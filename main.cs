@@ -19,10 +19,13 @@ class MainClass {
     public unsafe static void Main(string[] args) {
         CodeCompileUnit unit = new CodeCompileUnit();
         Smoke *smoke = InitSmoke("qt");
+        if (smoke == (Smoke*) 0) {
+            return;
+        }
         ClassesGenerator classgen = new ClassesGenerator(smoke, unit, "Qyoto");
         classgen.Run();
         DestroySmoke((IntPtr) smoke);
-        
+
         CodeDomProvider csharp = CodeDomProvider.CreateProvider("CSharp");
         CodeGeneratorOptions cgo = new CodeGeneratorOptions();
         csharp.GenerateCodeFromCompileUnit(unit, Console.Out, cgo);
