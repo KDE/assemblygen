@@ -48,7 +48,7 @@ unsafe class MethodsGenerator {
 
         CodeTypeReference returnType = null;
         try {
-            returnType = new CodeTypeReference(Translator.CppToCSharp(smoke->types + method->ret, out isRef));
+            returnType = Translator.CppToCSharp(smoke->types + method->ret, out isRef);
         } catch (NotSupportedException) {
 //             Console.WriteLine("  |--Won't wrap method {0}::{1}",
 //                 ByteArrayManager.GetString(smoke->classes[method->classId].className), cppSignature);

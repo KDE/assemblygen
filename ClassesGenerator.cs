@@ -9,7 +9,7 @@ unsafe class ClassesGenerator {
     CodeNamespace cnDefault;
     Dictionary<string, CodeNamespace> namespaceMap = new Dictionary<string, CodeNamespace>();
     Dictionary<string, CodeTypeDeclaration> typeMap = new Dictionary<string, CodeTypeDeclaration>();
-    
+
     public ClassesGenerator(Smoke* smoke, CodeCompileUnit unit, string defaultNamespace) {
         this.smoke = smoke;
         this.unit = unit;
@@ -17,7 +17,7 @@ unsafe class ClassesGenerator {
         unit.Namespaces.Add(cnDefault);
         namespaceMap[defaultNamespace] = cnDefault;
     }
-    
+
     public IList GetTypeCollection(string prefix) {
         if (prefix == null || prefix == string.Empty)
             return cnDefault.Types;
@@ -43,24 +43,24 @@ unsafe class ClassesGenerator {
             parentCollection = GetTypeCollection(name.Substring(0, colon));
             name = prefix.Substring(colon + 2);
         }
-        
+
         nspace = new CodeNamespace(name);
         parentCollection.Add(nspace);
         namespaceMap[prefix] = nspace;
         return nspace.Types;
     }
-    
+
     public void Run() {
         MethodsGenerator methgen = null;
         short klass = 0;
         CodeTypeDeclaration type = null;
-        
+
         for (short i = 0; i < smoke->numMethods; i++) {
             Smoke.Method *meth = smoke->methods + i;
-            
+
             if ((meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0)
                 continue;   // don't process enums here
-            
+
             if (klass != meth->classId) {
                 klass = meth->classId;
                 Smoke.Class *smokeClass = smoke->classes + klass;
@@ -77,7 +77,7 @@ unsafe class ClassesGenerator {
                     prefix = (colon != -1) ? smokeName.Substring(0, colon) : string.Empty;
                     name = (colon != -1) ? smokeName.Substring(colon + 2) : smokeName;
                 }
-                
+
                 CodeAttributeDeclaration attr = new CodeAttributeDeclaration("SmokeClass",
                     new CodeAttributeArgument(new CodePrimitiveExpression(smokeName)));
                 type = new CodeTypeDeclaration(name);

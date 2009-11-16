@@ -7,4 +7,4 @@ CS_SOURCE=Smoke.cs SmokeMethods.cs ByteArrayManager.cs MethodsGenerator.cs Class
 	  SmokeSupport.cs main.cs
 
 main.exe: libsmokeloader.so $(CS_SOURCE)
-	gmcs -unsafe -out:main.exe $(CS_SOURCE)
+	gmcs -debug -unsafe -out:main.exe $(CS_SOURCE)
