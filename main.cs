@@ -28,6 +28,6 @@ class MainClass {
 
         CodeDomProvider csharp = CodeDomProvider.CreateProvider("CSharp");
         CodeGeneratorOptions cgo = new CodeGeneratorOptions();
-        csharp.GenerateCodeFromCompileUnit(unit, Console.Out, cgo);
+//         csharp.GenerateCodeFromCompileUnit(unit, Console.Out, cgo);
     }
 }
