@@ -196,7 +196,7 @@ static class Translator {
             List<string> args = SplitUnenclosed(templateArgument, ',', '<', '>');
             for (int i = 0; i < args.Count; i++) {
                 if (i > 0) ret += ',';
-                ret += CppToCSharp(args[i], out tmp);
+                ret += CppToCSharp(args[i], out tmp).BaseType;
             }
             ret += '>';
         }

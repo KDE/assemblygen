@@ -25,9 +25,7 @@ unsafe class MethodsGenerator {
         }
     }
 
-    public void GenerateMethod(Smoke.Method *method) {
-        string cppSignature = smoke->GetMethodSignature(method);
-
+    public CodeMemberMethod GenerateBasicMethodDefinition(Smoke.Method *method) {
         List<CodeParameterDeclarationExpression> args = new List<CodeParameterDeclarationExpression>();
         int count = 1;
         bool isRef;
@@ -42,7 +40,7 @@ unsafe class MethodsGenerator {
             } catch (NotSupportedException) {
 //                 Console.WriteLine("  |--Won't wrap method {0}::{1}",
 //                     ByteArrayManager.GetString(smoke->classes[method->classId].className), cppSignature);
-                return;
+                return null;
             }
         }
 
@@ -52,7 +50,7 @@ unsafe class MethodsGenerator {
         } catch (NotSupportedException) {
 //             Console.WriteLine("  |--Won't wrap method {0}::{1}",
 //                 ByteArrayManager.GetString(smoke->classes[method->classId].className), cppSignature);
-            return;
+            return null;
         }
 
         StringBuilder builder = new StringBuilder(ByteArrayManager.GetString(smoke->methodNames[method->name]));
@@ -66,15 +64,22 @@ unsafe class MethodsGenerator {
         foreach (CodeParameterDeclarationExpression exp in args) {
             cmm.Parameters.Add(exp);
         }
+        return cmm;
+    }
 
+    public void GenerateMethod(Smoke.Method *method) {
+        CodeMemberMethod cmm = GenerateBasicMethodDefinition(method);
+        if (cmm == null)
+            return;
+
+        string cppSignature = smoke->GetMethodSignature(method);
         CodeAttributeDeclaration attr = new CodeAttributeDeclaration("SmokeMethod",
             new CodeAttributeArgument(new CodePrimitiveExpression(cppSignature)));
         cmm.CustomAttributes.Add(attr);
 
         CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(SmokeSupport.smokeInvocation_Invoke);
-        
         cmm.Statements.Add(new CodeExpressionStatement(invoke));
-        
+
         type.Members.Add(cmm);
     }
 
