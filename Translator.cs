@@ -37,6 +37,16 @@ static class Translator {
     static Dictionary<string, TranslateFunc> typeCodeMap = new Dictionary<string, TranslateFunc>()
     {
         { "void", type => (type.PointerDepth == 0) ? new CodeTypeReference(typeof(void)) : new CodeTypeReference(typeof(IntPtr)) },
+        { "char", delegate(TypeInfo type) {
+                    if (type.PointerDepth == 1) {
+                        if (type.IsConst)
+                            return "String";
+                        if (type.IsUnsigned)
+                            return new CodeTypeReference("Pointer<byte>");
+                        return new CodeTypeReference("Pointer<sbyte>");
+                    }
+                    return null;
+                  }},
         { "QString", type => (type.PointerDepth > 0) ? "System.Text.StringBuilder" : "String" }
     };
 
@@ -52,13 +62,14 @@ static class Translator {
 
     class TypeInfo {
         public TypeInfo() {}
-        public TypeInfo(string name, int pDepth, bool isRef, bool isConst, string templateParams) {
-            Name = name; PointerDepth = pDepth; IsCppRef = isRef; IsConst = isConst; TemplateParameters = templateParams;
+        public TypeInfo(string name, int pDepth, bool isRef, bool isConst, bool isUnsigned, string templateParams) {
+            Name = name; PointerDepth = pDepth; IsCppRef = isRef; IsConst = isConst; IsUnsigned = isUnsigned; TemplateParameters = templateParams;
         }
         public string Name = string.Empty;
         public int PointerDepth = 0;
         public bool IsCppRef = false;
         public bool IsConst = false;
+        public bool IsUnsigned = false;
         public bool IsRef = false;
         public string TemplateParameters = string.Empty;
     }
@@ -182,7 +193,7 @@ static class Translator {
             name = partialTypeStr;
         } else if (typeCodeMap.TryGetValue(name, out typeFunc)) {
             // try to look up custom translation code
-            TypeInfo typeInfo = new TypeInfo(name, pointerDepth, isCppRef, isConst, templateArgument);
+            TypeInfo typeInfo = new TypeInfo(name, pointerDepth, isCppRef, isConst, isUnsigned, templateArgument);
             object obj = typeFunc(typeInfo);
             if (obj is string) {
                 name = (string) obj;
