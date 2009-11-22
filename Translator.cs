@@ -47,6 +47,9 @@ static class Translator {
         "KDE"
     };
 
+    // maps a C++ class to a .NET interface (needed for multiple inheritance), populated by ClassInterfacesGenerator
+    public static Dictionary<string, CodeTypeDeclaration> InterfaceTypeMap = new Dictionary<string, CodeTypeDeclaration>();
+
     class TypeInfo {
         public TypeInfo() {}
         public TypeInfo(string name, int pDepth, bool isRef, bool isConst, string templateParams) {
@@ -88,6 +91,11 @@ static class Translator {
         }
         ret.Add(input.Substring(lastDelimeter + 1));
         return ret;
+    }
+
+    public unsafe static CodeTypeReference CppToCSharp(Smoke.Class* klass) {
+        bool isRef;
+        return CppToCSharp(ByteArrayManager.GetString(klass->className), out isRef);
     }
 
     public unsafe static CodeTypeReference CppToCSharp(Smoke.Type* type, out bool isRef) {
@@ -184,6 +192,18 @@ static class Translator {
             }
         } else {
             // if everything fails, just do some standard mapping
+            CodeTypeDeclaration ifaceDecl;
+            if (InterfaceTypeMap.TryGetValue(name, out ifaceDecl)) {
+                // this class is used in multiple inheritance, we need the interface
+                int colon = name.LastIndexOf("::");
+                string prefix = (colon != -1) ? name.Substring(0, colon) : string.Empty;
+                string className = (colon != -1) ? name.Substring(colon + 2) : name;
+                name = prefix;
+                if (name != string.Empty) {
+                    name += '.';
+                }
+                name += 'I' + className;
+            }
             name = name.Replace("::", ".");
         }
 

@@ -5,16 +5,10 @@ using System.Collections.Generic;
 unsafe class ClassInterfacesGenerator {
     ClassesGenerator classesGenerator;
     Smoke *smoke;
-    // maps a C++ class to a .NET interface (needed for multiple inheritance)
-    Dictionary<string, CodeTypeDeclaration> interfaceTypeMap = new Dictionary<string, CodeTypeDeclaration>();
 
     public ClassInterfacesGenerator(ClassesGenerator cg) {
         classesGenerator = cg;
         smoke = cg.smoke;
-    }
-
-    public Dictionary<string, CodeTypeDeclaration> InterfaceTypeMap {
-        get { return interfaceTypeMap; }
     }
 
     // Recursively adds base classes to a hash set.
@@ -95,6 +89,7 @@ unsafe class ClassInterfacesGenerator {
             }
 
             classesGenerator.GetTypeCollection(prefix).Add(ifaceDecl);
+            Translator.InterfaceTypeMap[className] = ifaceDecl;
         }
     }
 }

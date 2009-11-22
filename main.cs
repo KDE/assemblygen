@@ -23,9 +23,11 @@ class MainClass {
             return;
         }
         ClassesGenerator classgen = new ClassesGenerator(smoke, unit, "Qyoto");
+        Console.Error.WriteLine("Generating CodeCompileUnit...");
         classgen.Run();
         DestroySmoke((IntPtr) smoke);
 
+        Console.Error.WriteLine("Generating code...");
         CodeDomProvider csharp = CodeDomProvider.CreateProvider("CSharp");
         CodeGeneratorOptions cgo = new CodeGeneratorOptions();
         csharp.GenerateCodeFromCompileUnit(unit, Console.Out, cgo);

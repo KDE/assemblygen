@@ -12,8 +12,6 @@ unsafe class ClassesGenerator {
     Dictionary<string, CodeNamespace> namespaceMap = new Dictionary<string, CodeNamespace>();
     // maps a C++ class to a .NET class
     Dictionary<string, CodeTypeDeclaration> typeMap = new Dictionary<string, CodeTypeDeclaration>();
-    // maps a C++ class to a .NET interface (needed for multiple inheritance)
-    Dictionary<string, CodeTypeDeclaration> interfaceTypeMap = new Dictionary<string, CodeTypeDeclaration>();
 
     public ClassesGenerator(Smoke* smoke, CodeCompileUnit unit, string defaultNamespace) {
         this.smoke = smoke;
@@ -90,12 +88,19 @@ unsafe class ClassesGenerator {
             bool firstParent = true;
             while (*parent > 0) {
                 if (firstParent) {
-
+                    type.BaseTypes.Add(new CodeTypeReference(ByteArrayManager.GetString((smoke->classes + *parent)->className).Replace("::", ".")));
                     firstParent = false;
                     parent++;
+                    continue;
                 }
+                // Translator.CppToCSharp() will take care of 'interfacifying' the class name
+                type.BaseTypes.Add(Translator.CppToCSharp(smoke->classes + *parent));
                 parent++;
             }
+        }
+        CodeTypeDeclaration iface;
+        if (Translator.InterfaceTypeMap.TryGetValue(smokeName, out iface)) {
+            type.BaseTypes.Add(new CodeTypeReference('I' + name));
         }
 
         typeMap[mapName] = type;
@@ -106,7 +111,7 @@ unsafe class ClassesGenerator {
     /*
      * Loops through all wrapped methods. Any class that is found is converted to a .NET class.
      * A class Namespace::Foo is mapped to Namespace.Foo. Classes that are not in any namespace go into the default namespace.
-     * For namespaces that contain functions, a Namespace.Global class is created which holds the functions as methods.
+     * For namespaces that contain functions, a Namespace.Global class is created which holds the functions as methods. (see DefineClass(Smoke.Class*))
      * A MethodGenerator is then created to generate the methods for that class.
      */
     public void Run() {
@@ -124,6 +129,7 @@ unsafe class ClassesGenerator {
 
             if (klass != meth->classId) {
                 // we encountered a new class
+                klass = meth->classId;
                 type = DefineClass(smoke->classes + klass);
                 methgen = new MethodsGenerator(smoke, type);
             }
