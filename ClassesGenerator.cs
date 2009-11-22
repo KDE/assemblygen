@@ -59,6 +59,50 @@ unsafe class ClassesGenerator {
         return nspace.Types;
     }
 
+    CodeTypeDeclaration DefineClass(Smoke.Class* smokeClass) {
+        string smokeName = ByteArrayManager.GetString(smokeClass->className), mapName = smokeName;
+        string name;
+        string prefix = string.Empty;
+        if (smokeClass->size == 0) {
+            // namespace
+            prefix = smokeName;
+            name = "Global";
+            mapName = prefix + "::" + "Global";
+        } else {
+            int colon = smokeName.LastIndexOf("::");
+            prefix = (colon != -1) ? smokeName.Substring(0, colon) : string.Empty;
+            name = (colon != -1) ? smokeName.Substring(colon + 2) : smokeName;
+        }
+
+        // define the .NET class
+        CodeAttributeDeclaration attr = new CodeAttributeDeclaration("SmokeClass",
+            new CodeAttributeArgument(new CodePrimitiveExpression(smokeName)));
+        CodeTypeDeclaration type = new CodeTypeDeclaration(name);
+        type.CustomAttributes.Add(attr);
+        if (smokeClass->parents == 0) {
+            if (smokeName == "QObject") {
+                type.BaseTypes.Add(new CodeTypeReference("Qt"));
+            } else {
+                type.BaseTypes.Add(new CodeTypeReference(typeof(object)));
+            }
+        } else {
+            short *parent = smoke->inheritanceList + smokeClass->parents;
+            bool firstParent = true;
+            while (*parent > 0) {
+                if (firstParent) {
+
+                    firstParent = false;
+                    parent++;
+                }
+                parent++;
+            }
+        }
+
+        typeMap[mapName] = type;
+        GetTypeCollection(prefix).Add(type);
+        return type;
+    }
+
     /*
      * Loops through all wrapped methods. Any class that is found is converted to a .NET class.
      * A class Namespace::Foo is mapped to Namespace.Foo. Classes that are not in any namespace go into the default namespace.
@@ -80,42 +124,7 @@ unsafe class ClassesGenerator {
 
             if (klass != meth->classId) {
                 // we encountered a new class
-                klass = meth->classId;
-                Smoke.Class *smokeClass = smoke->classes + klass;
-                string smokeName = ByteArrayManager.GetString(smokeClass->className), mapName = smokeName;
-                string name;
-                string prefix = string.Empty;
-                if (smokeClass->size == 0) {
-                    // namespace
-                    prefix = smokeName;
-                    name = "Global";
-                    mapName = prefix + "::" + "Global";
-                } else {
-                    int colon = smokeName.LastIndexOf("::");
-                    prefix = (colon != -1) ? smokeName.Substring(0, colon) : string.Empty;
-                    name = (colon != -1) ? smokeName.Substring(colon + 2) : smokeName;
-                }
-
-                // define the .NET class
-                CodeAttributeDeclaration attr = new CodeAttributeDeclaration("SmokeClass",
-                    new CodeAttributeArgument(new CodePrimitiveExpression(smokeName)));
-                type = new CodeTypeDeclaration(name);
-                type.CustomAttributes.Add(attr);
-                if (smokeClass->parents == 0) {
-                    if (smokeName == "QObject") {
-                        type.BaseTypes.Add(new CodeTypeReference("Qt"));
-                    } else {
-                        type.BaseTypes.Add(new CodeTypeReference(typeof(object)));
-                    }
-                } else {
-                    short *parent = smoke->inheritanceList + smokeClass->parents;
-                    while (*parent > 0) {
-                        parent++;
-                    }
-                }
-
-                typeMap[mapName] = type;
-                GetTypeCollection(prefix).Add(type);
+                type = DefineClass(smoke->classes + klass);
                 methgen = new MethodsGenerator(smoke, type);
             }
 
