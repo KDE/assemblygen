@@ -12,16 +12,16 @@ unsafe class MethodsGenerator {
         this.type = type;
     }
     
-    public void Generate(short index) {
+    public void Generate(short index, string mungedName) {
         Smoke.Method *method = smoke->methods + index;
-        Generate(method);
+        Generate(method, mungedName);
     }
     
-    public void Generate(Smoke.Method *method) {
+    public void Generate(Smoke.Method *method, string mungedName) {
         if ((method->flags & (ushort) Smoke.MethodFlags.mf_attribute) > 0 || (method->flags & (ushort) Smoke.MethodFlags.mf_property) > 0) {
             GenerateProperty(method);
         } else {
-            GenerateMethod(method);
+            GenerateMethod(method, mungedName);
         }
     }
 
@@ -67,7 +67,7 @@ unsafe class MethodsGenerator {
         return cmm;
     }
 
-    public void GenerateMethod(Smoke.Method *method) {
+    public void GenerateMethod(Smoke.Method *method, string mungedName) {
         CodeMemberMethod cmm = GenerateBasicMethodDefinition(method);
         if (cmm == null)
             return;

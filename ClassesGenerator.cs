@@ -57,8 +57,14 @@ unsafe class ClassesGenerator {
         return nspace.Types;
     }
 
+    /*
+     * Create a .NET class from a smoke class.
+     * A class Namespace::Foo is mapped to Namespace.Foo. Classes that are not in any namespace go into the default namespace.
+     * For namespaces that contain functions, a Namespace.Global class is created which holds the functions as methods.
+     */
     CodeTypeDeclaration DefineClass(Smoke.Class* smokeClass) {
-        string smokeName = ByteArrayManager.GetString(smokeClass->className), mapName = smokeName;
+        string smokeName = ByteArrayManager.GetString(smokeClass->className);
+        string mapName = smokeName;
         string name;
         string prefix = string.Empty;
         if (smokeClass->size == 0) {
@@ -109,32 +115,54 @@ unsafe class ClassesGenerator {
     }
 
     /*
-     * Loops through all wrapped methods. Any class that is found is converted to a .NET class.
-     * A class Namespace::Foo is mapped to Namespace.Foo. Classes that are not in any namespace go into the default namespace.
-     * For namespaces that contain functions, a Namespace.Global class is created which holds the functions as methods. (see DefineClass(Smoke.Class*))
+     * Loops through all wrapped methods. Any class that is found is converted to a .NET class (see DefineClass()).
      * A MethodGenerator is then created to generate the methods for that class.
      */
     public void Run() {
         ClassInterfacesGenerator cig = new ClassInterfacesGenerator(this);
         cig.Run();
         MethodsGenerator methgen = null;
-        short klass = 0;
+        short currentClassId = 0;
+        Smoke.Class *klass = (Smoke.Class*) IntPtr.Zero;
         CodeTypeDeclaration type = null;
 
-        for (short i = 0; i < smoke->numMethods; i++) {
-            Smoke.Method *meth = smoke->methods + i;
+        for (short i = 1; i < smoke->numMethodMaps; i++) {
+            Smoke.MethodMap *map = smoke->methodMaps + i;
 
-            if ((meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0)
-                continue;   // don't process enums here
-
-            if (klass != meth->classId) {
+            if (currentClassId != map->classId) {
                 // we encountered a new class
-                klass = meth->classId;
-                type = DefineClass(smoke->classes + klass);
+                currentClassId = map->classId;
+                klass = smoke->classes + currentClassId;
+                type = DefineClass(klass);
+
+                bool firstParent = true;
+                for (short *parent = smoke->inheritanceList + klass->parents; *parent > 0; parent++) {
+                    if (firstParent) {
+                        // we're only interested in parents implemented as interfaces
+                        firstParent = false;
+                        continue;
+                    }
+                }
+
                 methgen = new MethodsGenerator(smoke, type);
             }
 
-            methgen.Generate(i);
+            string mungedName = ByteArrayManager.GetString(smoke->methodNames[map->name]);
+            if (map->method > 0) {
+                Smoke.Method *meth = smoke->methods + map->method;
+                if ((meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0)
+                    continue;   // don't process enums here
+
+                methgen.Generate(map->method, mungedName);
+            } else if (map->method < 0) {
+                for (short *overload = smoke->ambiguousMethodList + (-map->method); *overload > 0; overload++) {
+                    Smoke.Method *meth = smoke->methods + *overload;
+                    if ((meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0)
+                        continue;   // don't process enums here
+
+                    methgen.Generate(*overload, mungedName);
+                }
+            }
         }
     }
 }
