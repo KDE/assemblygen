@@ -110,8 +110,8 @@ static class Translator {
     }
 
     public unsafe static CodeTypeReference CppToCSharp(Smoke.Type* type, out bool isRef) {
+        isRef = false;
         if ((IntPtr) type->name == IntPtr.Zero) {
-            isRef = false;
             return new CodeTypeReference(typeof(void));
         }
 
@@ -141,23 +141,9 @@ static class Translator {
             typeRef = new CodeTypeReference(typeof(double));
         }
         if (typeRef != null) {
-            if ((type->flags & (ushort) Smoke.TypeFlags.tf_ptr) > 0) {
-                if (typeId == Smoke.TypeId.t_char) {
-                    if ((type->flags & (ushort) Smoke.TypeFlags.tf_const) > 0) {
-                        // const char*
-                        isRef = false;
-                        return new CodeTypeReference(typeof(string));
-                    } else {
-                        isRef = false;
-                        return new CodeTypeReference("Pointer<sbyte>");
-                    }
-                }
-                isRef = true;
-            }
             if ((type->flags & (ushort) Smoke.TypeFlags.tf_ref) > 0) {
                 isRef = true;
             }
-            isRef = false;
             return typeRef;
         }
 
