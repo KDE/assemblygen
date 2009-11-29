@@ -189,8 +189,8 @@ unsafe class ClassesGenerator {
                 if ((meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0)
                     continue;   // don't process enums here
 
-                // already implemented
-                if (implementMethods.Contains(map->method))
+                // already implemented?
+                if (implementMethods.ContainsKey(map->method))
                     continue;
 
                 methgen.Generate(map->method, mungedName);
@@ -200,8 +200,8 @@ unsafe class ClassesGenerator {
                     if ((meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0)
                         continue;   // don't process enums here
 
-                    // already implemented
-                    if (implementMethods.Contains(*overload))
+                    // already implemented?
+                    if (implementMethods.ContainsKey(*overload))
                         continue;
 
                     methgen.Generate(*overload, mungedName);
