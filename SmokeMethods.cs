@@ -18,6 +18,7 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.Text;
 
 // Extension methods would be nice, but 'Smoke' is a struct and would be
@@ -46,6 +47,58 @@ unsafe partial struct Smoke {
 
             return 0;
         }
+    }
+
+    // adapted from QtRuby's findAllMethods()
+    public void FindAllMethods(short c, IDictionary<short, string> ret, bool searchSuperClasses) {
+        short imax = numMethodMaps;
+        short imin = 0, icur = -1, methmin = -1, methmax = -1;
+        int icmp = -1;
+        while(imax >= imin) {
+            icur = (short) ((imin + imax) / 2);
+            icmp = methodMaps[icur].classId - c;
+            if (icmp == 0) {
+                short pos = icur;
+                while (icur > 0 && methodMaps[icur-1].classId == c)
+                    icur--;
+                methmin = icur;
+                icur = pos;
+                while(icur < imax && methodMaps[icur+1].classId == c)
+                    icur++;
+                methmax = icur;
+                break;
+            }
+            if (icmp > 0)
+                imax = (short) (icur - 1);
+            else
+                imin = (short) (icur + 1);
+        }
+        if (icmp != 0)
+            return;
+
+        for (short i = methmin; i <= methmax; i++) {
+            string mungedName = ByteArrayManager.GetString(methodNames[methodMaps[i].name]);
+            short methId = methodMaps[i].method;
+            if (methId > 0) {
+                ret[methId] = mungedName;
+            } else {
+                for (short *overload = ambiguousMethodList + (-methId); *overload > 0; overload++) {
+                    ret[*overload] = mungedName;
+                }
+            }
+        }
+        if (searchSuperClasses) {
+            for (short *parent = inheritanceList + classes[c].parents; *parent > 0; parent++) {
+                FindAllMethods(*parent, ret, true);
+            }
+        }
+    }
+
+    // convenience overload
+    public Dictionary<short, string> FindAllMethods(short classId, bool searchSuperClasses) {
+        Dictionary<short, string> ret = new Dictionary<short, string>();
+        FindAllMethods(classId, ret, searchSuperClasses);
+        return ret;
     }
 
     public override string ToString() {

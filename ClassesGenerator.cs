@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.CodeDom;
 
 unsafe class ClassesGenerator {
+
     public readonly Smoke* smoke;
     public readonly CodeCompileUnit unit;
     public readonly CodeNamespace cnDefault;
@@ -32,12 +33,16 @@ unsafe class ClassesGenerator {
     // maps a C++ class to a .NET class
     Dictionary<string, CodeTypeDeclaration> typeMap = new Dictionary<string, CodeTypeDeclaration>();
 
+    // needed to filter out superfluous methods from base classes
+    SmokeMethodEqualityComparer smokeMethodComparer;
+
     public ClassesGenerator(Smoke* smoke, CodeCompileUnit unit, string defaultNamespace) {
         this.smoke = smoke;
         this.unit = unit;
         this.cnDefault = new CodeNamespace(defaultNamespace);
         unit.Namespaces.Add(cnDefault);
         namespaceMap[defaultNamespace] = cnDefault;
+        smokeMethodComparer = new SmokeMethodEqualityComparer(smoke);
     }
 
     /*
@@ -145,6 +150,10 @@ unsafe class ClassesGenerator {
         Smoke.Class *klass = (Smoke.Class*) IntPtr.Zero;
         CodeTypeDeclaration type = null;
 
+        // Contains inherited methods that have to be implemented by the current class.
+        // We use our custom comparer, so we don't end up with the same method multiple times.
+        IDictionary<short, string> implementMethods = new Dictionary<short, string>(smokeMethodComparer);
+
         for (short i = 1; i < smoke->numMethodMaps; i++) {
             Smoke.MethodMap *map = smoke->methodMaps + i;
 
@@ -154,6 +163,10 @@ unsafe class ClassesGenerator {
                 klass = smoke->classes + currentClassId;
                 type = DefineClass(klass);
 
+                methgen = new MethodsGenerator(smoke, type);
+
+                implementMethods.Clear();
+
                 bool firstParent = true;
                 for (short *parent = smoke->inheritanceList + klass->parents; *parent > 0; parent++) {
                     if (firstParent) {
@@ -161,9 +174,13 @@ unsafe class ClassesGenerator {
                         firstParent = false;
                         continue;
                     }
+                    // collect all methods (+ inherited ones) and add them to the implementMethods Dictionary
+                    smoke->FindAllMethods(*parent, implementMethods, true);
                 }
 
-                methgen = new MethodsGenerator(smoke, type);
+                foreach (KeyValuePair<short, string> pair in implementMethods) {
+                    methgen.Generate(pair.Key, pair.Value);
+                }
             }
 
             string mungedName = ByteArrayManager.GetString(smoke->methodNames[map->name]);
@@ -172,12 +189,20 @@ unsafe class ClassesGenerator {
                 if ((meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0)
                     continue;   // don't process enums here
 
+                // already implemented
+                if (implementMethods.Contains(map->method))
+                    continue;
+
                 methgen.Generate(map->method, mungedName);
             } else if (map->method < 0) {
                 for (short *overload = smoke->ambiguousMethodList + (-map->method); *overload > 0; overload++) {
                     Smoke.Method *meth = smoke->methods + *overload;
                     if ((meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0)
                         continue;   // don't process enums here
+
+                    // already implemented
+                    if (implementMethods.Contains(*overload))
+                        continue;
 
                     methgen.Generate(*overload, mungedName);
                 }
