@@ -159,12 +159,8 @@ static class Translator {
         } else if (typeId == Smoke.TypeId.t_double) {
             typeRef = new CodeTypeReference(typeof(double));
         }
-        if (typeRef != null) {
-            if ((type->flags & (ushort) Smoke.TypeFlags.tf_ref) > 0) {
-                isRef = true;
-            }
+        if (typeRef != null)
             return typeRef;
-        }
 
         string typeString = ByteArrayManager.GetString(type->name);
         return CppToCSharp(typeString, out isRef);
@@ -173,14 +169,14 @@ static class Translator {
     public static CodeTypeReference CppToCSharp(string typeString, out bool isRef) {
         // yes, this won't match Foo<...>::Bar - but we can't wrap that anyway
         isRef = false;
-        Match match = Regex.Match(typeString, @"^(const )?(unsigned )?([\w\s:]+)(<.+>)?(\*)*(&)?$");
+        Match match = Regex.Match(typeString, @"^(const )?(unsigned |signed )?([\w\s:]+)(<.+>)?(\*)*(&)?$");
         if (!match.Success) {
             // Console.WriteLine("Can't handle type {0}", typeString);
             throw new NotSupportedException(typeString);
         }
         string ret;
         bool isConst = match.Groups[1].Value != string.Empty;
-        bool isUnsigned = match.Groups[2].Value != string.Empty;
+        bool isUnsigned = match.Groups[2].Value == "unsigned ";
         string name = match.Groups[3].Value;
         string templateArgument = match.Groups[4].Value;
         if (templateArgument != string.Empty) {
