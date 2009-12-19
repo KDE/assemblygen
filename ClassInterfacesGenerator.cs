@@ -89,6 +89,7 @@ unsafe class ClassInterfacesGenerator {
                 Smoke.Method *meth = smoke->methods + i;
                 if (meth->classId != idx)
                     continue;
+                string methName = ByteArrayManager.GetString(smoke->methodNames[meth->name]);
 
                 // we don't want anything except protected, const or empty flags
                 if (   (meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0
@@ -98,7 +99,8 @@ unsafe class ClassInterfacesGenerator {
                     || (meth->flags & (ushort) Smoke.MethodFlags.mf_static) > 0
                     || (meth->flags & (ushort) Smoke.MethodFlags.mf_internal) > 0
                     || (meth->flags & (ushort) Smoke.MethodFlags.mf_attribute) > 0
-                    || (meth->flags & (ushort) Smoke.MethodFlags.mf_property) > 0)
+                    || (meth->flags & (ushort) Smoke.MethodFlags.mf_property) > 0
+                    || methName.StartsWith("operator"))
                 {
                     continue;
                 }

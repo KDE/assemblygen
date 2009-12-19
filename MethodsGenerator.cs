@@ -18,6 +18,7 @@
 */
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 using System.CodeDom;
@@ -29,6 +30,27 @@ unsafe class MethodsGenerator {
     public MethodsGenerator(Smoke* smoke, CodeTypeDeclaration type) {
         this.smoke = smoke;
         this.type = type;
+    }
+
+    bool MethodOverrides(Smoke.Method* method) {
+        Dictionary<short, string> allMethods = smoke->FindAllMethods(method->classId, true);
+        // Do this with linq... there's probably room for optimization here.
+        // Select virtual and pure virtual and pure virtual methods from superclasses.
+        var inheritedVirtuals = from entry in allMethods
+                                where ((smoke->methods[entry.Key].flags & (ushort) Smoke.MethodFlags.mf_virtual) > 0
+                                    || (smoke->methods[entry.Key].flags & (ushort) Smoke.MethodFlags.mf_purevirtual) > 0)
+                                where smoke->methods[entry.Key].classId != method->classId
+                                select entry.Key;
+
+        foreach (short index in inheritedVirtuals) {
+            Smoke.Method* meth = smoke->methods + index;
+            if (meth->name == method->name && meth->args == method->args &&
+                (meth->flags & (uint) Smoke.MethodFlags.mf_const) == (method->flags & (uint) Smoke.MethodFlags.mf_const))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void Generate(short index, string mungedName) {
@@ -77,14 +99,39 @@ unsafe class MethodsGenerator {
             return null;
         }
 
-        StringBuilder builder = new StringBuilder(ByteArrayManager.GetString(smoke->methodNames[method->name]));
-        builder[0] = char.ToUpper(builder[0]);
+        CodeMemberMethod cmm;
+        if ((method->flags & (uint) Smoke.MethodFlags.mf_ctor) > 0) {
+            cmm = new CodeConstructor();
+            cmm.Attributes = (MemberAttributes) 0; // initialize to 0 so we can do |=
+        } else if ((method->flags & (uint) Smoke.MethodFlags.mf_dtor) > 0) {
+            cmm = new CodeMemberMethod();
+            cmm.Name = "Finalize";
+            cmm.ReturnType = new CodeTypeReference(typeof(void));
+            cmm.Attributes = MemberAttributes.Override | MemberAttributes.Family;
+        } else {
+            cmm = new CodeMemberMethod();
+            cmm.Attributes = (MemberAttributes) 0; // initialize to 0 so we can do |=
+            
+            StringBuilder builder = new StringBuilder(ByteArrayManager.GetString(smoke->methodNames[method->name]));
+            builder[0] = char.ToUpper(builder[0]);
+            string csName = builder.ToString();
+            cmm.Name = csName;
+            cmm.ReturnType = returnType;
+        }
 
-        string csName = builder.ToString();
+        if ((method->flags & (uint) Smoke.MethodFlags.mf_protected) > 0) {
+            cmm.Attributes |= MemberAttributes.Family;
+        } else {
+            cmm.Attributes |= MemberAttributes.Public;
+        }
 
-        CodeMemberMethod cmm = new CodeMemberMethod();
-        cmm.Name = csName;
-        cmm.ReturnType = returnType;
+        if ((method->flags & (uint) Smoke.MethodFlags.mf_virtual) == 0) {
+            cmm.Attributes |= MemberAttributes.Final | MemberAttributes.New;
+        } else {
+            if (MethodOverrides(method))
+                cmm.Attributes |= MemberAttributes.Override;
+        }
+
         foreach (CodeParameterDeclarationExpression exp in args) {
             cmm.Parameters.Add(exp);
         }
@@ -101,8 +148,8 @@ unsafe class MethodsGenerator {
             new CodeAttributeArgument(new CodePrimitiveExpression(cppSignature)));
         cmm.CustomAttributes.Add(attr);
 
-        CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(SmokeSupport.smokeInvocation_Invoke);
-        cmm.Statements.Add(new CodeExpressionStatement(invoke));
+//         CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(SmokeSupport.smokeInvocation_Invoke);
+//         cmm.Statements.Add(new CodeExpressionStatement(invoke));
 
         type.Members.Add(cmm);
     }
