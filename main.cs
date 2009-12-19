@@ -18,10 +18,8 @@
 */
 
 using System;
-using System.Collections.Generic;
-using System.Text;
+using System.IO;
 using System.Runtime.InteropServices;
-using System.Reflection;
 using System.CodeDom;
 using System.CodeDom.Compiler;
 
@@ -37,18 +35,21 @@ class MainClass {
 
     public unsafe static void Main(string[] args) {
         CodeCompileUnit unit = new CodeCompileUnit();
-        Smoke *smoke = InitSmoke("qt");
+        Smoke *smoke = InitSmoke("qtcore");
         if (smoke == (Smoke*) 0) {
             return;
         }
-        ClassesGenerator classgen = new ClassesGenerator(smoke, unit, "Qyoto");
+        ClassesGenerator classgen = new ClassesGenerator(smoke, unit, "QtCore");
         Console.Error.WriteLine("Generating CodeCompileUnit...");
         classgen.Run();
         DestroySmoke((IntPtr) smoke);
 
+        FileStream fs = new FileStream("out.cs", FileMode.Create);
+
         Console.Error.WriteLine("Generating code...");
         CodeDomProvider csharp = CodeDomProvider.CreateProvider("CSharp");
         CodeGeneratorOptions cgo = new CodeGeneratorOptions();
-        csharp.GenerateCodeFromCompileUnit(unit, Console.Out, cgo);
+        csharp.GenerateCodeFromCompileUnit(unit, new StreamWriter(fs), cgo);
+        fs.Close();
     }
 }
