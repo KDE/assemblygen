@@ -24,26 +24,28 @@ using System.Text;
 using System.CodeDom;
 
 unsafe class MethodsGenerator {
-    Smoke* smoke;
+    GeneratorData data;
+    Translator translator;
     CodeTypeDeclaration type;
 
-    public MethodsGenerator(Smoke* smoke, CodeTypeDeclaration type) {
-        this.smoke = smoke;
+    public MethodsGenerator(GeneratorData data, Translator translator, CodeTypeDeclaration type) {
+        this.data = data;
+        this.translator = translator;
         this.type = type;
     }
 
     bool MethodOverrides(Smoke.Method* method) {
-        Dictionary<short, string> allMethods = smoke->FindAllMethods(method->classId, true);
+        Dictionary<short, string> allMethods = data.Smoke->FindAllMethods(method->classId, true);
         // Do this with linq... there's probably room for optimization here.
         // Select virtual and pure virtual and pure virtual methods from superclasses.
         var inheritedVirtuals = from entry in allMethods
-                                where ((smoke->methods[entry.Key].flags & (ushort) Smoke.MethodFlags.mf_virtual) > 0
-                                    || (smoke->methods[entry.Key].flags & (ushort) Smoke.MethodFlags.mf_purevirtual) > 0)
-                                where smoke->methods[entry.Key].classId != method->classId
+                                where ((data.Smoke->methods[entry.Key].flags & (ushort) Smoke.MethodFlags.mf_virtual) > 0
+                                    || (data.Smoke->methods[entry.Key].flags & (ushort) Smoke.MethodFlags.mf_purevirtual) > 0)
+                                where data.Smoke->methods[entry.Key].classId != method->classId
                                 select entry.Key;
 
         foreach (short index in inheritedVirtuals) {
-            Smoke.Method* meth = smoke->methods + index;
+            Smoke.Method* meth = data.Smoke->methods + index;
             if (meth->name == method->name && meth->args == method->args &&
                 (meth->flags & (uint) Smoke.MethodFlags.mf_const) == (method->flags & (uint) Smoke.MethodFlags.mf_const))
             {
@@ -54,7 +56,7 @@ unsafe class MethodsGenerator {
     }
 
     public void Generate(short index, string mungedName) {
-        Smoke.Method *method = smoke->methods + index;
+        Smoke.Method *method = data.Smoke->methods + index;
         Generate(method, mungedName);
     }
 
@@ -67,7 +69,7 @@ unsafe class MethodsGenerator {
     }
 
     public CodeMemberMethod GenerateBasicMethodDefinition(Smoke.Method *method) {
-        string cppSignature = smoke->GetMethodSignature(method);
+        string cppSignature = data.Smoke->GetMethodSignature(method);
         return GenerateBasicMethodDefinition(method, cppSignature);
     }
 
@@ -75,27 +77,27 @@ unsafe class MethodsGenerator {
         List<CodeParameterDeclarationExpression> args = new List<CodeParameterDeclarationExpression>();
         int count = 1;
         bool isRef;
-        for (short* typeIndex = smoke->argumentList + method->args; *typeIndex > 0; typeIndex++) {
+        for (short* typeIndex = data.Smoke->argumentList + method->args; *typeIndex > 0; typeIndex++) {
             try {
                 CodeParameterDeclarationExpression exp =
-                    new CodeParameterDeclarationExpression(Translator.CppToCSharp(smoke->types + *typeIndex, out isRef), "arg" + count++);
+                    new CodeParameterDeclarationExpression(translator.CppToCSharp(data.Smoke->types + *typeIndex, out isRef), "arg" + count++);
                 if (isRef) {
                     exp.Direction = FieldDirection.Ref;
                 }
                 args.Add(exp);
             } catch (NotSupportedException) {
                 Console.WriteLine("  |--Won't wrap method {0}::{1}",
-                    ByteArrayManager.GetString(smoke->classes[method->classId].className), cppSignature);
+                    ByteArrayManager.GetString(data.Smoke->classes[method->classId].className), cppSignature);
                 return null;
             }
         }
 
         CodeTypeReference returnType = null;
         try {
-            returnType = Translator.CppToCSharp(smoke->types + method->ret, out isRef);
+            returnType = translator.CppToCSharp(data.Smoke->types + method->ret, out isRef);
         } catch (NotSupportedException) {
             Console.WriteLine("  |--Won't wrap method {0}::{1}",
-                ByteArrayManager.GetString(smoke->classes[method->classId].className), cppSignature);
+                ByteArrayManager.GetString(data.Smoke->classes[method->classId].className), cppSignature);
             return null;
         }
 
@@ -113,7 +115,7 @@ unsafe class MethodsGenerator {
             cmm = new CodeMemberMethod();
             cmm.Attributes = (MemberAttributes) 0; // initialize to 0 so we can do |=
 
-            string csName = ByteArrayManager.GetString(smoke->methodNames[method->name]);
+            string csName = ByteArrayManager.GetString(data.Smoke->methodNames[method->name]);
             if (!csName.StartsWith("operator")) {
                 StringBuilder builder = new StringBuilder(csName);
                 builder[0] = char.ToUpper(builder[0]);
@@ -149,7 +151,7 @@ unsafe class MethodsGenerator {
     }
 
     public void GenerateMethod(Smoke.Method *method, string mungedName) {
-        string cppSignature = smoke->GetMethodSignature(method);
+        string cppSignature = data.Smoke->GetMethodSignature(method);
         CodeMemberMethod cmm = GenerateBasicMethodDefinition(method, cppSignature);
         if (cmm == null)
             return;

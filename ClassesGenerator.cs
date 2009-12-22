@@ -24,61 +24,16 @@ using System.CodeDom;
 
 unsafe class ClassesGenerator {
 
-    public readonly Smoke* smoke;
-    public readonly CodeCompileUnit unit;
-    public readonly CodeNamespace cnDefault;
-
-    // maps a C++ namespace to a .NET namespace
-    Dictionary<string, CodeNamespace> namespaceMap = new Dictionary<string, CodeNamespace>();
-    // maps a C++ class to a .NET class
-    Dictionary<string, CodeTypeDeclaration> typeMap = new Dictionary<string, CodeTypeDeclaration>();
+    GeneratorData data;
+    Translator translator;
 
     // needed to filter out superfluous methods from base classes
     SmokeMethodEqualityComparer smokeMethodComparer;
 
-    public ClassesGenerator(Smoke* smoke, CodeCompileUnit unit, string defaultNamespace) {
-        this.smoke = smoke;
-        this.unit = unit;
-        this.cnDefault = new CodeNamespace(defaultNamespace);
-        unit.Namespaces.Add(cnDefault);
-        namespaceMap[defaultNamespace] = cnDefault;
-        smokeMethodComparer = new SmokeMethodEqualityComparer(smoke);
-    }
-
-    /*
-     * Returns the collection of sub-types for a given prefix (which may be a namespace or a class).
-     * If 'prefix' is empty, returns the collection of the default namespace.
-     */
-    public IList GetTypeCollection(string prefix) {
-        if (prefix == null || prefix == string.Empty)
-            return cnDefault.Types;
-        CodeNamespace nspace;
-        CodeTypeDeclaration typeDecl;
-        if (namespaceMap.TryGetValue(prefix, out nspace)) {
-            return nspace.Types;
-        }
-        if (typeMap.TryGetValue(prefix, out typeDecl)) {
-            return typeDecl.Members;
-        }
-        
-        short id = smoke->idClass(prefix);
-        Smoke.Class *klass = smoke->classes + id;
-        if (id != 0 && klass->size > 0) {
-            throw new Exception("Found class instead of namespace - this should not happen!");
-        }
-        
-        IList parentCollection = unit.Namespaces;
-        string name = prefix;
-        int colon = name.LastIndexOf("::");
-        if (colon != -1) {
-            parentCollection = GetTypeCollection(name.Substring(0, colon));
-            name = prefix.Substring(colon + 2);
-        }
-
-        nspace = new CodeNamespace(name);
-        parentCollection.Add(nspace);
-        namespaceMap[prefix] = nspace;
-        return nspace.Types;
+    public ClassesGenerator(GeneratorData data, Translator translator) {
+        this.data = data;
+        this.translator = translator;
+        smokeMethodComparer = new SmokeMethodEqualityComparer(data.Smoke);
     }
 
     /*
@@ -95,7 +50,7 @@ unsafe class ClassesGenerator {
             // namespace
             prefix = smokeName;
             name = "Global";
-            mapName = prefix + "::" + "Global";
+            mapName = prefix + "::Global";
         } else {
             int colon = smokeName.LastIndexOf("::");
             prefix = (colon != -1) ? smokeName.Substring(0, colon) : string.Empty;
@@ -116,27 +71,28 @@ unsafe class ClassesGenerator {
                 type.BaseTypes.Add(new CodeTypeReference(typeof(object)));
             }
         } else {
-            short *parent = smoke->inheritanceList + smokeClass->parents;
+            short *parent = data.Smoke->inheritanceList + smokeClass->parents;
             bool firstParent = true;
             while (*parent > 0) {
                 if (firstParent) {
-                    type.BaseTypes.Add(new CodeTypeReference(ByteArrayManager.GetString((smoke->classes + *parent)->className).Replace("::", ".")));
+                    type.BaseTypes.Add(new CodeTypeReference(ByteArrayManager.GetString((data.Smoke->classes + *parent)->className).Replace("::", ".")));
                     firstParent = false;
                     parent++;
                     continue;
                 }
                 // Translator.CppToCSharp() will take care of 'interfacifying' the class name
-                type.BaseTypes.Add(Translator.CppToCSharp(smoke->classes + *parent));
+                type.BaseTypes.Add(translator.CppToCSharp(data.Smoke->classes + *parent));
                 parent++;
             }
         }
         CodeTypeDeclaration iface;
-        if (Translator.InterfaceTypeMap.TryGetValue(smokeName, out iface)) {
+        if (data.InterfaceTypeMap.TryGetValue(smokeName, out iface)) {
             type.BaseTypes.Add(new CodeTypeReference('I' + name));
         }
 
-        typeMap[mapName] = type;
-        GetTypeCollection(prefix).Add(type);
+        data.CSharpTypeMap[mapName] = type;
+        data.SmokeTypeMap[(IntPtr) smokeClass] = type;
+        data.GetTypeCollection(prefix).Add(type);
         return type;
     }
 
@@ -145,39 +101,56 @@ unsafe class ClassesGenerator {
      * A MethodGenerator is then created to generate the methods for that class.
      */
     public void Run() {
-        ClassInterfacesGenerator cig = new ClassInterfacesGenerator(this);
+        // create interfaces if necessary
+        ClassInterfacesGenerator cig = new ClassInterfacesGenerator(data, translator);
         cig.Run();
-        MethodsGenerator methgen = null;
+
+        for (short i = 1; i <= data.Smoke->numClasses; i++) {
+            Smoke.Class* klass = data.Smoke->classes + i;
+            if (klass->external)
+                continue;
+
+            DefineClass(klass);
+        }
+
+        GenerateMethods();
+    }
+
+    /*
+     * Adds the methods to the classes created by Run()
+     */
+    void GenerateMethods() {
         short currentClassId = 0;
         Smoke.Class *klass = (Smoke.Class*) IntPtr.Zero;
+        MethodsGenerator methgen = null;
         CodeTypeDeclaration type = null;
 
         // Contains inherited methods that have to be implemented by the current class.
         // We use our custom comparer, so we don't end up with the same method multiple times.
         IDictionary<short, string> implementMethods = new Dictionary<short, string>(smokeMethodComparer);
 
-        for (short i = 1; i < smoke->numMethodMaps; i++) {
-            Smoke.MethodMap *map = smoke->methodMaps + i;
+        for (short i = 1; i < data.Smoke->numMethodMaps; i++) {
+            Smoke.MethodMap *map = data.Smoke->methodMaps + i;
 
             if (currentClassId != map->classId) {
                 // we encountered a new class
                 currentClassId = map->classId;
-                klass = smoke->classes + currentClassId;
-                type = DefineClass(klass);
+                klass = data.Smoke->classes + currentClassId;
+                type = data.SmokeTypeMap[(IntPtr) klass];
 
-                methgen = new MethodsGenerator(smoke, type);
+                methgen = new MethodsGenerator(data, translator, type);
 
                 implementMethods.Clear();
 
                 bool firstParent = true;
-                for (short *parent = smoke->inheritanceList + klass->parents; *parent > 0; parent++) {
+                for (short *parent = data.Smoke->inheritanceList + klass->parents; *parent > 0; parent++) {
                     if (firstParent) {
                         // we're only interested in parents implemented as interfaces
                         firstParent = false;
                         continue;
                     }
                     // collect all methods (+ inherited ones) and add them to the implementMethods Dictionary
-                    smoke->FindAllMethods(*parent, implementMethods, true);
+                    data.Smoke->FindAllMethods(*parent, implementMethods, true);
                 }
 
                 foreach (KeyValuePair<short, string> pair in implementMethods) {
@@ -185,9 +158,9 @@ unsafe class ClassesGenerator {
                 }
             }
 
-            string mungedName = ByteArrayManager.GetString(smoke->methodNames[map->name]);
+            string mungedName = ByteArrayManager.GetString(data.Smoke->methodNames[map->name]);
             if (map->method > 0) {
-                Smoke.Method *meth = smoke->methods + map->method;
+                Smoke.Method *meth = data.Smoke->methods + map->method;
                 if ((meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0)
                     continue;   // don't process enums here
 
@@ -197,8 +170,8 @@ unsafe class ClassesGenerator {
 
                 methgen.Generate(map->method, mungedName);
             } else if (map->method < 0) {
-                for (short *overload = smoke->ambiguousMethodList + (-map->method); *overload > 0; overload++) {
-                    Smoke.Method *meth = smoke->methods + *overload;
+                for (short *overload = data.Smoke->ambiguousMethodList + (-map->method); *overload > 0; overload++) {
+                    Smoke.Method *meth = data.Smoke->methods + *overload;
                     if ((meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0)
                         continue;   // don't process enums here
 

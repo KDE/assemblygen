@@ -34,22 +34,29 @@ class MainClass {
     static extern unsafe void DestroySmoke(IntPtr smoke);
 
     public unsafe static void Main(string[] args) {
-        CodeCompileUnit unit = new CodeCompileUnit();
         Smoke *smoke = InitSmoke("qtcore");
         if (smoke == (Smoke*) 0) {
             return;
         }
-        ClassesGenerator classgen = new ClassesGenerator(smoke, unit, "QtCore");
+
+        GeneratorData data = new GeneratorData(smoke, "Qyoto");
+        Translator translator = new Translator(data);
+
+        ClassesGenerator classgen = new ClassesGenerator(data, translator);
         Console.Error.WriteLine("Generating CodeCompileUnit...");
         classgen.Run();
         DestroySmoke((IntPtr) smoke);
 
         FileStream fs = new FileStream("out.cs", FileMode.Create);
+        StreamWriter sw = new StreamWriter(fs);
 
         Console.Error.WriteLine("Generating code...");
         CodeDomProvider csharp = CodeDomProvider.CreateProvider("CSharp");
         CodeGeneratorOptions cgo = new CodeGeneratorOptions();
-        csharp.GenerateCodeFromCompileUnit(unit, new StreamWriter(fs), cgo);
+        csharp.GenerateCodeFromCompileUnit(data.CompileUnit, sw, cgo);
+        sw.Close();
         fs.Close();
+
+        Console.Error.WriteLine("Done.");
     }
 }

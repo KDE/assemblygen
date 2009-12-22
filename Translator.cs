@@ -23,61 +23,15 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
-static class Translator {
+unsafe class Translator {
 
-    // map a C++ type string to a .NET type
-    static Dictionary<string, Type> typeMap = new Dictionary<string, Type>()
-    {
-        { "char", typeof(sbyte) },
-        { "uchar", typeof(byte) },
-        { "short", typeof(short) },
-        { "ushort", typeof(ushort) },
-        { "int", typeof(int) },
-        { "uint", typeof(uint) },
-        { "long", typeof(long) },
-        { "long long", typeof(long) },
-        { "ulong", typeof(ulong) },
-        { "float", typeof(float) },
-        { "double", typeof(double) },
-        { "bool", typeof(bool) },
-        { "void", typeof(void) },
-    };
+    GeneratorData data;
 
-    // map a C++ type string to a .NET type string
-    static Dictionary<string, string> typeStringMap = new Dictionary<string, string>()
-    {
-        { "QList", "System.Collections.Generic.List" },
-        { "QVector", "System.Collections.Generic.List" },
-        { "QHash", "System.Collections.Generic.Dictionary" },
-        { "QMap", "System.Collections.Generic.Dictionary" },
-    };
+    public Translator(GeneratorData data) {
+        this.data = data;
+    }
 
-    // custom translation code
-    static Dictionary<string, TranslateFunc> typeCodeMap = new Dictionary<string, TranslateFunc>()
-    {
-        { "void", type => (type.PointerDepth == 0) ? new CodeTypeReference(typeof(void)) : new CodeTypeReference(typeof(IntPtr)) },
-        { "char", delegate(TypeInfo type) {
-                    if (type.PointerDepth == 1) {
-                        if (type.IsConst)
-                            return "String";
-                        if (type.IsUnsigned)
-                            return new CodeTypeReference("Pointer<byte>");
-                        return new CodeTypeReference("Pointer<sbyte>");
-                    }
-                    return null;
-                  }},
-        { "QString", type => (type.PointerDepth > 0) ? "System.Text.StringBuilder" : "String" }
-    };
-
-    // C++ namespaces that should be mapped to .NET classes
-    public static List<string> namespacesAsClasses = new List<string>()
-    {
-        "Qt",
-        "KDE"
-    };
-
-    // maps a C++ class to a .NET interface (needed for multiple inheritance), populated by ClassInterfacesGenerator
-    public static Dictionary<string, CodeTypeDeclaration> InterfaceTypeMap = new Dictionary<string, CodeTypeDeclaration>();
+#region private data
 
     class TypeInfo {
         public TypeInfo() {}
@@ -95,40 +49,60 @@ static class Translator {
 
     delegate object TranslateFunc(TypeInfo type);
 
-    public static bool IsPrimitiveType(string input) {
-        if (   input == "char" || input == "short" || input == "int" || input == "long" || input == "float"
-            || input == "double" || input == "long long" || input == "bool")
-        {
-            return true;
-        }
-        return false;
-    }
+    // map a C++ type string to a .NET type
+    Dictionary<string, Type> typeMap = new Dictionary<string, Type>()
+    {
+        { "char", typeof(sbyte) },
+        { "uchar", typeof(byte) },
+        { "short", typeof(short) },
+        { "ushort", typeof(ushort) },
+        { "int", typeof(int) },
+        { "uint", typeof(uint) },
+        { "long", typeof(long) },
+        { "long long", typeof(long) },
+        { "ulong", typeof(ulong) },
+        { "float", typeof(float) },
+        { "double", typeof(double) },
+        { "bool", typeof(bool) },
+        { "void", typeof(void) },
+    };
 
-    public static List<string> SplitUnenclosed(string input, char delimeter, char open, char close) {
-        int enclosed = 0;
-        int lastDelimeter = -1;
-        List<string> ret = new List<string>();
-        for (int i = 0; i < input.Length; i++) {
-            char c = input[i];
-            if (c == open) {
-                enclosed++;
-            } else if (c == close) {
-                enclosed--;
-            } else if (c == delimeter && enclosed == 0) {
-                ret.Add(input.Substring(lastDelimeter + 1, i - lastDelimeter - 1));
-                lastDelimeter = i;
-            }
-        }
-        ret.Add(input.Substring(lastDelimeter + 1));
-        return ret;
-    }
+    // map a C++ type string to a .NET type string
+    Dictionary<string, string> typeStringMap = new Dictionary<string, string>()
+    {
+        { "QList", "System.Collections.Generic.List" },
+        { "QVector", "System.Collections.Generic.List" },
+        { "QHash", "System.Collections.Generic.Dictionary" },
+        { "QMap", "System.Collections.Generic.Dictionary" },
+    };
 
-    public unsafe static CodeTypeReference CppToCSharp(Smoke.Class* klass) {
+    // custom translation code
+    Dictionary<string, TranslateFunc> typeCodeMap = new Dictionary<string, TranslateFunc>()
+    {
+        { "void", type => (type.PointerDepth == 0) ? new CodeTypeReference(typeof(void)) : new CodeTypeReference(typeof(IntPtr)) },
+        { "char", delegate(TypeInfo type) {
+                    if (type.PointerDepth == 1) {
+                        if (type.IsConst)
+                            return "String";
+                        if (type.IsUnsigned)
+                            return new CodeTypeReference("Pointer<byte>");
+                        return new CodeTypeReference("Pointer<sbyte>");
+                    }
+                    return null;
+                  }},
+        { "QString", type => (type.PointerDepth > 0) ? "System.Text.StringBuilder" : "String" }
+    };
+
+#endregion
+
+#region public functions
+
+    public CodeTypeReference CppToCSharp(Smoke.Class* klass) {
         bool isRef;
         return CppToCSharp(ByteArrayManager.GetString(klass->className), out isRef);
     }
 
-    public unsafe static CodeTypeReference CppToCSharp(Smoke.Type* type, out bool isRef) {
+    public CodeTypeReference CppToCSharp(Smoke.Type* type, out bool isRef) {
         isRef = false;
         if ((IntPtr) type->name == IntPtr.Zero) {
             return new CodeTypeReference(typeof(void));
@@ -166,7 +140,7 @@ static class Translator {
         return CppToCSharp(typeString, out isRef);
     }
 
-    public static CodeTypeReference CppToCSharp(string typeString, out bool isRef) {
+    public CodeTypeReference CppToCSharp(string typeString, out bool isRef) {
         // yes, this won't match Foo<...>::Bar - but we can't wrap that anyway
         isRef = false;
         Match match = Regex.Match(typeString, @"^(const )?(unsigned |signed )?([\w\s:]+)(<.+>)?(\*)*(&)?$");
@@ -205,7 +179,7 @@ static class Translator {
         } else {
             // if everything fails, just do some standard mapping
             CodeTypeDeclaration ifaceDecl;
-            if (InterfaceTypeMap.TryGetValue(name, out ifaceDecl)) {
+            if (data.InterfaceTypeMap.TryGetValue(name, out ifaceDecl)) {
                 // this class is used in multiple inheritance, we need the interface
                 int colon = name.LastIndexOf("::");
                 string prefix = (colon != -1) ? name.Substring(0, colon) : string.Empty;
@@ -225,7 +199,7 @@ static class Translator {
             // convert template parameters
             ret += '<';
             bool tmp;
-            List<string> args = SplitUnenclosed(templateArgument, ',', '<', '>');
+            List<string> args = Util.SplitUnenclosed(templateArgument, ',', '<', '>');
             for (int i = 0; i < args.Count; i++) {
                 if (i > 0) ret += ',';
                 ret += CppToCSharp(args[i], out tmp).BaseType;
@@ -241,4 +215,7 @@ static class Translator {
         }
         return new CodeTypeReference(ret);
     }
+
+#endregion
+
 }

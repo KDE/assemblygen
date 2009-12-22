@@ -22,19 +22,20 @@ using System.CodeDom;
 using System.Collections.Generic;
 
 unsafe class ClassInterfacesGenerator {
-    ClassesGenerator classesGenerator;
-    Smoke *smoke;
 
-    public ClassInterfacesGenerator(ClassesGenerator cg) {
-        classesGenerator = cg;
-        smoke = cg.smoke;
+    GeneratorData data;
+    Translator translator;
+
+    public ClassInterfacesGenerator(GeneratorData data, Translator translator) {
+        this.data = data;
+        this.translator = translator;
     }
 
     // Recursively adds base classes to a hash set.
     void AddBaseClassesToHashSet(Smoke.Class *klass, HashSet<short> set) {
-        short *parent = smoke->inheritanceList + klass->parents;
+        short *parent = data.Smoke->inheritanceList + klass->parents;
         while (*parent > 0) {
-            Smoke.Class *baseClass = smoke->classes + *parent;
+            Smoke.Class *baseClass = data.Smoke->classes + *parent;
             set.Add(*parent);
             AddBaseClassesToHashSet(baseClass, set);
             parent++;
@@ -47,9 +48,9 @@ unsafe class ClassInterfacesGenerator {
      */
     HashSet<short> GetClassList() {
         HashSet<short> set = new HashSet<short>();
-        for (short i = 1; i <= smoke->numClasses; i++) {
-            Smoke.Class *klass = smoke->classes + i;
-            short *parent = smoke->inheritanceList + klass->parents;
+        for (short i = 1; i <= data.Smoke->numClasses; i++) {
+            Smoke.Class *klass = data.Smoke->classes + i;
+            short *parent = data.Smoke->inheritanceList + klass->parents;
             bool firstParent = true;
             while (*parent > 0) {
                 if (firstParent) {
@@ -60,7 +61,7 @@ unsafe class ClassInterfacesGenerator {
                 }
 
                 set.Add(*parent);
-                Smoke.Class *baseClass = smoke->classes + *parent;
+                Smoke.Class *baseClass = data.Smoke->classes + *parent;
                 // also generate interfaces for the base classes of the base classes ;)
                 AddBaseClassesToHashSet(baseClass, set);
                 parent++;
@@ -72,7 +73,7 @@ unsafe class ClassInterfacesGenerator {
     public void Run() {
         MethodsGenerator mg = null;
         foreach (short idx in GetClassList()) {
-            Smoke.Class* klass = smoke->classes + idx;
+            Smoke.Class* klass = data.Smoke->classes + idx;
             string className = ByteArrayManager.GetString(klass->className);
             string prefix;
             string name;
@@ -82,14 +83,14 @@ unsafe class ClassInterfacesGenerator {
 
             CodeTypeDeclaration ifaceDecl = new CodeTypeDeclaration('I' + name);
             ifaceDecl.IsInterface = true;
-            mg = new MethodsGenerator(smoke, ifaceDecl);
+            mg = new MethodsGenerator(data, translator, ifaceDecl);
 
             // TODO: replace this algorithm, it's highly inefficient
-            for (short i = 0; i <= smoke->numMethods && smoke->methods[i].classId <= idx; i++) {
-                Smoke.Method *meth = smoke->methods + i;
+            for (short i = 0; i <= data.Smoke->numMethods && data.Smoke->methods[i].classId <= idx; i++) {
+                Smoke.Method *meth = data.Smoke->methods + i;
                 if (meth->classId != idx)
                     continue;
-                string methName = ByteArrayManager.GetString(smoke->methodNames[meth->name]);
+                string methName = ByteArrayManager.GetString(data.Smoke->methodNames[meth->name]);
 
                 // we don't want anything except protected, const or empty flags
                 if (   (meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0
@@ -109,8 +110,8 @@ unsafe class ClassInterfacesGenerator {
                 ifaceDecl.Members.Add(cmm);
             }
 
-            classesGenerator.GetTypeCollection(prefix).Add(ifaceDecl);
-            Translator.InterfaceTypeMap[className] = ifaceDecl;
+            data.GetTypeCollection(prefix).Add(ifaceDecl);
+            data.InterfaceTypeMap[className] = ifaceDecl;
         }
     }
 }
