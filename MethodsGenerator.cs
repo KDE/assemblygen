@@ -104,6 +104,7 @@ unsafe class MethodsGenerator {
             cmm = new CodeConstructor();
             cmm.Attributes = (MemberAttributes) 0; // initialize to 0 so we can do |=
         } else if ((method->flags & (uint) Smoke.MethodFlags.mf_dtor) > 0) {
+            // a destructor is actually 'protected override void Finalize() { try { ... } finally { base.Finalize(); } }'
             cmm = new CodeMemberMethod();
             cmm.Name = "Finalize";
             cmm.ReturnType = new CodeTypeReference(typeof(void));
@@ -111,27 +112,36 @@ unsafe class MethodsGenerator {
         } else {
             cmm = new CodeMemberMethod();
             cmm.Attributes = (MemberAttributes) 0; // initialize to 0 so we can do |=
-            
-            StringBuilder builder = new StringBuilder(ByteArrayManager.GetString(smoke->methodNames[method->name]));
-            builder[0] = char.ToUpper(builder[0]);
-            string csName = builder.ToString();
+
+            string csName = ByteArrayManager.GetString(smoke->methodNames[method->name]);
+            if (!csName.StartsWith("operator")) {
+                StringBuilder builder = new StringBuilder(csName);
+                builder[0] = char.ToUpper(builder[0]);
+                csName = builder.ToString();
+            }
             cmm.Name = csName;
             cmm.ReturnType = returnType;
         }
 
-        if ((method->flags & (uint) Smoke.MethodFlags.mf_protected) > 0) {
-            cmm.Attributes |= MemberAttributes.Family;
-        } else {
-            cmm.Attributes |= MemberAttributes.Public;
+        // for destructors we already have this stuff set
+        if ((method->flags & (uint) Smoke.MethodFlags.mf_dtor) == 0) {
+            // set access
+            if ((method->flags & (uint) Smoke.MethodFlags.mf_protected) > 0) {
+                cmm.Attributes |= MemberAttributes.Family;
+            } else {
+                cmm.Attributes |= MemberAttributes.Public;
+            }
+
+            // virtual/final
+            if ((method->flags & (uint) Smoke.MethodFlags.mf_virtual) == 0) {
+                cmm.Attributes |= MemberAttributes.Final | MemberAttributes.New;
+            } else {
+                if (MethodOverrides(method))
+                    cmm.Attributes |= MemberAttributes.Override;
+            }
         }
 
-        if ((method->flags & (uint) Smoke.MethodFlags.mf_virtual) == 0) {
-            cmm.Attributes |= MemberAttributes.Final | MemberAttributes.New;
-        } else {
-            if (MethodOverrides(method))
-                cmm.Attributes |= MemberAttributes.Override;
-        }
-
+        // add the parameters
         foreach (CodeParameterDeclarationExpression exp in args) {
             cmm.Parameters.Add(exp);
         }

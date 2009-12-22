@@ -107,6 +107,8 @@ unsafe class ClassesGenerator {
             new CodeAttributeArgument(new CodePrimitiveExpression(smokeName)));
         CodeTypeDeclaration type = new CodeTypeDeclaration(name);
         type.CustomAttributes.Add(attr);
+        type.IsPartial = true;
+
         if (smokeClass->parents == 0) {
             if (smokeName == "QObject") {
                 type.BaseTypes.Add(new CodeTypeReference("Qt"));
