@@ -18,7 +18,9 @@
 */
 
 using System;
+using System.Diagnostics;
 using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.CodeDom;
@@ -78,6 +80,7 @@ unsafe class MethodsGenerator {
         List<CodeParameterDeclarationExpression> args = new List<CodeParameterDeclarationExpression>();
         int count = 1;
         bool isRef;
+        string className = ByteArrayManager.GetString(data.Smoke->classes[method->classId].className);
         for (short* typeIndex = data.Smoke->argumentList + method->args; *typeIndex > 0; typeIndex++) {
             try {
                 CodeParameterDeclarationExpression exp =
@@ -87,8 +90,7 @@ unsafe class MethodsGenerator {
                 }
                 args.Add(exp);
             } catch (NotSupportedException) {
-                Console.WriteLine("  |--Won't wrap method {0}::{1}",
-                    ByteArrayManager.GetString(data.Smoke->classes[method->classId].className), cppSignature);
+                Debug.Print("  |--Won't wrap method {0}::{1}", className, cppSignature);
                 return null;
             }
         }
@@ -98,8 +100,7 @@ unsafe class MethodsGenerator {
         try {
             returnType = translator.CppToCSharp(data.Smoke->types + method->ret, out isRef);
         } catch (NotSupportedException) {
-            Console.WriteLine("  |--Won't wrap method {0}::{1}",
-                ByteArrayManager.GetString(data.Smoke->classes[method->classId].className), cppSignature);
+            Debug.Print("  |--Won't wrap method {0}::{1}", className, cppSignature);
             return null;
         }
 
@@ -119,9 +120,21 @@ unsafe class MethodsGenerator {
 
             string csName = ByteArrayManager.GetString(data.Smoke->methodNames[method->name]);
             if (!csName.StartsWith("operator")) {
+                // capitalize the first letter
                 StringBuilder builder = new StringBuilder(csName);
                 builder[0] = char.ToUpper(builder[0]);
-                csName = builder.ToString();
+                string tmp = builder.ToString();
+
+                // If the new name clashes with a name of a type declaration, keep the lower-case name.
+                var typesWithSameName = from typeDecl in type.Members.Cast<CodeTypeMember>()
+                                        where typeDecl is CodeTypeDeclaration
+                                        where typeDecl.Name == tmp
+                                        select typeDecl;
+                if (typesWithSameName.Count() > 0) {
+                    Debug.Print("  |--Conflicting names: method/type: {0} in class {1} - keeping original method name", tmp, className);
+                } else {
+                    csName = tmp;
+                }
             }
             cmm.Name = csName;
             cmm.ReturnType = returnType;

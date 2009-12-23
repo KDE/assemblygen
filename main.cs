@@ -18,6 +18,8 @@
 */
 
 using System;
+using System.Diagnostics;
+using System.Linq;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.CodeDom;
@@ -34,6 +36,10 @@ class MainClass {
     static extern unsafe void DestroySmoke(IntPtr smoke);
 
     public unsafe static void Main(string[] args) {
+        if (args.Contains("-debug")) {
+            Debug.Listeners.Add(new TextWriterTraceListener(Console.Out));
+        }
+
         Smoke *smoke = InitSmoke("qtcore");
         if (smoke == (Smoke*) 0) {
             return;
