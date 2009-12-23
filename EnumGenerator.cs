@@ -18,18 +18,21 @@
 */
 
 using System;
+using System.Runtime.InteropServices;
 using System.Collections;
 using System.Collections.Generic;
 using System.CodeDom;
 
 // Generates C# enums from enums found in the smoke lib.
 unsafe class EnumGenerator {
-    readonly GeneratorData data;
-    readonly Translator translator;
 
-    public EnumGenerator(GeneratorData data, Translator translator) {
+    [DllImport("smokeloader", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
+    static extern unsafe long GetEnumValue(Smoke* smoke, Smoke.Method* meth);
+
+    readonly GeneratorData data;
+
+    public EnumGenerator(GeneratorData data) {
         this.data = data;
-        this.translator = translator;
     }
 
     /*
@@ -49,7 +52,10 @@ unsafe class EnumGenerator {
 
         CodeTypeDeclaration typeDecl = new CodeTypeDeclaration(name);
         typeDecl.IsEnum = true;
+        // we derive from uint so we have more possible values
+        typeDecl.BaseTypes.Add(new CodeTypeReference(typeof(uint)));
         data.GetTypeCollection(prefix).Add(typeDecl);
+        data.EnumTypeMap[cppName] = typeDecl;
         return typeDecl;
     }
 
@@ -67,6 +73,9 @@ unsafe class EnumGenerator {
         return DefineEnum(enumName);
     }
 
+    /*
+     * Loops through the 'types' table and defines .NET Enums for t_enums
+     */
     public void DefineEnums() {
         for (short i = 1; i <= data.Smoke->numTypes; i++) {
             DefineEnum(data.Smoke->types + i);
@@ -74,8 +83,20 @@ unsafe class EnumGenerator {
     }
 
     /*
-     * Generate an Enum member, creating the Enum if necessary.
+     * Generates an Enum member, creating the Enum if necessary.
      */
-    public void Generate() {
+    public void DefineMember(Smoke.Method* meth) {
+        if ((meth->flags & (uint) Smoke.MethodFlags.mf_enum) == 0)
+            return;
+
+        string typeName = ByteArrayManager.GetString(data.Smoke->types[meth->ret].name);
+        CodeTypeDeclaration enumType;
+        if (!data.EnumTypeMap.TryGetValue(typeName, out enumType)) {
+            enumType = DefineEnum(typeName);
+        }
+        CodeMemberField member = new CodeMemberField();
+        member.Name = ByteArrayManager.GetString(data.Smoke->methodNames[meth->name]);
+        member.InitExpression = new CodePrimitiveExpression((uint) GetEnumValue(data.Smoke, meth));
+        enumType.Members.Add(member);
     }
 }

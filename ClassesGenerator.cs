@@ -26,6 +26,7 @@ unsafe class ClassesGenerator {
 
     GeneratorData data;
     Translator translator;
+    EnumGenerator eg;
 
     // needed to filter out superfluous methods from base classes
     SmokeMethodEqualityComparer smokeMethodComparer;
@@ -34,6 +35,7 @@ unsafe class ClassesGenerator {
         this.data = data;
         this.translator = translator;
         smokeMethodComparer = new SmokeMethodEqualityComparer(data.Smoke);
+        eg = new EnumGenerator(data);
     }
 
     /*
@@ -113,7 +115,6 @@ unsafe class ClassesGenerator {
             DefineClass(klass);
         }
 
-        EnumGenerator eg = new EnumGenerator(data, translator);
         eg.DefineEnums();
 
         GenerateMethods();
@@ -164,8 +165,10 @@ unsafe class ClassesGenerator {
             string mungedName = ByteArrayManager.GetString(data.Smoke->methodNames[map->name]);
             if (map->method > 0) {
                 Smoke.Method *meth = data.Smoke->methods + map->method;
-                if ((meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0)
-                    continue;   // don't process enums here
+                if ((meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0) {
+                    eg.DefineMember(meth);
+                    continue;
+                }
 
                 // already implemented?
                 if (implementMethods.ContainsKey(map->method))
@@ -175,8 +178,10 @@ unsafe class ClassesGenerator {
             } else if (map->method < 0) {
                 for (short *overload = data.Smoke->ambiguousMethodList + (-map->method); *overload > 0; overload++) {
                     Smoke.Method *meth = data.Smoke->methods + *overload;
-                    if ((meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0)
-                        continue;   // don't process enums here
+                    if ((meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0) {
+                        eg.DefineMember(meth);
+                        continue;
+                    }
 
                     // already implemented?
                     if (implementMethods.ContainsKey(*overload))

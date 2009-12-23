@@ -24,7 +24,9 @@
 
 typedef void (*InitSmokeFn)();
 
-extern "C" Q_DECL_EXPORT Smoke* InitSmoke(const char* module)
+extern "C" {
+
+Q_DECL_EXPORT Smoke* InitSmoke(const char* module)
 {
     QString lib = "smoke" + QString(module);
     QByteArray symbol = "init_" + QByteArray(module) + "_Smoke";
@@ -48,7 +50,17 @@ extern "C" Q_DECL_EXPORT Smoke* InitSmoke(const char* module)
     return *(Smoke**) smoke;
 }
 
-extern "C" Q_DECL_EXPORT void DestroySmoke(Smoke* smoke)
+Q_DECL_EXPORT void DestroySmoke(Smoke* smoke)
 {
     delete smoke;
+}
+
+Q_DECL_EXPORT long GetEnumValue(Smoke* smoke, Smoke::Method* meth)
+{
+    Smoke::ClassFn fn = smoke->classes[meth->classId].classFn;
+    Smoke::StackItem ret;
+    (*fn)(meth->method, 0, &ret);
+    return ret.s_enum;
+}
+
 }

@@ -37,7 +37,7 @@ unsafe class MethodsGenerator {
     bool MethodOverrides(Smoke.Method* method) {
         Dictionary<short, string> allMethods = data.Smoke->FindAllMethods(method->classId, true);
         // Do this with linq... there's probably room for optimization here.
-        // Select virtual and pure virtual and pure virtual methods from superclasses.
+        // Select virtual and pure virtual methods from superclasses.
         var inheritedVirtuals = from entry in allMethods
                                 where ((data.Smoke->methods[entry.Key].flags & (ushort) Smoke.MethodFlags.mf_virtual) > 0
                                     || (data.Smoke->methods[entry.Key].flags & (ushort) Smoke.MethodFlags.mf_purevirtual) > 0)
@@ -74,6 +74,7 @@ unsafe class MethodsGenerator {
     }
 
     public CodeMemberMethod GenerateBasicMethodDefinition(Smoke.Method *method, string cppSignature) {
+        // translate arguments
         List<CodeParameterDeclarationExpression> args = new List<CodeParameterDeclarationExpression>();
         int count = 1;
         bool isRef;
@@ -92,6 +93,7 @@ unsafe class MethodsGenerator {
             }
         }
 
+        // translate return type
         CodeTypeReference returnType = null;
         try {
             returnType = translator.CppToCSharp(data.Smoke->types + method->ret, out isRef);

@@ -50,6 +50,8 @@ unsafe class GeneratorData {
     public readonly Dictionary<IntPtr, CodeTypeDeclaration> SmokeTypeMap = new Dictionary<IntPtr, CodeTypeDeclaration>();
     // maps a binding class name to a .NET class
     public readonly Dictionary<string, CodeTypeDeclaration> CSharpTypeMap = new Dictionary<string, CodeTypeDeclaration>();
+    // maps a smoke enum type to a .NET enum
+    public readonly Dictionary<string, CodeTypeDeclaration> EnumTypeMap = new Dictionary<string, CodeTypeDeclaration>();
 
     // C++ namespaces that should be mapped to .NET classes
     public static List<string> NamespacesAsClasses = new List<string>()
