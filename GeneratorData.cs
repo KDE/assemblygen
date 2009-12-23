@@ -30,6 +30,7 @@ unsafe class GeneratorData {
 
     public CodeCompileUnit CompileUnit = null;
     public CodeNamespace DefaultNamespace = null;
+    public string GlobalSpaceClassName = "Global";
 
     public GeneratorData(Smoke* smoke, string defaultNamespace) : this(smoke, defaultNamespace, new CodeCompileUnit()) {}
 
@@ -54,7 +55,7 @@ unsafe class GeneratorData {
     public readonly Dictionary<string, CodeTypeDeclaration> EnumTypeMap = new Dictionary<string, CodeTypeDeclaration>();
 
     // C++ namespaces that should be mapped to .NET classes
-    public static List<string> NamespacesAsClasses = new List<string>()
+    public List<string> NamespacesAsClasses = new List<string>()
     {
         "Qt",
         "KDE"

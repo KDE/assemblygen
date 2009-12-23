@@ -48,11 +48,15 @@ unsafe class ClassesGenerator {
         string mapName = smokeName;
         string name;
         string prefix = string.Empty;
-        if (smokeClass->size == 0) {
-            // namespace
-            prefix = smokeName;
-            name = "Global";
-            mapName = prefix + "::Global";
+        if (smokeClass->size == 0 && !data.NamespacesAsClasses.Contains(smokeName)) {
+            if (smokeName == "QGlobalSpace") {  // global space
+                name = data.GlobalSpaceClassName;
+            } else {
+                // namespace
+                prefix = smokeName;
+                name = "Global";
+                mapName = prefix + "::Global";
+            }
         } else {
             int colon = smokeName.LastIndexOf("::");
             prefix = (colon != -1) ? smokeName.Substring(0, colon) : string.Empty;
