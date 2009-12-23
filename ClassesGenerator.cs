@@ -113,6 +113,9 @@ unsafe class ClassesGenerator {
             DefineClass(klass);
         }
 
+        EnumGenerator eg = new EnumGenerator(data, translator);
+        eg.DefineEnums();
+
         GenerateMethods();
     }
 

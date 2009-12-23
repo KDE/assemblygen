@@ -24,18 +24,53 @@ using System.CodeDom;
 
 // Generates C# enums from enums found in the smoke lib.
 unsafe class EnumGenerator {
-    readonly ClassesGenerator classGen;
+    readonly GeneratorData data;
+    readonly Translator translator;
 
-    public EnumGenerator(ClassesGenerator classGen) {
-        this.classGen = classGen;
+    public EnumGenerator(GeneratorData data, Translator translator) {
+        this.data = data;
+        this.translator = translator;
     }
 
     /*
      * Defines an Enum.
      */
     CodeTypeDeclaration DefineEnum(string cppName) {
-        string prefix = cppName.Substring(0, cppName.LastIndexOf("::") - 1);
-        return null;
+        int colon = cppName.LastIndexOf("::");
+        string prefix = string.Empty;
+        if (colon != -1) {
+            prefix = cppName.Substring(0,  colon);
+        }
+
+        string name = cppName;
+        if (colon != -1) {
+            name = cppName.Substring(colon + 2);
+        }
+
+        CodeTypeDeclaration typeDecl = new CodeTypeDeclaration(name);
+        typeDecl.IsEnum = true;
+        data.GetTypeCollection(prefix).Add(typeDecl);
+        return typeDecl;
+    }
+
+    /*
+     * convenience overload
+     */
+    CodeTypeDeclaration DefineEnum(Smoke.Type* type) {
+        Smoke.TypeId typeId = (Smoke.TypeId) (type->flags & (uint) Smoke.TypeFlags.tf_elem);
+        if (typeId != Smoke.TypeId.t_enum) {
+            // not an enum type
+            return null;
+        }
+
+        string enumName = ByteArrayManager.GetString(type->name);
+        return DefineEnum(enumName);
+    }
+
+    public void DefineEnums() {
+        for (short i = 1; i <= data.Smoke->numTypes; i++) {
+            DefineEnum(data.Smoke->types + i);
+        }
     }
 
     /*
