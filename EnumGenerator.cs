@@ -63,8 +63,8 @@ unsafe class EnumGenerator {
      * convenience overload
      */
     CodeTypeDeclaration DefineEnum(Smoke.Type* type) {
-        Smoke.TypeId typeId = (Smoke.TypeId) (type->flags & (uint) Smoke.TypeFlags.tf_elem);
-        if (typeId != Smoke.TypeId.t_enum) {
+        // we want the exact combination: t_enum | tf_stack
+        if (type->flags != ((uint) Smoke.TypeId.t_enum | (uint) Smoke.TypeFlags.tf_stack)) {
             // not an enum type
             return null;
         }
