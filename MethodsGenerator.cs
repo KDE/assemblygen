@@ -23,6 +23,7 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.CodeDom;
 
 unsafe class MethodsGenerator {
@@ -63,7 +64,9 @@ unsafe class MethodsGenerator {
     }
 
     public void Generate(Smoke.Method *method, string mungedName) {
-        if ((method->flags & (ushort) Smoke.MethodFlags.mf_attribute) > 0 || (method->flags & (ushort) Smoke.MethodFlags.mf_property) > 0) {
+        if ((method->flags & (ushort) Smoke.MethodFlags.mf_virtual) == 0 && (method->flags & (ushort) Smoke.MethodFlags.mf_purevirtual) == 0
+            && ((method->flags & (ushort) Smoke.MethodFlags.mf_attribute) > 0 || (method->flags & (ushort) Smoke.MethodFlags.mf_property) > 0))
+        {
             GenerateProperty(method);
         } else {
             GenerateMethod(method, mungedName);
@@ -76,6 +79,12 @@ unsafe class MethodsGenerator {
     }
 
     public CodeMemberMethod GenerateBasicMethodDefinition(Smoke.Method *method, string cppSignature) {
+        // do we actually want that method?
+        foreach (Regex regex in data.ExcludedMethods) {
+            if (regex.IsMatch(cppSignature))
+                return null;
+        }
+
         // translate arguments
         List<CodeParameterDeclarationExpression> args = new List<CodeParameterDeclarationExpression>();
         int count = 1;

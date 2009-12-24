@@ -39,6 +39,7 @@ unsafe class GeneratorData {
         CompileUnit = unit;
 
         DefaultNamespace = new CodeNamespace(defaultNamespace);
+        DefaultNamespace.Imports.Add(new CodeNamespaceImport("System"));
         CompileUnit.Namespaces.Add(DefaultNamespace);
         NamespaceMap[defaultNamespace] = DefaultNamespace;
     }
@@ -59,6 +60,13 @@ unsafe class GeneratorData {
     {
         "Qt",
         "KDE"
+    };
+
+    // C++ method signatures (without return type) that should be excluded
+    public List<Regex> ExcludedMethods = new List<Regex>()
+    {
+        new Regex(@"^qt_.*\("),
+        new Regex(@"^operator.*\(")
     };
 
     /*
@@ -98,6 +106,7 @@ unsafe class GeneratorData {
 
         // Define a new namespace.
         nspace = new CodeNamespace(name);
+        nspace.Imports.Add(new CodeNamespaceImport("System"));
         parentCollection.Add(nspace);
         NamespaceMap[prefix] = nspace;
         return nspace.Types;
