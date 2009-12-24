@@ -71,21 +71,31 @@ unsafe class Translator {
     Dictionary<string, string> typeStringMap = new Dictionary<string, string>()
     {
         { "QList", "System.Collections.Generic.List" },
+        { "QStringList", "System.Collections.Generic.List<string>" },
         { "QVector", "System.Collections.Generic.List" },
         { "QHash", "System.Collections.Generic.Dictionary" },
         { "QMap", "System.Collections.Generic.Dictionary" },
+        { "QSet", "System.Collections.Generic.HashSet" },
+        { "QQueue", "System.Collections.Generic.Queue" },
+        { "QStack", "System.Collections.Generic.Stack" },
     };
 
     // custom translation code
     Dictionary<string, TranslateFunc> typeCodeMap = new Dictionary<string, TranslateFunc>()
     {
+        { "size_t", delegate { throw new NotSupportedException(); } },
+        { "_IO_FILE", delegate { throw new NotSupportedException(); } },
+        { "QThread", delegate { throw new NotSupportedException(); } },
+        { "QMutex", delegate { throw new NotSupportedException(); } },
+        { "QDebug", delegate { throw new NotSupportedException(); } },
+
         { "void", type => (type.PointerDepth == 0) ? new CodeTypeReference(typeof(void)) : new CodeTypeReference(typeof(IntPtr)) },
         { "char", delegate(TypeInfo type) {
                     if (type.PointerDepth == 1) {
-                        if (type.IsConst)
-                            return "String";
                         if (type.IsUnsigned)
                             return new CodeTypeReference("Pointer<byte>");
+                        if (type.IsConst)
+                            return "String";
                         return new CodeTypeReference("Pointer<sbyte>");
                     }
                     return null;
