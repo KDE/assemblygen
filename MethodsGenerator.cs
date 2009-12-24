@@ -67,6 +67,28 @@ unsafe class MethodsGenerator {
         return ret;
     }
 
+    Dictionary<IntPtr, List<CodeTypeMember>> nestedMembersCache = new Dictionary<IntPtr, List<CodeTypeMember>>();
+    List<CodeTypeMember> GetAccessibleNestedMembers(Smoke.Class* klass) {
+        List<CodeTypeMember> nestedMembers;
+        if (nestedMembersCache.TryGetValue((IntPtr) klass, out nestedMembers)) {
+            return nestedMembers;
+        }
+
+        nestedMembers = new List<CodeTypeMember>();
+        for (; klass->className != (char*) IntPtr.Zero;
+               klass = data.Smoke->classes + data.Smoke->inheritanceList[klass->parents])
+        {
+            try {
+                foreach (CodeTypeMember member in data.SmokeTypeMap[(IntPtr) klass].Members) {
+                    nestedMembers.Add(member);
+                }
+            } catch (KeyNotFoundException) {
+                Debug.Print("  |--Unknown parent: {0}", ByteArrayManager.GetString(klass->className));
+            }
+        }
+        return nestedMembers;
+    }
+
     public void Generate(short index, string mungedName) {
         Smoke.Method *method = data.Smoke->methods + index;
         Generate(method, mungedName);
@@ -138,7 +160,7 @@ unsafe class MethodsGenerator {
                 string tmp = builder.ToString();
 
                 // If the new name clashes with a name of a type declaration, keep the lower-case name.
-                var typesWithSameName = from typeDecl in type.Members.Cast<CodeTypeMember>()
+                var typesWithSameName = from typeDecl in GetAccessibleNestedMembers(data.Smoke->classes + method->classId)
                                         where typeDecl is CodeTypeDeclaration
                                         where typeDecl.Name == tmp
                                         select typeDecl;

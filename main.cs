@@ -36,8 +36,8 @@ class MainClass {
     static extern unsafe void DestroySmoke(IntPtr smoke);
 
     public unsafe static void Main(string[] args) {
-        if (args.Contains("-debug")) {
-            Debug.Listeners.Add(new TextWriterTraceListener(Console.Out));
+        if (args.Contains("--debug")) {
+            Debug.Listeners.Add(new ConsoleTraceListener(true));
         }
 
         Smoke *smoke = InitSmoke("qtcore");
