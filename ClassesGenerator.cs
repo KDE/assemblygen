@@ -187,11 +187,20 @@ unsafe class ClassesGenerator {
                         continue;
                     }
 
+                    // if the methods only differ by const, we will generate special code
+                    bool nextDiffersByConst = false;
+                    if (*(overload + 1) > 0) {
+                        if (SmokeMethodEqualityComparer.EqualExceptConstness(meth, data.Smoke->methods + *(overload + 1)))
+                            nextDiffersByConst = true;
+                    }
+
                     // already implemented?
                     if (implementMethods.ContainsKey(*overload))
                         continue;
 
                     methgen.Generate(*overload, mungedName);
+                    if (nextDiffersByConst)
+                        overload++;
                 }
             }
         }

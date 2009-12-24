@@ -32,4 +32,14 @@ unsafe class SmokeMethodEqualityComparer : IEqualityComparer<short> {
         long hash = method->name * 10000000 + method->args * 100 + (isConst? 10 : 0) + (isStatic? 1 : 0);
         return hash.GetHashCode();
     }
+
+    public static bool EqualExceptConstness(Smoke.Method* firstMeth, Smoke.Method* secondMeth) {
+        bool firstStatic = ((firstMeth->flags & (ushort) Smoke.MethodFlags.mf_static) > 0);
+        bool secondStatic = ((secondMeth->flags & (ushort) Smoke.MethodFlags.mf_static) > 0);
+
+        if (firstMeth->name == secondMeth->name && firstMeth->args == secondMeth->args && firstStatic == secondStatic)
+            return true;
+
+        return false;
+    }
 }
