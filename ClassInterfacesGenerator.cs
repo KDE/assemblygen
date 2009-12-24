@@ -99,8 +99,6 @@ unsafe class ClassInterfacesGenerator {
                     || (meth->flags & (ushort) Smoke.MethodFlags.mf_dtor) > 0
                     || (meth->flags & (ushort) Smoke.MethodFlags.mf_static) > 0
                     || (meth->flags & (ushort) Smoke.MethodFlags.mf_internal) > 0
-                    || (meth->flags & (ushort) Smoke.MethodFlags.mf_attribute) > 0
-                    || (meth->flags & (ushort) Smoke.MethodFlags.mf_property) > 0
                     || methName.StartsWith("operator"))
                 {
                     continue;

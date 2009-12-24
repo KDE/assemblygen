@@ -162,7 +162,18 @@ unsafe class ClassesGenerator {
                 }
 
                 foreach (KeyValuePair<short, string> pair in implementMethods) {
-                    methgen.Generate(pair.Key, pair.Value);
+                    Smoke.Method *meth = data.Smoke->methods + pair.Key;
+                    if (   (meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0
+                        || (meth->flags & (ushort) Smoke.MethodFlags.mf_ctor) > 0
+                        || (meth->flags & (ushort) Smoke.MethodFlags.mf_copyctor) > 0
+                        || (meth->flags & (ushort) Smoke.MethodFlags.mf_dtor) > 0
+                        || (meth->flags & (ushort) Smoke.MethodFlags.mf_static) > 0
+                        || (meth->flags & (ushort) Smoke.MethodFlags.mf_internal) > 0)
+                    {
+                        continue;
+                    }
+
+                    methgen.Generate(meth, pair.Value);
                 }
             }
 

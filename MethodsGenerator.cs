@@ -37,7 +37,7 @@ unsafe class MethodsGenerator {
         this.type = type;
     }
 
-    bool MethodOverrides(Smoke.Method* method) {
+    bool MethodOverrides(Smoke.Method* method, out MemberAttributes access) {
         Dictionary<short, string> allMethods = data.Smoke->FindAllMethods(method->classId, true);
         // Do this with linq... there's probably room for optimization here.
         // Select virtual and pure virtual methods from superclasses.
@@ -47,15 +47,24 @@ unsafe class MethodsGenerator {
                                 where data.Smoke->methods[entry.Key].classId != method->classId
                                 select entry.Key;
 
+        access = MemberAttributes.Public;
+        bool ret = false;
+
         foreach (short index in inheritedVirtuals) {
             Smoke.Method* meth = data.Smoke->methods + index;
             if (meth->name == method->name && meth->args == method->args &&
                 (meth->flags & (uint) Smoke.MethodFlags.mf_const) == (method->flags & (uint) Smoke.MethodFlags.mf_const))
             {
-                return true;
+                if ((meth->flags & (uint) Smoke.MethodFlags.mf_protected) > 0) {
+                    access = MemberAttributes.Family;
+                } else {
+                    access = MemberAttributes.Public;
+                }
+                // don't return here - we need the access of the method in the topmost superclass
+                ret = true;
             }
         }
-        return false;
+        return ret;
     }
 
     public void Generate(short index, string mungedName) {
@@ -117,12 +126,6 @@ unsafe class MethodsGenerator {
         if ((method->flags & (uint) Smoke.MethodFlags.mf_ctor) > 0) {
             cmm = new CodeConstructor();
             cmm.Attributes = (MemberAttributes) 0; // initialize to 0 so we can do |=
-        } else if ((method->flags & (uint) Smoke.MethodFlags.mf_dtor) > 0) {
-            // a destructor is actually 'protected override void Finalize() { try { ... } finally { base.Finalize(); } }'
-            cmm = new CodeMemberMethod();
-            cmm.Name = "Finalize";
-            cmm.ReturnType = new CodeTypeReference(typeof(void));
-            cmm.Attributes = MemberAttributes.Override | MemberAttributes.Family;
         } else {
             cmm = new CodeMemberMethod();
             cmm.Attributes = (MemberAttributes) 0; // initialize to 0 so we can do |=
@@ -162,9 +165,14 @@ unsafe class MethodsGenerator {
             if ((method->flags & (uint) Smoke.MethodFlags.mf_virtual) == 0) {
                 cmm.Attributes |= MemberAttributes.Final | MemberAttributes.New;
             } else {
-                if (MethodOverrides(method))
-                    cmm.Attributes |= MemberAttributes.Override;
+                MemberAttributes access;
+                if (MethodOverrides(method, out access)) {
+                    cmm.Attributes = access | MemberAttributes.Override;
+                }
             }
+        } else {
+            // hack, so we don't have to use CodeSnippetTypeMember to generator the destructor
+            cmm.ReturnType = new CodeTypeReference(" ");
         }
 
         // add the parameters
