@@ -26,6 +26,32 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.CodeDom;
 
+static class CodeTypeDeclarationExtensions {
+    public static bool HasMethod(this CodeTypeDeclaration self, CodeMemberMethod method) {
+        foreach (CodeTypeMember member in self.Members) {
+            if (!(member is CodeMemberMethod) || member.Name != method.Name)
+                continue;
+
+            // now check the parameters
+            CodeMemberMethod currentMeth = (CodeMemberMethod) member;
+            if (currentMeth.Parameters.Count != method.Parameters.Count)
+                continue;
+            bool continueOuter = false;
+            for (int i = 0; i < method.Parameters.Count; i++) {
+                /// TODO: Type.BaseType is _not_ the complete type string - use an recursive algorithm instead
+                if (method.Parameters[i].Type.BaseType != currentMeth.Parameters[i].Type.BaseType) {
+                    continueOuter = true;
+                    break;
+                }
+            }
+            if (continueOuter)
+                continue;
+            return true;
+        }
+        return false;
+    }
+}
+
 unsafe class MethodsGenerator {
     GeneratorData data;
     Translator translator;
@@ -209,6 +235,11 @@ unsafe class MethodsGenerator {
         CodeMemberMethod cmm = GenerateBasicMethodDefinition(method, cppSignature);
         if (cmm == null)
             return;
+
+        if (type.HasMethod(cmm)) {
+            Console.WriteLine("We already have method {0}", cppSignature);
+            return;
+        }
 
         CodeAttributeDeclaration attr = new CodeAttributeDeclaration("SmokeMethod",
             new CodeAttributeArgument(new CodePrimitiveExpression(cppSignature)));
