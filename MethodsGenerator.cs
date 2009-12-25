@@ -26,7 +26,19 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.CodeDom;
 
-static class CodeTypeDeclarationExtensions {
+static class CodeDomExtensions {
+
+    public static bool TypeEquals(this CodeTypeReference self, CodeTypeReference other) {
+        if (self.BaseType != other.BaseType || self.TypeArguments.Count != other.TypeArguments.Count)
+            return false;
+
+        for (int i = 0; i < self.TypeArguments.Count; i++) {
+            if (!self.TypeArguments[i].TypeEquals(other.TypeArguments[i]))
+                return false;
+        }
+        return true;
+    }
+
     public static bool HasMethod(this CodeTypeDeclaration self, CodeMemberMethod method) {
         foreach (CodeTypeMember member in self.Members) {
             if (!(member is CodeMemberMethod) || member.Name != method.Name)
@@ -38,8 +50,7 @@ static class CodeTypeDeclarationExtensions {
                 continue;
             bool continueOuter = false;
             for (int i = 0; i < method.Parameters.Count; i++) {
-                /// TODO: Type.BaseType is _not_ the complete type string - use an recursive algorithm instead
-                if (method.Parameters[i].Type.BaseType != currentMeth.Parameters[i].Type.BaseType) {
+                if (!method.Parameters[i].Type.TypeEquals(currentMeth.Parameters[i].Type) && method.Parameters[i].Direction != currentMeth.Parameters[i].Direction) {
                     continueOuter = true;
                     break;
                 }
@@ -237,7 +248,7 @@ unsafe class MethodsGenerator {
             return;
 
         if (type.HasMethod(cmm)) {
-            Console.WriteLine("We already have method {0}", cppSignature);
+            Debug.Print("  |--Skipping already implemented method {0}", cppSignature);
             return;
         }
 
