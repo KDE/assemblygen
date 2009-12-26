@@ -348,7 +348,17 @@ unsafe class MethodsGenerator {
         if (cmm == null)
             return;
 
-        if (type.HasMethod(cmm)) {
+        CodeTypeDeclaration containingType = type;
+        if (cmm.Name.StartsWith("operator") || cmm.Name.StartsWith("explicit ")) {
+            if (!data.CSharpTypeMap.TryGetValue(cmm.Parameters[0].Type.GetStringRepresentation(), out containingType)) {
+                if (cmm.Parameters.Count < 2 || !data.CSharpTypeMap.TryGetValue(cmm.Parameters[1].Type.GetStringRepresentation(), out containingType)) {
+                    Debug.Print("  |--Can't find containing type for {0} - skipping", cppSignature);
+                }
+                return;
+            }
+        }
+
+        if (containingType.HasMethod(cmm)) {
             Debug.Print("  |--Skipping already implemented method {0}", cppSignature);
             return;
         }
@@ -360,7 +370,7 @@ unsafe class MethodsGenerator {
 //         CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(SmokeSupport.smokeInvocation_Invoke);
 //         cmm.Statements.Add(new CodeExpressionStatement(invoke));
 
-        type.Members.Add(cmm);
+        containingType.Members.Add(cmm);
     }
 
     public void GenerateProperty(Smoke.Method *method) {
