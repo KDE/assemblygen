@@ -61,6 +61,7 @@ unsafe class Translator {
         { "long", typeof(long) },
         { "long long", typeof(long) },
         { "ulong", typeof(ulong) },
+        { "ulong long", typeof(ulong) },
         { "float", typeof(float) },
         { "double", typeof(double) },
         { "bool", typeof(bool) },
@@ -88,6 +89,16 @@ unsafe class Translator {
         { "QThread", delegate { throw new NotSupportedException(); } },
         { "QMutex", delegate { throw new NotSupportedException(); } },
         { "QDebug", delegate { throw new NotSupportedException(); } },
+        { "QWidget", delegate { throw new NotSupportedException(); } },
+        { "QFlags", delegate { throw new NotSupportedException(); } },
+        { "QFlag", delegate { throw new NotSupportedException(); } },
+        { "QIncompatibleFlag", delegate { throw new NotSupportedException(); } },
+        { "QString::Null", delegate { throw new NotSupportedException(); } },
+        { "QHashDummyValue", delegate { throw new NotSupportedException(); } },
+        { "QPostEventList", delegate { throw new NotSupportedException(); } },
+        { "QTextStreamManipulator", delegate { throw new NotSupportedException(); } },
+        { "QVariant::Private", delegate { throw new NotSupportedException(); } },
+        { "QUrlPrivate", delegate { throw new NotSupportedException(); } },
 
         { "void", type => (type.PointerDepth == 0) ? new CodeTypeReference(typeof(void)) : new CodeTypeReference(typeof(IntPtr)) },
         { "char", delegate(TypeInfo type) {
@@ -100,7 +111,12 @@ unsafe class Translator {
                     }
                     return null;
                   }},
-        { "QString", type => (type.PointerDepth > 0) ? "System.Text.StringBuilder" : "String" }
+        { "QString", type => (type.PointerDepth > 0) ? "System.Text.StringBuilder" : "String" },
+        { "QByteArray", delegate(TypeInfo type) {
+                            if (type.PointerDepth > 0)
+                                type.IsRef = true;
+                            return type.Name;
+                        }},
     };
 
 #endregion
@@ -180,10 +196,10 @@ unsafe class Translator {
             // try to look up custom translation code
             TypeInfo typeInfo = new TypeInfo(name, pointerDepth, isCppRef, isConst, isUnsigned, templateArgument);
             object obj = typeFunc(typeInfo);
+            isRef = typeInfo.IsRef;
             if (obj is string) {
                 name = (string) obj;
             } else if (obj is CodeTypeReference) {
-                isRef = typeInfo.IsRef;
                 return (CodeTypeReference) obj;
             }
         } else {

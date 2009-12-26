@@ -66,13 +66,6 @@ unsafe class GeneratorData {
     public List<Regex> ExcludedMethods = new List<Regex>()
     {
         new Regex(@"^qt_.*\("),
-        new Regex(@"^operator.*\("),
-        new Regex(@".*\(.*QWidget\*.*\)"),
-        new Regex(@"^qSetFieldWidth\(.*"),
-        new Regex(@"^qSetPadChar\(.*"),
-        new Regex(@"^qSetRealNumberPrecision\(.*"),
-        new Regex(@"^compressEvent\(QEvent\*, QObject\*, QPostEventList\*\)$"),
-        new Regex(@"^data_ptr\(\)$"),
     };
 
     /*

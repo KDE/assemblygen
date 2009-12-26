@@ -39,6 +39,19 @@ static class CodeDomExtensions {
         return true;
     }
 
+    public static string GetStringRepresentation(this CodeTypeReference self) {
+        StringBuilder ret = new StringBuilder(self.BaseType);
+        if (self.TypeArguments.Count > 0) {
+            ret.Append('<');
+            for (int i = 0; i < self.TypeArguments.Count; i++) {
+                if (i > 0) ret.Append(", ");
+                ret.Append(self.TypeArguments[i].GetStringRepresentation());
+            }
+            ret.Append('>');
+        }
+        return ret.ToString();
+    }
+
     public static bool HasMethod(this CodeTypeDeclaration self, CodeMemberMethod method) {
         foreach (CodeTypeMember member in self.Members) {
             if (!(member is CodeMemberMethod) || member.Name != method.Name)
@@ -50,7 +63,7 @@ static class CodeDomExtensions {
                 continue;
             bool continueOuter = false;
             for (int i = 0; i < method.Parameters.Count; i++) {
-                if (!method.Parameters[i].Type.TypeEquals(currentMeth.Parameters[i].Type) && method.Parameters[i].Direction != currentMeth.Parameters[i].Direction) {
+                if (!method.Parameters[i].Type.TypeEquals(currentMeth.Parameters[i].Type) || method.Parameters[i].Direction != currentMeth.Parameters[i].Direction) {
                     continueOuter = true;
                     break;
                 }
@@ -67,6 +80,16 @@ unsafe class MethodsGenerator {
     GeneratorData data;
     Translator translator;
     CodeTypeDeclaration type;
+
+    static List<string> binaryOperators = new List<string>() {
+        "!=", "==", "%", "&", "*", "+", "-", "/", "<", "<=", ">", ">=", "^", "|"
+    };
+    static List<string> unaryOperators = new List<string>() {
+        "!", "~", "+", "++", "-", "--"
+    };
+    static List<string> unsupportedOperators = new List<string>() {
+        "=", "->", "+=", "-=", "/=", "*=", "%=", "^=", "&=", "|=", "[]"
+    };
 
     public MethodsGenerator(GeneratorData data, Translator translator, CodeTypeDeclaration type) {
         this.data = data;
@@ -153,11 +176,74 @@ unsafe class MethodsGenerator {
                 return null;
         }
 
-        // translate arguments
         List<CodeParameterDeclarationExpression> args = new List<CodeParameterDeclarationExpression>();
         int count = 1;
         bool isRef;
         string className = ByteArrayManager.GetString(data.Smoke->classes[method->classId].className);
+
+        // make instance operators static and bring the arguments in the correct order
+        string methName = ByteArrayManager.GetString(data.Smoke->methodNames[method->name]);
+        bool isOperator = false;
+        string explicitConversionType = null;
+        if (methName.StartsWith("operator")) {
+            string op = methName.Substring(8);
+            if (unsupportedOperators.Contains(op)) {
+                // not supported
+                Debug.Print("  |--Won't wrap method {0}::{1}", className, cppSignature);
+                return null;
+            }
+
+            if (op == "<<") {
+                methName = "Write";
+            } else if (op == ">>") {
+                methName = "Read";
+            }
+
+            // binary/unary operator
+            if (binaryOperators.Contains(op) || unaryOperators.Contains(op)) {
+                // instance operator
+                if (data.Smoke->classes[method->classId].size > 0) {
+                    if (op == "*" && method->numArgs == 0) {
+                        // dereference operator not supported
+                        Debug.Print("  |--Won't wrap method {0}::{1}", className, cppSignature);
+                        return null;
+                    }
+
+                    try {
+                        CodeParameterDeclarationExpression exp =
+                            new CodeParameterDeclarationExpression(translator.CppToCSharp(className, out isRef), "arg" + count++);
+                        args.Add(exp);
+                    } catch (NotSupportedException) {
+                        Debug.Print("  |--Won't wrap method {0}::{1}", className, cppSignature);
+                        return null;
+                    }
+                } else {    // global operator
+                    if (op == "*" && method->numArgs == 1) {
+                        // dereference operator not supported
+                        Debug.Print("  |--Won't wrap method {0}::{1}", className, cppSignature);
+                        return null;
+                    }
+                }
+                isOperator = true;
+            } else if (op[0] == ' ') {
+                // conversion operator
+                explicitConversionType = op.Substring(1);
+                try {
+                    explicitConversionType = translator.CppToCSharp(explicitConversionType, out isRef).GetStringRepresentation();
+                    if (data.Smoke->classes[method->classId].size > 0) {
+                        CodeParameterDeclarationExpression exp =
+                            new CodeParameterDeclarationExpression(translator.CppToCSharp(className, out isRef), "arg" + count++);
+                        args.Add(exp);
+                    }
+                } catch (NotSupportedException) {
+                    Debug.Print("  |--Won't wrap method {0}::{1}", className, cppSignature);
+                    return null;
+                }
+                isOperator = true;
+            }
+        }
+
+        // translate arguments
         for (short* typeIndex = data.Smoke->argumentList + method->args; *typeIndex > 0; typeIndex++) {
             try {
                 CodeParameterDeclarationExpression exp =
@@ -190,8 +276,8 @@ unsafe class MethodsGenerator {
             cmm = new CodeMemberMethod();
             cmm.Attributes = (MemberAttributes) 0; // initialize to 0 so we can do |=
 
-            string csName = ByteArrayManager.GetString(data.Smoke->methodNames[method->name]);
-            if (!csName.StartsWith("operator")) {
+            string csName = methName;
+            if (!isOperator) {
                 // capitalize the first letter
                 StringBuilder builder = new StringBuilder(csName);
                 builder[0] = char.ToUpper(builder[0]);
@@ -208,8 +294,14 @@ unsafe class MethodsGenerator {
                     csName = tmp;
                 }
             }
-            cmm.Name = csName;
-            cmm.ReturnType = returnType;
+
+            if (explicitConversionType != null) {
+                cmm.Name = "explicit operator " + explicitConversionType;
+                cmm.ReturnType = new CodeTypeReference(" ");
+            } else {
+                cmm.Name = csName;
+                cmm.ReturnType = returnType;
+            }
         }
 
         // for destructors we already have this stuff set
@@ -221,18 +313,22 @@ unsafe class MethodsGenerator {
                 cmm.Attributes |= MemberAttributes.Public;
             }
 
-            // virtual/final
-            if ((method->flags & (uint) Smoke.MethodFlags.mf_virtual) == 0) {
-                cmm.Attributes |= MemberAttributes.Final | MemberAttributes.New;
+            if (isOperator) {
+                cmm.Attributes |= MemberAttributes.Final | MemberAttributes.Static;
             } else {
-                MemberAttributes access;
-                if (MethodOverrides(method, out access)) {
-                    cmm.Attributes = access | MemberAttributes.Override;
+                // virtual/final
+                if ((method->flags & (uint) Smoke.MethodFlags.mf_virtual) == 0) {
+                    cmm.Attributes |= MemberAttributes.Final | MemberAttributes.New;
+                } else {
+                    MemberAttributes access;
+                    if (MethodOverrides(method, out access)) {
+                        cmm.Attributes = access | MemberAttributes.Override;
+                    }
                 }
-            }
 
-            if ((method->flags & (uint) Smoke.MethodFlags.mf_static) > 0) {
-                cmm.Attributes |= MemberAttributes.Static;
+                if ((method->flags & (uint) Smoke.MethodFlags.mf_static) > 0) {
+                    cmm.Attributes |= MemberAttributes.Static;
+                }
             }
         } else {
             // hack, so we don't have to use CodeSnippetTypeMember to generator the destructor
