@@ -185,6 +185,7 @@ unsafe class MethodsGenerator {
         if ((method->flags & (uint) Smoke.MethodFlags.mf_ctor) > 0) {
             cmm = new CodeConstructor();
             cmm.Attributes = (MemberAttributes) 0; // initialize to 0 so we can do |=
+            ((CodeConstructor) cmm).ChainedConstructorArgs.Add(new CodeSnippetExpression("(System.Type) null"));
         } else {
             cmm = new CodeMemberMethod();
             cmm.Attributes = (MemberAttributes) 0; // initialize to 0 so we can do |=
@@ -228,6 +229,10 @@ unsafe class MethodsGenerator {
                 if (MethodOverrides(method, out access)) {
                     cmm.Attributes = access | MemberAttributes.Override;
                 }
+            }
+
+            if ((method->flags & (uint) Smoke.MethodFlags.mf_static) > 0) {
+                cmm.Attributes |= MemberAttributes.Static;
             }
         } else {
             // hack, so we don't have to use CodeSnippetTypeMember to generator the destructor

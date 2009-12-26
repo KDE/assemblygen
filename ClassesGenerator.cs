@@ -96,6 +96,17 @@ unsafe class ClassesGenerator {
             type.BaseTypes.Add(new CodeTypeReference('I' + name));
         }
 
+        // define the dummy constructor
+        if (smokeClass->size > 0) {
+            CodeConstructor dummyCtor = new CodeConstructor();
+            dummyCtor.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(Type)), "dummy"));
+            if (data.Smoke->inheritanceList[smokeClass->parents] > 0) {
+                dummyCtor.BaseConstructorArgs.Add(new CodeSnippetExpression("(System.Type) null"));
+            }
+            dummyCtor.Attributes = MemberAttributes.Family;
+            type.Members.Add(dummyCtor);
+        }
+
         data.CSharpTypeMap[mapName] = type;
         data.SmokeTypeMap[(IntPtr) smokeClass] = type;
         data.GetTypeCollection(prefix).Add(type);
