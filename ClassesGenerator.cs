@@ -226,5 +226,80 @@ unsafe class ClassesGenerator {
                 }
             }
         }
+
+        AddMissingOperators();
+    }
+
+    delegate void AddComplementingOperatorsFn(IList<CodeMemberMethod> a, IList<CodeMemberMethod> b, string opName, string returnExpression);
+
+    /*
+     * Adds complement operators if necessary.
+     */
+    void AddMissingOperators() {
+        for (short i = 1; i <= data.Smoke->numClasses; i++) {
+            Smoke.Class* klass = data.Smoke->classes + i;
+            // skip external classes and namespaces
+            if (klass->external || klass->size == 0)
+                continue;
+
+            CodeTypeDeclaration typeDecl = data.SmokeTypeMap[(IntPtr) klass];
+
+            var lessThanOperators = new List<CodeMemberMethod>();
+            var greaterThanOperators = new List<CodeMemberMethod>();
+            var lessThanOrEqualOperators = new List<CodeMemberMethod>();
+            var greaterThanOrEqualOperators = new List<CodeMemberMethod>();
+            var equalOperators = new List<CodeMemberMethod>();
+            var inequalOperators = new List<CodeMemberMethod>();
+
+            foreach (CodeTypeMember member in typeDecl.Members) {
+                CodeMemberMethod method = member as CodeMemberMethod;
+                if (method == null)
+                    continue;
+                if (method.Name == "operator<") {
+                    lessThanOperators.Add(method);
+                } else if (method.Name == "operator>") {
+                    greaterThanOperators.Add(method);
+                } else if (method.Name == "operator<=") {
+                    lessThanOrEqualOperators.Add(method);
+                } else if (method.Name == "operator>=") {
+                    greaterThanOrEqualOperators.Add(method);
+                } else if (method.Name == "operator==") {
+                    equalOperators.Add(method);
+                } else if (method.Name == "operator!=") {
+                    inequalOperators.Add(method);
+                }
+            }
+
+            AddComplementingOperatorsFn checkAndAdd = delegate(IList<CodeMemberMethod> ops, IList<CodeMemberMethod> otherOps, string opName, string expr) {
+                foreach (CodeMemberMethod op in ops) {
+                    bool haveComplement = false;
+                    foreach (CodeMemberMethod otherOp in otherOps) {
+                        if (op.ParametersEqual(otherOp)) {
+                            haveComplement = true;
+                            break;
+                        }
+                    }
+                    if (haveComplement)
+                        continue;
+
+                    CodeMemberMethod complement = new CodeMemberMethod();
+                    complement.Name = opName;
+                    complement.Attributes = op.Attributes;
+                    complement.ReturnType = op.ReturnType;
+                    complement.Parameters.AddRange(op.Parameters);
+                    complement.Statements.Add(new CodeMethodReturnStatement(new CodeSnippetExpression(expr)));
+                    typeDecl.Members.Add(complement);
+                }
+            };
+
+            checkAndAdd(lessThanOperators, greaterThanOperators, "operator>", "!(arg1 < arg2) && arg1 != arg2");
+            checkAndAdd(greaterThanOperators, lessThanOperators, "operator<", "!(arg1 > arg2) && arg1 != arg2");
+
+            checkAndAdd(lessThanOrEqualOperators, greaterThanOrEqualOperators, "operator>=", "!(arg1 < arg2)");
+            checkAndAdd(greaterThanOrEqualOperators, lessThanOrEqualOperators, "operator<=", "!(arg1 > arg2)");
+
+            checkAndAdd(equalOperators, inequalOperators, "operator!=", "!(arg1 == arg2)");
+            checkAndAdd(inequalOperators, equalOperators, "operator==", "!(arg1 != arg2)");
+        }
     }
 }

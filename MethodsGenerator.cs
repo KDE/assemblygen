@@ -74,6 +74,17 @@ static class CodeDomExtensions {
         }
         return false;
     }
+
+    public static bool ParametersEqual(this CodeMemberMethod self, CodeMemberMethod method) {
+        if (method.Parameters.Count != self.Parameters.Count)
+            return false;
+        for (int i = 0; i < self.Parameters.Count; i++) {
+            if (!self.Parameters[i].Type.TypeEquals(method.Parameters[i].Type) || self.Parameters[i].Direction != method.Parameters[i].Direction) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
 
 unsafe class MethodsGenerator {
@@ -128,6 +139,9 @@ unsafe class MethodsGenerator {
     }
 
     Dictionary<IntPtr, List<CodeTypeMember>> nestedMembersCache = new Dictionary<IntPtr, List<CodeTypeMember>>();
+    /*
+     * Returns a list of accessible nested members from class 'klass' and superclasses.
+     */
     List<CodeTypeMember> GetAccessibleNestedMembers(Smoke.Class* klass) {
         List<CodeTypeMember> nestedMembers;
         if (nestedMembersCache.TryGetValue((IntPtr) klass, out nestedMembers)) {
@@ -138,6 +152,7 @@ unsafe class MethodsGenerator {
         for (; klass->className != (char*) IntPtr.Zero;
                klass = data.Smoke->classes + data.Smoke->inheritanceList[klass->parents])
         {
+            // loop through superclasses (only the first ones - others are only implemented as interfaces)
             try {
                 foreach (CodeTypeMember member in data.SmokeTypeMap[(IntPtr) klass].Members) {
                     nestedMembers.Add(member);
