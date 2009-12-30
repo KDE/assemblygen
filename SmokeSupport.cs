@@ -21,6 +21,8 @@ using System;
 using System.CodeDom;
 
 static class SmokeSupport {
-    public static CodeMethodReferenceExpression smokeInvocation_Invoke =
-        new CodeMethodReferenceExpression(new CodeSnippetExpression("SmokeInvocation"), "Invoke");
+    public static CodeMethodReferenceExpression interceptor_Invoke =
+        new CodeMethodReferenceExpression(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "interceptor"), "Invoke");
+    public static CodeMethodReferenceExpression staticInterceptor_Invoke =
+        new CodeMethodReferenceExpression(new CodeFieldReferenceExpression(null, "staticInterceptor"), "Invoke");
 }

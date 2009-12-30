@@ -382,8 +382,38 @@ unsafe class MethodsGenerator {
             new CodeAttributeArgument(new CodePrimitiveExpression(cppSignature)));
         cmm.CustomAttributes.Add(attr);
 
-//         CodeMethodInvokeExpression invoke = new CodeMethodInvokeExpression(SmokeSupport.smokeInvocation_Invoke);
-//         cmm.Statements.Add(new CodeExpressionStatement(invoke));
+        CodeMethodInvokeExpression invoke;
+        if ((cmm.Attributes & MemberAttributes.Static) == MemberAttributes.Static) {
+            invoke = new CodeMethodInvokeExpression(SmokeSupport.staticInterceptor_Invoke);
+        } else {
+            invoke = new CodeMethodInvokeExpression(SmokeSupport.interceptor_Invoke);
+        }
+
+        invoke.Parameters.Add(new CodePrimitiveExpression(mungedName));
+        invoke.Parameters.Add(new CodePrimitiveExpression(cppSignature));
+        CodeTypeReference returnType;
+        if ((method->flags & (uint) Smoke.MethodFlags.mf_dtor) > 0) {
+            // destructor
+            returnType = new CodeTypeReference(typeof(void));
+        } else if (cmm.Name.StartsWith("explicit operator ")) {
+            // strip 'explicit operator' from the name to get the return type
+            returnType = new CodeTypeReference(cmm.Name.Substring(18));
+        } else {
+            returnType = cmm.ReturnType;
+        }
+        invoke.Parameters.Add(new CodeTypeOfExpression(returnType));
+        foreach (CodeParameterDeclarationExpression param in cmm.Parameters) {
+            invoke.Parameters.Add(new CodeTypeOfExpression(param.Type));
+            invoke.Parameters.Add(new CodeArgumentReferenceExpression(param.Name));
+        }
+
+        CodeStatement statement;
+        if (method->ret > 0 && (method->flags & (uint) Smoke.MethodFlags.mf_ctor) == 0) {
+            statement = new CodeMethodReturnStatement(new CodeCastExpression(returnType, invoke));
+        } else {
+            statement = new CodeExpressionStatement(invoke);
+        }
+        cmm.Statements.Add(statement);
 
         containingType.Members.Add(cmm);
     }
