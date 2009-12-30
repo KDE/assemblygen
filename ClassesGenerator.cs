@@ -31,6 +31,16 @@ unsafe class ClassesGenerator {
     // needed to filter out superfluous methods from base classes
     SmokeMethodEqualityComparer smokeMethodComparer;
 
+    static string qObjectDummyCtorCode =
+"            try {\n" +
+"                Type proxyInterface = Qyoto.GetSignalsInterface(GetType());\n" +
+"                SignalInvocation realProxy = new SignalInvocation(proxyInterface, this);\n" +
+"                Q_EMIT = realProxy.GetTransparentProxy();\n" +
+"            }\n" +
+"            catch (Exception e) {\n" +
+"                Console.WriteLine(\"Could not retrieve signal interface: {0}\", e);\n" +
+"            }";
+
     public ClassesGenerator(GeneratorData data, Translator translator) {
         this.data = data;
         this.translator = translator;
@@ -96,6 +106,17 @@ unsafe class ClassesGenerator {
             type.BaseTypes.Add(new CodeTypeReference('I' + name));
         }
 
+        DefineWrapperClassFieldsAndMethods(smokeClass, type);
+
+        data.CSharpTypeMap[mapName] = type;
+        data.SmokeTypeMap[(IntPtr) smokeClass] = type;
+        data.GetTypeCollection(prefix).Add(type);
+        return type;
+    }
+
+    void DefineWrapperClassFieldsAndMethods(Smoke.Class* smokeClass, CodeTypeDeclaration type) {
+        string smokeName = ByteArrayManager.GetString(smokeClass->className);
+
         // define the dummy constructor
         if (smokeClass->size > 0) {
             CodeConstructor dummyCtor = new CodeConstructor();
@@ -104,13 +125,46 @@ unsafe class ClassesGenerator {
                 dummyCtor.BaseConstructorArgs.Add(new CodeSnippetExpression("(System.Type) null"));
             }
             dummyCtor.Attributes = MemberAttributes.Family;
+            if (smokeName == "QObject") {
+                dummyCtor.Statements.Add(new CodeSnippetStatement(qObjectDummyCtorCode));
+                CodeMemberField Q_EMIT = new CodeMemberField(typeof(object), "Q_EMIT");
+                Q_EMIT.Attributes = MemberAttributes.Family;
+                Q_EMIT.InitExpression = new CodePrimitiveExpression(null);
+                type.Members.Add(Q_EMIT);
+            }
             type.Members.Add(dummyCtor);
         }
 
-        data.CSharpTypeMap[mapName] = type;
-        data.SmokeTypeMap[(IntPtr) smokeClass] = type;
-        data.GetTypeCollection(prefix).Add(type);
-        return type;
+        CodeMemberField staticInterceptor = new CodeMemberField("SmokeInvocation", "staticInterceptor");
+        staticInterceptor.Attributes = MemberAttributes.Static;
+        CodeObjectCreateExpression initExpression = new CodeObjectCreateExpression("SmokeInvocation");
+        initExpression.Parameters.Add(new CodeTypeOfExpression(type.Name));
+        initExpression.Parameters.Add(new CodePrimitiveExpression(null));
+        staticInterceptor.InitExpression = initExpression;
+        type.Members.Add(staticInterceptor);
+
+        if (smokeClass->size == 0)
+            return;
+
+        // we only need this for real classes
+        CodeMemberMethod createProxy = new CodeMemberMethod();
+        createProxy.Name = "CreateProxy";
+        createProxy.Attributes = MemberAttributes.Family | MemberAttributes.Final | MemberAttributes.New;
+        createProxy.Statements.Add(new CodeAssignStatement(
+            new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "interceptor"), // left hand side
+            new CodeObjectCreateExpression("SmokeInvocation", new CodeTypeOfExpression(type.Name), new CodeThisReferenceExpression()) // right hand side
+        ));
+        type.Members.Add(createProxy);
+
+        if (data.Smoke->inheritanceList[smokeClass->parents] != 0)
+            return;
+        // The following fields are only necessary for classes without superclasses.
+
+        CodeMemberField interceptor = new CodeMemberField("SmokeInvocation", "interceptor");
+        interceptor.Attributes = MemberAttributes.Family;
+        type.Members.Add(interceptor);
+        CodeMemberField smokeObject = new CodeMemberField(typeof(IntPtr), "smokeObject");
+        type.Members.Add(smokeObject);
     }
 
     /*
