@@ -31,10 +31,20 @@ unsafe class ByteArrayManager {
         return s - str;
     }*/
 
+    /*
+     * Use this custom method because Encoding.GetBytes() won't append the '\0' at the end.
+     */
+    public static byte[] GetCString(string input) {
+        byte[] bytes = new byte[input.Length + 1];
+        for (int i = 0; i < input.Length; i++) {
+            bytes[i] = (byte) input[i];
+        }
+        bytes[input.Length] = 0;
+        return bytes;
+    }
+
     public static long strcmp(byte* str1, byte* str2) {
-        while (*str1 == *str2) {
-            if (*str1 == 0)
-                return 0;
+        while (*str1 != 0 && *str1 == *str2) {
             str1++; str2++;
         }
         return *str1 - *str2;

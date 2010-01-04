@@ -25,7 +25,7 @@ using System.Text;
 // copied every time we use an extension method.
 unsafe partial struct Smoke {
     public short idClass(string name) {
-        byte[] bytes = Encoding.ASCII.GetBytes(name);
+        byte[] bytes = ByteArrayManager.GetCString(name);
         fixed (byte* c = bytes) {
             short imax = numClasses;
             short imin = 1;
@@ -47,6 +47,56 @@ unsafe partial struct Smoke {
 
             return 0;
         }
+    }
+
+    public short idMethodName(string name) {
+        byte[] bytes = ByteArrayManager.GetCString(name);
+        fixed (byte* m = bytes) {
+            short imax = numMethodNames;
+            short imin = 1;
+            short icur = -1;
+            long icmp = -1;
+
+            while (imax >= imin) {
+                icur = (short) ((imin + imax) / 2);
+                icmp = ByteArrayManager.strcmp(methodNames[icur], m);
+                if (icmp == 0) {
+                    return icur;
+                }
+                if (icmp > 0) {
+                    imax = (short) (icur - 1);
+                } else {
+                    imin = (short) (icur + 1);
+                }
+            }
+
+            return 0;
+        }
+    }
+
+    public short idMethod(short c, short name) {
+        short imax = numMethodMaps;
+        short imin = 1;
+        short icur = -1;
+        int icmp = -1;
+
+        while (imax >= imin) {
+            icur = (short) ((imin + imax) / 2);
+            icmp = methodMaps[icur].classId - c;
+            if (icmp == 0) {
+                icmp = methodMaps[icur].name - name;
+                if (icmp == 0) {
+                    return icur;
+                }
+            }
+            if (icmp > 0) {
+                imax = (short) (icur - 1);
+            } else {
+                imin = (short) (icur + 1);
+            }
+        }
+
+        return 0;
     }
 
     // adapted from QtRuby's findAllMethods()

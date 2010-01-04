@@ -237,7 +237,9 @@ unsafe class ClassesGenerator {
                         || (meth->flags & (ushort) Smoke.MethodFlags.mf_dtor) > 0
                         || (meth->flags & (ushort) Smoke.MethodFlags.mf_static) > 0
                         || (meth->flags & (ushort) Smoke.MethodFlags.mf_internal) > 0
-                        || (meth->flags & (ushort) Smoke.MethodFlags.mf_property) > 0)
+                        || (   (meth->flags & (ushort) Smoke.MethodFlags.mf_property) > 0   // non-virtual properties are excluded
+                            && (meth->flags & (ushort) Smoke.MethodFlags.mf_virtual) == 0
+                            && (meth->flags & (ushort) Smoke.MethodFlags.mf_purevirtual) == 0))
                     {
                         continue;
                     }
@@ -254,8 +256,12 @@ unsafe class ClassesGenerator {
                     continue;
                 }
 
-                if ((meth->flags & (ushort) Smoke.MethodFlags.mf_property) > 0)
+                if (   (meth->flags & (ushort) Smoke.MethodFlags.mf_property) > 0   // non-virtual properties are excluded
+                    && (meth->flags & (ushort) Smoke.MethodFlags.mf_virtual) == 0
+                    && (meth->flags & (ushort) Smoke.MethodFlags.mf_purevirtual) == 0)
+                {
                     continue;
+                }
 
                 // already implemented?
                 if (implementMethods.ContainsKey(map->method))
@@ -270,8 +276,12 @@ unsafe class ClassesGenerator {
                         continue;
                     }
 
-                    if ((meth->flags & (ushort) Smoke.MethodFlags.mf_property) > 0)
+                    if (   (meth->flags & (ushort) Smoke.MethodFlags.mf_property) > 0   // non-virtual properties are excluded
+                        && (meth->flags & (ushort) Smoke.MethodFlags.mf_virtual) == 0
+                        && (meth->flags & (ushort) Smoke.MethodFlags.mf_purevirtual) == 0)
+                    {
                         continue;
+                    }
 
                     // if the methods differ only by constness, we will generate special code
                     bool nextDiffersByConst = false;

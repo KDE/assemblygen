@@ -85,21 +85,67 @@ unsafe class PropertyGenerator {
                 // capitalize the first letter
                 StringBuilder builder = new StringBuilder(cmp.Name);
                 builder[0] = char.ToUpper(builder[0]);
-                string tmp = builder.ToString();
+                string capitalized = builder.ToString();
 
                 // If the new name clashes with a name of a type declaration, keep the lower-case name.
                 var typesWithSameName = from typeDecl in data.GetAccessibleNestedMembers(data.Smoke->classes + classId)
                                         where typeDecl is CodeTypeDeclaration
-                                        where typeDecl.Name == tmp
+                                        where typeDecl.Name == capitalized
                                         select typeDecl;
                 if (typesWithSameName.Count() > 0) {
-                    Debug.Print("  |--Conflicting names: property/type: {0} in class {1} - keeping original property name", tmp, className);
+                    Debug.Print("  |--Conflicting names: property/type: {0} in class {1} - keeping original property name", capitalized, className);
                 } else {
-                    cmp.Name = tmp;
+                    cmp.Name = capitalized;
                 }
 
                 cmp.HasGet = true;
                 cmp.HasSet = prop.IsWritable;
+
+                string getterName = prop.Name;
+                short methNameId = data.Smoke->idMethodName(prop.Name);
+                short getterMapId = data.Smoke->idMethod(classId, methNameId);
+                if (getterMapId == 0 && prop.Type == "bool") {
+                    // bool methods often begin with isFoo()
+                    getterName = "is" + capitalized;
+                    methNameId = data.Smoke->idMethodName(getterName);
+                    getterMapId = data.Smoke->idMethod(classId, methNameId);
+                }
+                if (getterMapId == 0) {
+                    Debug.Print("  |--Missing getter method for property {0}::{1} - using QObject.Property()", className, prop.Name);
+                    cmp.GetStatements.Add(new CodeMethodReturnStatement(
+                        new CodeMethodInvokeExpression(
+                            new CodeMethodReferenceExpression(new CodeMethodInvokeExpression(new CodeThisReferenceExpression(), "Property", new CodePrimitiveExpression(prop.Name)),
+                                "Value", cmp.Type)
+                            )
+                        )
+                    );
+                } else {
+                    Smoke.MethodMap* map = data.Smoke->methodMaps + getterMapId;
+                    short getterId = map->method;
+                    if (getterId < 0) {
+                        // simply choose the first (i.e. non-const) version if there are alternatives
+                        getterId = data.Smoke->ambiguousMethodList[-getterId];
+                    }
+
+                    Smoke.Method* getter = data.Smoke->methods + getterId;
+                    if (   (getter->flags & (uint) Smoke.MethodFlags.mf_virtual) == 0
+                        && (getter->flags & (uint) Smoke.MethodFlags.mf_purevirtual) == 0)
+                    {
+                        cmp.GetStatements.Add(new CodeMethodReturnStatement(
+                            new CodeMethodInvokeExpression(SmokeSupport.interceptor_Invoke,
+                                new CodePrimitiveExpression(getterName), new CodePrimitiveExpression(data.Smoke->GetMethodSignature(getter)),
+                                new CodeTypeOfExpression(cmp.Type)
+                            )
+                        ));
+                        // implement the property here
+                    } else {
+                        cmp.HasGet = false;
+                        if (!cmp.HasSet) {
+                            // the get accessor is virtual and there's no set accessor => continue
+                            continue;
+                        }
+                    }
+                }
 
                 type.Members.Add(cmp);
             }
