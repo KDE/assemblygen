@@ -76,7 +76,8 @@ unsafe class Translator {
         { "QVector", "System.Collections.Generic.List" },
         { "QHash", "System.Collections.Generic.Dictionary" },
         { "QMap", "System.Collections.Generic.Dictionary" },
-        { "QSet", "System.Collections.Generic.HashSet" },
+        // a hash set would be better, but do we want to depend on System.Core.dll (i.e. .NET 3.5)?
+        { "QSet", "System.Collections.Generic.List" },
         { "QQueue", "System.Collections.Generic.Queue" },
         { "QStack", "System.Collections.Generic.Stack" },
     };

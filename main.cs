@@ -19,8 +19,9 @@
 
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.IO;
+using System.Text;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.CodeDom;
 using System.CodeDom.Compiler;
@@ -35,14 +36,51 @@ class MainClass {
     [DllImport("smokeloader", CallingConvention=CallingConvention.Cdecl)]
     static extern unsafe void DestroySmoke(IntPtr smoke);
 
-    public unsafe static void Main(string[] args) {
-        if (args.Contains("--debug")) {
-            Debug.Listeners.Add(new ConsoleTraceListener(true));
+    const int NoError = 0;
+    const int SmokeLoadingFailure = 1;
+    const int CompilationError = 2;
+    const int MissingOptionError = 254;
+
+    public unsafe static int Main(string[] args) {
+        List<CodeCompileUnit> codeSnippets = new List<CodeCompileUnit>();
+        StringBuilder compilerOptions = new StringBuilder();
+        bool codeOnly = false;
+        string codeFile = string.Empty;
+        string assemblyFile = "out.dll";
+        int warnLevel = 0;
+
+        foreach (string arg in args) {
+            if (arg == "-verbose") {
+                Debug.Listeners.Add(new ConsoleTraceListener(true));
+                continue;
+            } else if (arg == "-code-only") {
+                codeOnly = true;
+                continue;
+            } else if (arg.StartsWith("-code-file:")) {
+                codeFile = arg.Substring(11);
+                continue;
+            } else if (arg.StartsWith("-out:")) {
+                assemblyFile = arg.Substring(5);
+                continue;
+            } else if (arg.StartsWith("-warn:")) {
+                warnLevel = int.Parse(arg.Substring(6));
+                continue;
+            } else if (arg.StartsWith("-")) {
+                compilerOptions.Append(" /");
+                compilerOptions.Append(arg.Substring(1));
+                continue;
+            }
+
+            FileStream fs = new FileStream(arg, FileMode.Open);
+            StreamReader sr = new StreamReader(fs);
+            codeSnippets.Add(new CodeSnippetCompileUnit(sr.ReadToEnd()));
+            sr.Close();
+            fs.Close();
         }
 
         Smoke *smoke = InitSmoke("qtcore");
         if (smoke == (Smoke*) 0) {
-            return;
+            return SmokeLoadingFailure;
         }
 
         GeneratorData data = new GeneratorData(smoke, "Qyoto");
@@ -53,16 +91,51 @@ class MainClass {
         classgen.Run();
         DestroySmoke((IntPtr) smoke);
 
-        FileStream fs = new FileStream("out.cs", FileMode.Create);
-        StreamWriter sw = new StreamWriter(fs);
-
-        Console.Error.WriteLine("Generating code...");
         CodeDomProvider csharp = CodeDomProvider.CreateProvider("CSharp");
-        CodeGeneratorOptions cgo = new CodeGeneratorOptions();
-        csharp.GenerateCodeFromCompileUnit(data.CompileUnit, sw, cgo);
-        sw.Close();
-        fs.Close();
+        if (codeFile != string.Empty) {
+            FileStream fs = new FileStream(codeFile, FileMode.Create);
+            StreamWriter sw = new StreamWriter(fs);
 
-        Console.Error.WriteLine("Done.");
+            Console.Error.WriteLine("Generating code...");
+            CodeGeneratorOptions cgo = new CodeGeneratorOptions();
+            csharp.GenerateCodeFromCompileUnit(data.CompileUnit, sw, cgo);
+            sw.Close();
+            fs.Close();
+        }
+
+        if (codeOnly) {
+            if (codeFile == string.Empty) {
+                Console.Error.WriteLine("Missing output filename. Use the -code-file:<file> option.");
+                return MissingOptionError;
+            }
+            return NoError;
+        }
+
+        codeSnippets.Add(data.CompileUnit);
+
+        Console.Error.WriteLine("Compiling assembly...");
+        CompilerParameters cp = new CompilerParameters();
+        cp.GenerateExecutable = false;
+        cp.TreatWarningsAsErrors = false;
+        cp.OutputAssembly = assemblyFile;
+        cp.GenerateInMemory = false;
+        cp.WarningLevel = warnLevel;
+        cp.CompilerOptions = compilerOptions.ToString();
+        CompilerResults cr = csharp.CompileAssemblyFromDom(cp, codeSnippets.ToArray());
+
+        bool errorsOccured = false;
+        foreach (CompilerError error in cr.Errors) {
+            if (!error.IsWarning)
+                errorsOccured = true;
+            Console.Error.WriteLine(error);
+        }
+
+        if (errorsOccured) {
+            Console.Error.WriteLine("Errors occured. No assembly was generated.");
+            return CompilationError;
+        } else {
+            Console.Error.WriteLine("Done.");
+            return NoError;
+        }
     }
 }
