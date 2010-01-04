@@ -18,9 +18,10 @@
 */
 
 #include <QLibrary>
-#include <smoke.h>
-#include <stdio.h>
+#include <QMetaProperty>
 #include <QtDebug>
+
+#include <smoke.h>
 
 typedef void (*InitSmokeFn)();
 
@@ -61,6 +62,32 @@ Q_DECL_EXPORT long GetEnumValue(Smoke* smoke, Smoke::Method* meth)
     Smoke::StackItem ret;
     (*fn)(meth->method, 0, &ret);
     return ret.s_enum;
+}
+
+Q_DECL_EXPORT bool GetProperties(Smoke* smoke, Smoke::Index classId, void (*addProp)(const char*, const char*, bool, bool))
+{
+    const Smoke::Class& klass = smoke->classes[classId];
+    Smoke::Index methodNameId = smoke->idMethodName("staticMetaObject").index;
+    if (!methodNameId) {
+        return false;
+    }
+    Smoke::Index methodMapId = smoke->idMethod(classId, methodNameId).index;
+    if (!methodMapId) {
+        return false;
+    }
+
+    const Smoke::Method& meth = smoke->methods[smoke->methodMaps[methodMapId].method];
+    Smoke::ClassFn fn = klass.classFn;
+    Smoke::StackItem ret;
+    (*fn)(meth.method, 0, &ret);
+
+    const QMetaObject* mo = (QMetaObject*) ret.s_class;
+
+    for (int i = mo->propertyOffset(); i < mo->propertyCount(); ++i) {
+        const QMetaProperty& prop = mo->property(i);
+        (*addProp)(prop.name(), prop.isFlagType() ? "uint" : prop.typeName(), prop.isWritable(), prop.isEnumType());
+    }
+    return true;
 }
 
 }

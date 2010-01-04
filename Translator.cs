@@ -91,6 +91,7 @@ unsafe class Translator {
         { "QMutex", delegate { throw new NotSupportedException(); } },
         { "QDebug", delegate { throw new NotSupportedException(); } },
         { "QWidget", delegate { throw new NotSupportedException(); } },
+        { "QEventPrivate", delegate { throw new NotSupportedException(); } },
         { "QFlags", delegate { throw new NotSupportedException(); } },
         { "QFlag", delegate { throw new NotSupportedException(); } },
         { "QIncompatibleFlag", delegate { throw new NotSupportedException(); } },
@@ -99,6 +100,7 @@ unsafe class Translator {
         { "QPostEventList", delegate { throw new NotSupportedException(); } },
         { "QTextStreamManipulator", delegate { throw new NotSupportedException(); } },
         { "QVariant::Private", delegate { throw new NotSupportedException(); } },
+        { "QVariant::Handler", delegate { throw new NotSupportedException(); } },
         { "QUrlPrivate", delegate { throw new NotSupportedException(); } },
 
         { "void", type => (type.PointerDepth == 0) ? new CodeTypeReference(typeof(void)) : new CodeTypeReference(typeof(IntPtr)) },

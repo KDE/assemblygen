@@ -138,47 +138,6 @@ unsafe class MethodsGenerator {
         return ret;
     }
 
-    Dictionary<IntPtr, List<CodeTypeMember>> nestedMembersCache = new Dictionary<IntPtr, List<CodeTypeMember>>();
-    /*
-     * Returns a list of accessible nested members from class 'klass' and superclasses.
-     */
-    List<CodeTypeMember> GetAccessibleNestedMembers(Smoke.Class* klass) {
-        List<CodeTypeMember> nestedMembers;
-        if (nestedMembersCache.TryGetValue((IntPtr) klass, out nestedMembers)) {
-            return nestedMembers;
-        }
-
-        nestedMembers = new List<CodeTypeMember>();
-        for (; klass->className != (char*) IntPtr.Zero;
-               klass = data.Smoke->classes + data.Smoke->inheritanceList[klass->parents])
-        {
-            // loop through superclasses (only the first ones - others are only implemented as interfaces)
-            try {
-                foreach (CodeTypeMember member in data.SmokeTypeMap[(IntPtr) klass].Members) {
-                    nestedMembers.Add(member);
-                }
-            } catch (KeyNotFoundException) {
-                Debug.Print("  |--Unknown parent: {0}", ByteArrayManager.GetString(klass->className));
-            }
-        }
-        return nestedMembers;
-    }
-
-    public void Generate(short index, string mungedName) {
-        Smoke.Method *method = data.Smoke->methods + index;
-        Generate(method, mungedName);
-    }
-
-    public void Generate(Smoke.Method *method, string mungedName) {
-        if ((method->flags & (ushort) Smoke.MethodFlags.mf_virtual) == 0 && (method->flags & (ushort) Smoke.MethodFlags.mf_purevirtual) == 0
-            && ((method->flags & (ushort) Smoke.MethodFlags.mf_attribute) > 0 || (method->flags & (ushort) Smoke.MethodFlags.mf_property) > 0))
-        {
-            GenerateProperty(method);
-        } else {
-            GenerateMethod(method, mungedName);
-        }
-    }
-
     public CodeMemberMethod GenerateBasicMethodDefinition(Smoke.Method *method) {
         string cppSignature = data.Smoke->GetMethodSignature(method);
         return GenerateBasicMethodDefinition(method, cppSignature);
@@ -299,12 +258,13 @@ unsafe class MethodsGenerator {
                 string tmp = builder.ToString();
 
                 // If the new name clashes with a name of a type declaration, keep the lower-case name.
-                var typesWithSameName = from typeDecl in GetAccessibleNestedMembers(data.Smoke->classes + method->classId)
-                                        where typeDecl is CodeTypeDeclaration
-                                        where typeDecl.Name == tmp
+                var typesWithSameName = from typeDecl in data.GetAccessibleNestedMembers(data.Smoke->classes + method->classId)
+                                        where (typeDecl is CodeTypeDeclaration
+                                           || typeDecl is CodeMemberProperty)
+                                           && typeDecl.Name == tmp
                                         select typeDecl;
                 if (typesWithSameName.Count() > 0) {
-                    Debug.Print("  |--Conflicting names: method/type: {0} in class {1} - keeping original method name", tmp, className);
+                    Debug.Print("  |--Conflicting names: method/(type or property): {0} in class {1} - keeping original method name", tmp, className);
                 } else {
                     csName = tmp;
                 }
@@ -355,6 +315,10 @@ unsafe class MethodsGenerator {
             cmm.Parameters.Add(exp);
         }
         return cmm;
+    }
+
+    public void GenerateMethod(short idx, string mungedName) {
+        GenerateMethod(data.Smoke->methods + idx, mungedName);
     }
 
     public void GenerateMethod(Smoke.Method *method, string mungedName) {
@@ -432,8 +396,5 @@ unsafe class MethodsGenerator {
         cmm.Statements.Add(statement);
 
         containingType.Members.Add(cmm);
-    }
-
-    public void GenerateProperty(Smoke.Method *method) {
     }
 }

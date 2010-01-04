@@ -23,6 +23,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 unsafe class GeneratorData {
 
@@ -109,6 +110,32 @@ unsafe class GeneratorData {
         parentCollection.Add(nspace);
         NamespaceMap[prefix] = nspace;
         return nspace.Types;
+    }
+
+    Dictionary<IntPtr, List<CodeTypeMember>> nestedMembersCache = new Dictionary<IntPtr, List<CodeTypeMember>>();
+    /*
+     * Returns a list of accessible nested members from class 'klass' and superclasses.
+     */
+    public List<CodeTypeMember> GetAccessibleNestedMembers(Smoke.Class* klass) {
+        List<CodeTypeMember> nestedMembers;
+        if (nestedMembersCache.TryGetValue((IntPtr) klass, out nestedMembers)) {
+            return nestedMembers;
+        }
+
+        nestedMembers = new List<CodeTypeMember>();
+        for (; klass->className != (char*) IntPtr.Zero;
+               klass = Smoke->classes + Smoke->inheritanceList[klass->parents])
+        {
+            // loop through superclasses (only the first ones - others are only implemented as interfaces)
+            try {
+                foreach (CodeTypeMember member in SmokeTypeMap[(IntPtr) klass].Members) {
+                    nestedMembers.Add(member);
+                }
+            } catch (KeyNotFoundException) {
+                Debug.Print("  |--Unknown parent: {0}", ByteArrayManager.GetString(klass->className));
+            }
+        }
+        return nestedMembers;
     }
 
 }

@@ -186,6 +186,9 @@ unsafe class ClassesGenerator {
 
         eg.DefineEnums();
 
+        PropertyGenerator pg = new PropertyGenerator(data, translator);
+        pg.Run();
+
         GenerateMethods();
     }
 
@@ -233,12 +236,13 @@ unsafe class ClassesGenerator {
                         || (meth->flags & (ushort) Smoke.MethodFlags.mf_copyctor) > 0
                         || (meth->flags & (ushort) Smoke.MethodFlags.mf_dtor) > 0
                         || (meth->flags & (ushort) Smoke.MethodFlags.mf_static) > 0
-                        || (meth->flags & (ushort) Smoke.MethodFlags.mf_internal) > 0)
+                        || (meth->flags & (ushort) Smoke.MethodFlags.mf_internal) > 0
+                        || (meth->flags & (ushort) Smoke.MethodFlags.mf_property) > 0)
                     {
                         continue;
                     }
 
-                    methgen.Generate(meth, pair.Value);
+                    methgen.GenerateMethod(meth, pair.Value);
                 }
             }
 
@@ -250,11 +254,14 @@ unsafe class ClassesGenerator {
                     continue;
                 }
 
+                if ((meth->flags & (ushort) Smoke.MethodFlags.mf_property) > 0)
+                    continue;
+
                 // already implemented?
                 if (implementMethods.ContainsKey(map->method))
                     continue;
 
-                methgen.Generate(map->method, mungedName);
+                methgen.GenerateMethod(map->method, mungedName);
             } else if (map->method < 0) {
                 for (short *overload = data.Smoke->ambiguousMethodList + (-map->method); *overload > 0; overload++) {
                     Smoke.Method *meth = data.Smoke->methods + *overload;
@@ -263,7 +270,10 @@ unsafe class ClassesGenerator {
                         continue;
                     }
 
-                    // if the methods only differ by const, we will generate special code
+                    if ((meth->flags & (ushort) Smoke.MethodFlags.mf_property) > 0)
+                        continue;
+
+                    // if the methods differ only by constness, we will generate special code
                     bool nextDiffersByConst = false;
                     if (*(overload + 1) > 0) {
                         if (SmokeMethodEqualityComparer.EqualExceptConstness(meth, data.Smoke->methods + *(overload + 1)))
@@ -274,7 +284,7 @@ unsafe class ClassesGenerator {
                     if (implementMethods.ContainsKey(*overload))
                         continue;
 
-                    methgen.Generate(*overload, mungedName);
+                    methgen.GenerateMethod(*overload, mungedName);
                     if (nextDiffersByConst)
                         overload++;
                 }
