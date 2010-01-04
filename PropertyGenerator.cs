@@ -20,6 +20,7 @@
 using System;
 using System.Diagnostics;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.CodeDom;
@@ -101,8 +102,9 @@ unsafe class PropertyGenerator {
                 cmp.HasGet = true;
                 cmp.HasSet = prop.IsWritable;
 
+                // ===== get-method =====
                 string getterName = prop.Name;
-                short methNameId = data.Smoke->idMethodName(prop.Name);
+                short methNameId = data.Smoke->idMethodName(getterName);
                 short getterMapId = data.Smoke->idMethod(classId, methNameId);
                 if (getterMapId == 0 && prop.Type == "bool") {
                     // bool methods often begin with isFoo()
@@ -111,7 +113,7 @@ unsafe class PropertyGenerator {
                     getterMapId = data.Smoke->idMethod(classId, methNameId);
                 }
                 if (getterMapId == 0) {
-                    Debug.Print("  |--Missing getter method for property {0}::{1} - using QObject.Property()", className, prop.Name);
+                    Debug.Print("  |--Missing 'get' method for property {0}::{1} - using QObject.Property()", className, prop.Name);
                     cmp.GetStatements.Add(new CodeMethodReturnStatement(
                         new CodeMethodInvokeExpression(
                             new CodeMethodReferenceExpression(new CodeMethodInvokeExpression(new CodeThisReferenceExpression(), "Property", new CodePrimitiveExpression(prop.Name)),
@@ -131,12 +133,12 @@ unsafe class PropertyGenerator {
                     if (   (getter->flags & (uint) Smoke.MethodFlags.mf_virtual) == 0
                         && (getter->flags & (uint) Smoke.MethodFlags.mf_purevirtual) == 0)
                     {
-                        cmp.GetStatements.Add(new CodeMethodReturnStatement(
+                        cmp.GetStatements.Add(new CodeMethodReturnStatement(new CodeCastExpression(cmp.Type,
                             new CodeMethodInvokeExpression(SmokeSupport.interceptor_Invoke,
                                 new CodePrimitiveExpression(getterName), new CodePrimitiveExpression(data.Smoke->GetMethodSignature(getter)),
                                 new CodeTypeOfExpression(cmp.Type)
                             )
-                        ));
+                        )));
                         // implement the property here
                     } else {
                         cmp.HasGet = false;
@@ -147,8 +149,90 @@ unsafe class PropertyGenerator {
                     }
                 }
 
+                // ===== set-method =====
+                if (!prop.IsWritable) {
+                    // not writable? => continue
+                    type.Members.Add(cmp);
+                    continue;
+                }
+
+                char mungedSuffix;
+                if (translator.IsPrimitiveType(prop.Type) || prop.IsEnum) {
+                    // scalar
+                    mungedSuffix = '$';
+                } else if (prop.Type.Contains("<")) {
+                    // generic type
+                    mungedSuffix = '?';
+                } else {
+                    mungedSuffix = '#';
+                }
+                string setterName = "set" + capitalized;
+                short setterMethId = FindSetMethodId(classId, setterName, ref mungedSuffix);
+                if (setterMethId == 0) {
+                    Console.WriteLine("{0}::{1}: no methId", className, setterName);
+                    // try with 're' prefix, e.g. 'resize'
+                    setterName = "re" + prop.Name;
+                    setterMethId = FindSetMethodId(classId, setterName, ref mungedSuffix);
+                }
+                if (setterMethId == 0) {
+                    Debug.Print("  |--Missing 'set' method for property {0}::{1} - using QObject.SetProperty()", className, prop.Name);
+                    cmp.SetStatements.Add(new CodeExpressionStatement(
+                        new CodeMethodInvokeExpression(new CodeThisReferenceExpression(), "SetProperty", new CodePrimitiveExpression(prop.Name),
+                            new CodeMethodInvokeExpression(
+                                new CodeMethodReferenceExpression(new CodeTypeReferenceExpression("QVariant"), "FromValue", cmp.Type),
+                                new CodeArgumentReferenceExpression("value")
+                            )
+                        )
+                    ));
+                } else {
+                    if (!cmp.HasGet) {
+                        // so the 'get' method is virtual - generating a property for only the 'set' method is a bad idea
+                        MethodsGenerator mg = new MethodsGenerator(data, translator, type);
+                        mg.GenerateMethod(setterMethId, setterName + mungedSuffix);
+                        continue;
+                    } else {
+                        cmp.SetStatements.Add(new CodeExpressionStatement(
+                            new CodeMethodInvokeExpression(SmokeSupport.interceptor_Invoke,
+                                new CodePrimitiveExpression(setterName + mungedSuffix), new CodePrimitiveExpression(data.Smoke->GetMethodSignature(setterMethId)),
+                                new CodeTypeOfExpression(typeof(void)), new CodeTypeOfExpression(cmp.Type), new CodeArgumentReferenceExpression("value")
+                            )
+                        ));
+                    }
+                }
+
                 type.Members.Add(cmp);
             }
         }
+    }
+
+    static char[] mungedSuffixes = { '#', '$', '?' };
+
+    short FindSetMethodId(short classId, string name, ref char mungedSuffix) {
+        int idx = Array.IndexOf(mungedSuffixes, mungedSuffix);
+        int i = idx;
+        do {
+            // loop through the other elements, try various munged names
+            mungedSuffix = mungedSuffixes[i];
+            short methNameId = data.Smoke->idMethodName(name + mungedSuffix);
+            short methMapId = data.Smoke->idMethod(classId, methNameId);
+            if (methMapId == 0)
+                continue;
+            short methId = data.Smoke->methodMaps[methMapId].method;
+            if (methId < 0) {
+                for (short* id = data.Smoke->ambiguousMethodList + (-methId); *id > 0; id++) {
+                    Smoke.Method* method = data.Smoke->methods + *id;
+                    if ((method->flags & (uint) Smoke.MethodFlags.mf_property) > 0) {
+                        // actually we'd need to check for the parameter type here, but for now we simply trust that there's only
+                        // one property accessor with that name and munged signature
+                        return *id;
+                    }
+                }
+            } else {
+                Smoke.Method* method = data.Smoke->methods + methId;
+                if ((method->flags & (uint) Smoke.MethodFlags.mf_property) > 0)
+                    return methId;
+            }
+        } while ((i = (i + 1) % mungedSuffixes.Length) != idx); // automatically moves from the end to the beginning
+        return 0;
     }
 }

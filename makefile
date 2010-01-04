@@ -10,7 +10,7 @@ main.exe: libsmokeloader.so $(CS_SOURCE)
 	gmcs -define:DEBUG -debug -unsafe -out:main.exe $(CS_SOURCE)
 
 test: main.exe
-	mono main.exe -verbose -unsafe -out:out.dll -code-file:out.cs -keyfile:$$HOME/dev/KDE/kdebindings/csharp/key.snk \
-		QPair.cs ~/dev/KDE/kdebindings/csharp/qyoto/core/QVariantExtras.cs ~/dev/KDE/kdebindings/csharp/qyoto/src/*.cs
+	mono main.exe -unsafe -out:out.dll -code-file:out.cs -keyfile:$$HOME/dev/KDE/kdebindings/csharp/key.snk \
+		QPair.cs QVariantExtras.cs ~/dev/KDE/kdebindings/csharp/qyoto/src/*.cs
 
 # kate: space-indent off; mixed-indent off
