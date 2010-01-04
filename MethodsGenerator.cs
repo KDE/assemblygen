@@ -363,6 +363,7 @@ unsafe class MethodsGenerator {
         if (cmm == null)
             return;
 
+        // put the method into the correct type
         CodeTypeDeclaration containingType = type;
         if (cmm.Name.StartsWith("operator") || cmm.Name.StartsWith("explicit ")) {
             if (!data.CSharpTypeMap.TryGetValue(cmm.Parameters[0].Type.GetStringRepresentation(), out containingType)) {
@@ -373,15 +374,18 @@ unsafe class MethodsGenerator {
             }
         }
 
+        // already implemented?
         if (containingType.HasMethod(cmm)) {
             Debug.Print("  |--Skipping already implemented method {0}", cppSignature);
             return;
         }
 
+        // generate the SmokeMethod attribute
         CodeAttributeDeclaration attr = new CodeAttributeDeclaration("SmokeMethod",
             new CodeAttributeArgument(new CodePrimitiveExpression(cppSignature)));
         cmm.CustomAttributes.Add(attr);
 
+        // choose the correct 'interceptor'
         CodeMethodInvokeExpression invoke;
         if ((cmm.Attributes & MemberAttributes.Static) == MemberAttributes.Static) {
             invoke = new CodeMethodInvokeExpression(SmokeSupport.staticInterceptor_Invoke);
@@ -389,8 +393,11 @@ unsafe class MethodsGenerator {
             invoke = new CodeMethodInvokeExpression(SmokeSupport.interceptor_Invoke);
         }
 
+        // first pass the munged name, then the C++ signature
         invoke.Parameters.Add(new CodePrimitiveExpression(mungedName));
         invoke.Parameters.Add(new CodePrimitiveExpression(cppSignature));
+
+        // retrieve the return type
         CodeTypeReference returnType;
         if ((method->flags & (uint) Smoke.MethodFlags.mf_dtor) > 0) {
             // destructor
@@ -401,12 +408,21 @@ unsafe class MethodsGenerator {
         } else {
             returnType = cmm.ReturnType;
         }
+        // add the return type
         invoke.Parameters.Add(new CodeTypeOfExpression(returnType));
+
+        // add the parameters
         foreach (CodeParameterDeclarationExpression param in cmm.Parameters) {
             invoke.Parameters.Add(new CodeTypeOfExpression(param.Type));
             invoke.Parameters.Add(new CodeArgumentReferenceExpression(param.Name));
         }
 
+        // we have to call "CreateProxy()" in constructors
+        if (cmm is CodeConstructor) {
+            cmm.Statements.Add(new CodeExpressionStatement(new CodeMethodInvokeExpression(new CodeThisReferenceExpression(), "CreateProxy")));
+        }
+
+        // add the method call statement
         CodeStatement statement;
         if (method->ret > 0 && (method->flags & (uint) Smoke.MethodFlags.mf_ctor) == 0) {
             statement = new CodeMethodReturnStatement(new CodeCastExpression(returnType, invoke));
