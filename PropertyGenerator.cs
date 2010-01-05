@@ -159,7 +159,7 @@ unsafe class PropertyGenerator {
                 }
 
                 char mungedSuffix;
-                if (translator.IsPrimitiveType(prop.Type) || prop.IsEnum) {
+                if (Util.IsPrimitiveType(prop.Type) || prop.IsEnum) {
                     // scalar
                     mungedSuffix = '$';
                 } else if (prop.Type.Contains("<")) {

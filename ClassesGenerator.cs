@@ -199,6 +199,7 @@ unsafe class ClassesGenerator {
         short currentClassId = 0;
         Smoke.Class *klass = (Smoke.Class*) IntPtr.Zero;
         MethodsGenerator methgen = null;
+        AttributeGenerator attrgen = null;
         CodeTypeDeclaration type = null;
 
         // Contains inherited methods that have to be implemented by the current class.
@@ -215,6 +216,12 @@ unsafe class ClassesGenerator {
                 type = data.SmokeTypeMap[(IntPtr) klass];
 
                 methgen = new MethodsGenerator(data, translator, type);
+
+                if (attrgen != null) {
+                    // generate all scheduled attributes
+                    attrgen.Run();
+                }
+                attrgen = new AttributeGenerator(data, translator, type);
 
                 implementMethods.Clear();
 
@@ -242,6 +249,8 @@ unsafe class ClassesGenerator {
                             && (meth->flags & (ushort) Smoke.MethodFlags.mf_purevirtual) == 0))
                     {
                         continue;
+                    } else if ((meth->flags & (ushort) Smoke.MethodFlags.mf_attribute) > 0) {
+                        attrgen.ScheduleAttributeAccessor(meth);
                     }
 
                     methgen.GenerateMethod(meth, pair.Value);
@@ -260,6 +269,9 @@ unsafe class ClassesGenerator {
                     && (meth->flags & (ushort) Smoke.MethodFlags.mf_virtual) == 0
                     && (meth->flags & (ushort) Smoke.MethodFlags.mf_purevirtual) == 0)
                 {
+                    continue;
+                } else if ((meth->flags & (ushort) Smoke.MethodFlags.mf_attribute) > 0) {
+                    attrgen.ScheduleAttributeAccessor(meth);
                     continue;
                 }
 
@@ -280,6 +292,9 @@ unsafe class ClassesGenerator {
                         && (meth->flags & (ushort) Smoke.MethodFlags.mf_virtual) == 0
                         && (meth->flags & (ushort) Smoke.MethodFlags.mf_purevirtual) == 0)
                     {
+                        continue;
+                    } else if ((meth->flags & (ushort) Smoke.MethodFlags.mf_attribute) > 0) {
+                        attrgen.ScheduleAttributeAccessor(meth);
                         continue;
                     }
 
