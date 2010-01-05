@@ -243,11 +243,9 @@ unsafe class ClassesGenerator {
                         || (meth->flags & (ushort) Smoke.MethodFlags.mf_copyctor) > 0
                         || (meth->flags & (ushort) Smoke.MethodFlags.mf_dtor) > 0
                         || (meth->flags & (ushort) Smoke.MethodFlags.mf_static) > 0
-                        || (meth->flags & (ushort) Smoke.MethodFlags.mf_internal) > 0
-                        || (   (meth->flags & (ushort) Smoke.MethodFlags.mf_property) > 0   // non-virtual properties are excluded
-                            && (meth->flags & (ushort) Smoke.MethodFlags.mf_virtual) == 0
-                            && (meth->flags & (ushort) Smoke.MethodFlags.mf_purevirtual) == 0))
+                        || (meth->flags & (ushort) Smoke.MethodFlags.mf_internal) > 0)
                     {
+                        // no need to check for properties here - QObjects don't support multiple inheritance anyway
                         continue;
                     } else if ((meth->flags & (ushort) Smoke.MethodFlags.mf_attribute) > 0) {
                         attrgen.ScheduleAttributeAccessor(meth);

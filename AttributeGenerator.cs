@@ -59,6 +59,7 @@ unsafe class AttributeGenerator {
         Attribute attr;
         if (!attributes.TryGetValue(name, out attr)) {
             attr = new Attribute();
+            attributes.Add(name, attr);
         }
 
         if (isSetMethod) {
@@ -68,6 +69,60 @@ unsafe class AttributeGenerator {
         }
     }
 
+    public List<CodeMemberProperty> GenerateBasicAttributeDefinitions() {
+        List<CodeMemberProperty> ret = new List<CodeMemberProperty>();
+        foreach (KeyValuePair<string, Attribute> pair in attributes) {
+            Attribute attr = pair.Value;
+            CodeMemberProperty prop = new CodeMemberProperty();
+            prop.Name = pair.Key;
+            try {
+                bool isRef;
+                prop.Type = translator.CppToCSharp(data.Smoke->types + attr.GetMethod->ret, out isRef);
+            } catch (NotSupportedException) {
+                string className = ByteArrayManager.GetString(data.Smoke->classes[attr.GetMethod->classId].className);
+                Debug.Print("  |--Won't wrap Attribute {0}::{1}", className, prop.Name);
+                continue;
+            }
+            prop.HasGet = true;
+            prop.HasSet = attr.SetMethod != (Smoke.Method*) 0;
+
+            if ((attr.GetMethod->flags & (uint) Smoke.MethodFlags.mf_protected) > 0) {
+                prop.Attributes = MemberAttributes.Family | MemberAttributes.New | MemberAttributes.Final;
+            } else {
+                prop.Attributes = MemberAttributes.Public | MemberAttributes.New | MemberAttributes.Final;
+            }
+
+            if ((attr.GetMethod->flags & (uint) Smoke.MethodFlags.mf_static) > 0)
+                prop.Attributes |= MemberAttributes.Static;
+
+            ret.Add(prop);
+        }
+        return ret;
+    }
+
     public void Run() {
+        foreach (CodeMemberProperty cmp in GenerateBasicAttributeDefinitions()) {
+            Attribute attr = attributes[cmp.Name];
+            CodeMethodReferenceExpression interceptorReference =
+                ((attr.GetMethod->flags & (uint) Smoke.MethodFlags.mf_static) == 0) ? SmokeSupport.interceptor_Invoke : SmokeSupport.staticInterceptor_Invoke;
+            cmp.GetStatements.Add(new CodeMethodReturnStatement(new CodeCastExpression(cmp.Type,
+                new CodeMethodInvokeExpression(interceptorReference, new CodePrimitiveExpression(FindMungedName(attr.GetMethod)),
+                    new CodePrimitiveExpression(data.Smoke->GetMethodSignature(attr.GetMethod)), new CodeTypeOfExpression(cmp.Type)
+                )
+            )));
+
+            if (cmp.HasSet) {
+                cmp.SetStatements.Add(new CodeMethodInvokeExpression(interceptorReference, new CodePrimitiveExpression(FindMungedName(attr.GetMethod)),
+                        new CodePrimitiveExpression(data.Smoke->GetMethodSignature(attr.GetMethod)), new CodeTypeOfExpression(typeof(void)),
+                        new CodeTypeOfExpression(cmp.Type), new CodeArgumentReferenceExpression("value")
+                ));
+            }
+
+            type.Members.Add(cmp);
+        }
+    }
+
+    string FindMungedName(Smoke.Method* meth) {
+        return null;
     }
 }

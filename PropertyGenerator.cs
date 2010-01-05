@@ -101,6 +101,8 @@ unsafe class PropertyGenerator {
 
                 cmp.HasGet = true;
                 cmp.HasSet = prop.IsWritable;
+                cmp.Attributes = MemberAttributes.Public | MemberAttributes.New | MemberAttributes.Final;
+
                 cmp.CustomAttributes.Add(new CodeAttributeDeclaration("Q_PROPERTY",
                     new CodeAttributeArgument(new CodePrimitiveExpression(prop.Type)), new CodeAttributeArgument(new CodePrimitiveExpression(prop.Name))));
 
