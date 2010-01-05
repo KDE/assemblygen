@@ -22,9 +22,11 @@ using System.Collections.Generic;
 using System.Text;
 
 static class Util {
-    public static bool IsPrimitiveType(string input) {
-        if (   input == "char" || input == "short" || input == "int" || input == "long" || input == "float"
-            || input == "double" || input == "long long" || input == "bool")
+    public static bool IsPrimitiveType(string type) {
+        type = type.Replace("unsigned ", "u");
+        if (   type == "char" || type == "uchar" || type == "short" || type == "ushort" || type == "int" || type == "uint"
+            || type == "long" || type == "long long" || type == "ulong" || type == "ulong long" || type == "float" || type == "double"
+            || type == "bool" || type == "void")
         {
             return true;
         }

@@ -126,17 +126,6 @@ unsafe class Translator {
 
 #region public functions
 
-    public bool IsPrimitiveType(string type) {
-        type = type.Replace("unsigned ", "u");
-        if (   type == "char" || type == "uchar" || type == "short" || type == "ushort" || type == "int" || type == "uint"
-            || type == "long" || type == "long long" || type == "ulong" || type == "ulong long" || type == "float" || type == "double"
-            || type == "bool" || type == "void")
-        {
-            return true;
-        }
-        return false;
-    }
-
     public CodeTypeReference CppToCSharp(Smoke.Class* klass) {
         bool isRef;
         return CppToCSharp(ByteArrayManager.GetString(klass->className), out isRef);
