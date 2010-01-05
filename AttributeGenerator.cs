@@ -106,23 +106,20 @@ unsafe class AttributeGenerator {
             CodeMethodReferenceExpression interceptorReference =
                 ((attr.GetMethod->flags & (uint) Smoke.MethodFlags.mf_static) == 0) ? SmokeSupport.interceptor_Invoke : SmokeSupport.staticInterceptor_Invoke;
             cmp.GetStatements.Add(new CodeMethodReturnStatement(new CodeCastExpression(cmp.Type,
-                new CodeMethodInvokeExpression(interceptorReference, new CodePrimitiveExpression(FindMungedName(attr.GetMethod)),
+                new CodeMethodInvokeExpression(interceptorReference, new CodePrimitiveExpression(ByteArrayManager.GetString(data.Smoke->methodNames[attr.GetMethod->name])),
                     new CodePrimitiveExpression(data.Smoke->GetMethodSignature(attr.GetMethod)), new CodeTypeOfExpression(cmp.Type)
                 )
             )));
 
             if (cmp.HasSet) {
-                cmp.SetStatements.Add(new CodeMethodInvokeExpression(interceptorReference, new CodePrimitiveExpression(FindMungedName(attr.GetMethod)),
-                        new CodePrimitiveExpression(data.Smoke->GetMethodSignature(attr.GetMethod)), new CodeTypeOfExpression(typeof(void)),
+                cmp.SetStatements.Add(new CodeMethodInvokeExpression(interceptorReference,
+                        new CodePrimitiveExpression(ByteArrayManager.GetString(data.Smoke->methodNames[data.Smoke->FindMungedName(attr.SetMethod)])),
+                        new CodePrimitiveExpression(data.Smoke->GetMethodSignature(attr.SetMethod)), new CodeTypeOfExpression(typeof(void)),
                         new CodeTypeOfExpression(cmp.Type), new CodeArgumentReferenceExpression("value")
                 ));
             }
 
             type.Members.Add(cmp);
         }
-    }
-
-    string FindMungedName(Smoke.Method* meth) {
-        return null;
     }
 }

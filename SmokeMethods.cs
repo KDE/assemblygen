@@ -99,6 +99,47 @@ unsafe partial struct Smoke {
         return 0;
     }
 
+    public short FindMungedName(Smoke.Method* meth) {
+        short imax = numMethodMaps;
+        short imin = 1;
+        short icur = -1;
+        int icmp = -1;
+
+        short c = meth->classId;
+        short name = meth->name;
+        short searchId = (short) (meth - methods);
+
+        while (imax >= imin) {
+            icur = (short) ((imin + imax) / 2);
+            icmp = methodMaps[icur].classId - c;
+            if (icmp == 0) {
+                // move to the beginning of this class
+                while (methodMaps[icur - 1].classId == c) {
+                    icur--;
+                }
+                // we found the class, let's go hunt for the munged name
+                while (methodMaps[icur].classId == c) {
+                    if (methodMaps[icur].method == searchId) {
+                        return methodMaps[icur].name;
+                    } else if (methodMaps[icur].method < 0) {
+                        for (short *id = ambiguousMethodList + (-methodMaps[icur].method); *id > 0; id++) {
+                            if (*id == searchId)
+                                return methodMaps[icur].name;
+                        }
+                    }
+                    icur++;
+                }
+            }
+            if (icmp > 0) {
+                imax = (short) (icur - 1);
+            } else {
+                imin = (short) (icur + 1);
+            }
+        }
+
+        return 0;
+    }
+
     // adapted from QtRuby's findAllMethods()
     public void FindAllMethods(short c, IDictionary<short, string> ret, bool searchSuperClasses) {
         short imax = numMethodMaps;
