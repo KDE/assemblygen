@@ -106,7 +106,6 @@ unsafe partial struct Smoke {
         int icmp = -1;
 
         short c = meth->classId;
-        short name = meth->name;
         short searchId = (short) (meth - methods);
 
         while (imax >= imin) {

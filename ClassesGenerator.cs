@@ -314,6 +314,8 @@ unsafe class ClassesGenerator {
             }
         }
 
+        // Generate the last scheduled attributes
+        attrgen.Run();
         AddMissingOperators();
     }
 
