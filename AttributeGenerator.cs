@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Collections.Generic;
 using System.CodeDom;
+using System.Linq;
 
 unsafe class AttributeGenerator {
 
@@ -54,6 +55,17 @@ unsafe class AttributeGenerator {
             StringBuilder builder = new StringBuilder(name);
             builder[0] = char.ToUpper(builder[0]);
             name = builder.ToString();
+        }
+
+        // If the new name clashes with a name of a type declaration, keep the lower-case name.
+        var typesWithSameName = from typeDecl in data.GetAccessibleNestedMembers(data.Smoke->classes + meth->classId)
+                                where typeDecl is CodeTypeDeclaration
+                                where typeDecl.Name == name
+                                select typeDecl;
+        if (typesWithSameName.Count() > 0) {
+            string className = ByteArrayManager.GetString(data.Smoke->classes[meth->classId].className);
+            Debug.Print("  |--Conflicting names: property/type: {0} in class {1} - keeping original property name", name, className);
+            name = char.ToLower(name[0]) + name.Substring(1);
         }
 
         Attribute attr;

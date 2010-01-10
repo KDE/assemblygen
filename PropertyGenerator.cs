@@ -173,7 +173,6 @@ unsafe class PropertyGenerator {
                 string setterName = "set" + capitalized;
                 short setterMethId = FindSetMethodId(classId, setterName, ref mungedSuffix);
                 if (setterMethId == 0) {
-                    Console.WriteLine("{0}::{1}: no methId", className, setterName);
                     // try with 're' prefix, e.g. 'resize'
                     setterName = "re" + prop.Name;
                     setterMethId = FindSetMethodId(classId, setterName, ref mungedSuffix);

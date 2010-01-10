@@ -56,6 +56,16 @@ Q_DECL_EXPORT void DestroySmoke(Smoke* smoke)
     delete smoke;
 }
 
+Q_DECL_EXPORT bool GetModuleIndexFromClassName(const char* name, Smoke** smoke, short* index)
+{
+    Smoke::ModuleIndex mi = Smoke::classMap[name];
+    *smoke = mi.smoke;
+    *index = mi.index;
+    if (!mi.index)
+        return false;
+    return true;
+}
+
 Q_DECL_EXPORT long GetEnumValue(Smoke* smoke, Smoke::Method* meth)
 {
     Smoke::ClassFn fn = smoke->classes[meth->classId].classFn;
