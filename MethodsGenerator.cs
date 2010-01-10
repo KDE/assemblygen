@@ -154,6 +154,11 @@ unsafe class MethodsGenerator {
         int count = 1;
         bool isRef;
         string className = ByteArrayManager.GetString(data.Smoke->classes[method->classId].className);
+        string csharpClassName = className;
+        int indexOfColon = csharpClassName.LastIndexOf("::");
+        if (indexOfColon != -1) {
+            csharpClassName = csharpClassName.Substring(indexOfColon + 2);
+        }
 
         // make instance operators static and bring the arguments in the correct order
         string methName = ByteArrayManager.GetString(data.Smoke->methodNames[method->name]);
@@ -265,6 +270,8 @@ unsafe class MethodsGenerator {
                                         select typeDecl;
                 if (typesWithSameName.Count() > 0) {
                     Debug.Print("  |--Conflicting names: method/(type or property): {0} in class {1} - keeping original method name", tmp, className);
+                } else if (tmp == csharpClassName) {
+                    Debug.Print("  |--Conflicting names: method/classname: {0} in class {1} - keeping original method name", tmp, className);
                 } else {
                     csName = tmp;
                 }
