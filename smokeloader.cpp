@@ -17,8 +17,10 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#include <QFileInfo>
 #include <QLibrary>
 #include <QMetaProperty>
+#include <QRegExp>
 #include <QtDebug>
 
 #include <smoke.h>
@@ -27,10 +29,12 @@ typedef void (*InitSmokeFn)();
 
 extern "C" {
 
-Q_DECL_EXPORT Smoke* InitSmoke(const char* module)
+Q_DECL_EXPORT Smoke* InitSmoke(const char* lib)
 {
-    QString lib = "smoke" + QString(module);
-    QByteArray symbol = "init_" + QByteArray(module) + "_Smoke";
+    QFileInfo fileInfo(lib);
+
+    QByteArray module = fileInfo.baseName().replace(QRegExp("^(lib)?smoke"), QString()).toLatin1();
+    QByteArray symbol = "init_" + module + "_Smoke";
 
     QLibrary qLib(lib);
     InitSmokeFn init = (InitSmokeFn) qLib.resolve(symbol.constData());
@@ -41,7 +45,7 @@ Q_DECL_EXPORT Smoke* InitSmoke(const char* module)
     }
 
     (*init)();
-    symbol = module + QByteArray("_Smoke");
+    symbol = module + "_Smoke";
     void* smoke = qLib.resolve(symbol.constData());
 
     if (!smoke) {

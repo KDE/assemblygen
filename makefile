@@ -9,8 +9,15 @@ CS_SOURCE=Smoke.cs SmokeMethods.cs ByteArrayManager.cs MethodsGenerator.cs Prope
 main.exe: libsmokeloader.so $(CS_SOURCE)
 	gmcs -define:DEBUG -debug -unsafe -out:main.exe $(CS_SOURCE)
 
-test: main.exe
-	mono main.exe -unsafe -out:out.dll -code-file:out.cs -keyfile:$$HOME/dev/KDE/kdebindings/csharp/key.snk \
+qtcore: main.exe
+	mono main.exe -unsafe -out:qyoto-qtcore.dll -code-file:qyoto-qtcore.cs -keyfile:$$HOME/dev/KDE/kdebindings/csharp/key.snk libsmokeqtcore.so \
 		QPair.cs QVariantExtras.cs ~/dev/KDE/kdebindings/csharp/qyoto/src/*.cs
+
+qtgui: main.exe
+	mono main.exe -unsafe -out:qyoto-qtcore.dll -code-file:qyoto-qtcore.cs -keyfile:$$HOME/dev/KDE/kdebindings/csharp/key.snk -r:qyoto-qtcore.dll -verbose libsmokeqtgui.so
+
+kdecore: main.exe
+	mono main.exe -unsafe -out:kimono-kdecore.dll -code-file:kimono-kdecore.cs -keyfile:$$HOME/dev/KDE/kdebindings/csharp/key.snk libsmokekdecore.so \
+		QPair.cs QVariantExtras.cs ~/dev/KDE/kdebindings/csharp/qyoto/src/*.cs -r:qyoto-qtcore.dll
 
 # kate: space-indent off; mixed-indent off

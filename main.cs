@@ -48,6 +48,7 @@ class MainClass {
         string codeFile = string.Empty;
         string assemblyFile = "out.dll";
         int warnLevel = 0;
+        string smokeLib = null;
 
         foreach (string arg in args) {
             if (arg == "-verbose") {
@@ -71,6 +72,11 @@ class MainClass {
                 continue;
             }
 
+            if (smokeLib == null) {
+                smokeLib = arg;
+                continue;
+            }
+
             FileStream fs = new FileStream(arg, FileMode.Open);
             StreamReader sr = new StreamReader(fs);
             codeSnippets.Add(new CodeSnippetCompileUnit(sr.ReadToEnd()));
@@ -78,7 +84,7 @@ class MainClass {
             fs.Close();
         }
 
-        Smoke *smoke = InitSmoke("qtcore");
+        Smoke *smoke = InitSmoke(smokeLib);
         if (smoke == (Smoke*) 0) {
             return SmokeLoadingFailure;
         }

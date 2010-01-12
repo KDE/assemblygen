@@ -88,22 +88,9 @@ unsafe class ClassesGenerator {
             }
         } else {
             short *parent = data.Smoke->inheritanceList + smokeClass->parents;
-            bool firstParent = true;
-            while (*parent > 0) {
-                if (firstParent) {
-                    type.BaseTypes.Add(new CodeTypeReference(ByteArrayManager.GetString((data.Smoke->classes + *parent)->className).Replace("::", ".")));
-                    firstParent = false;
-                    parent++;
-                    continue;
-                }
-                // Translator.CppToCSharp() will take care of 'interfacifying' the class name
-                type.BaseTypes.Add(translator.CppToCSharp(data.Smoke->classes + *parent));
-                parent++;
+            if (*parent > 0) {
+                type.BaseTypes.Add(new CodeTypeReference(ByteArrayManager.GetString((data.Smoke->classes + *parent)->className).Replace("::", ".")));
             }
-        }
-        CodeTypeDeclaration iface;
-        if (data.InterfaceTypeMap.TryGetValue(smokeName, out iface)) {
-            type.BaseTypes.Add(new CodeTypeReference('I' + name));
         }
 
         DefineWrapperClassFieldsAndMethods(smokeClass, type);
@@ -172,10 +159,6 @@ unsafe class ClassesGenerator {
      * A MethodGenerator is then created to generate the methods for that class.
      */
     public void Run() {
-        // create interfaces if necessary
-        ClassInterfacesGenerator cig = new ClassInterfacesGenerator(data, translator);
-        cig.Run();
-
         for (short i = 1; i <= data.Smoke->numClasses; i++) {
             Smoke.Class* klass = data.Smoke->classes + i;
             if (klass->external)
@@ -185,6 +168,36 @@ unsafe class ClassesGenerator {
         }
 
         eg.DefineEnums();
+
+        // create interfaces if necessary
+        ClassInterfacesGenerator cig = new ClassInterfacesGenerator(data, translator);
+        cig.Run();
+
+        for (short i = 1; i <= data.Smoke->numClasses; i++) {
+            Smoke.Class* klass = data.Smoke->classes + i;
+            if (klass->external)
+                continue;
+
+            string className = ByteArrayManager.GetString(klass->className);
+            CodeTypeDeclaration type = data.SmokeTypeMap[(IntPtr) klass];
+            CodeTypeDeclaration iface;
+            if (data.InterfaceTypeMap.TryGetValue(className, out iface)) {
+                type.BaseTypes.Add(new CodeTypeReference('I' + type.Name));
+            }
+
+            short *parent = data.Smoke->inheritanceList + klass->parents;
+            bool firstParent = true;
+            while (*parent > 0) {
+                if (firstParent) {
+                    firstParent = false;
+                    parent++;
+                    continue;
+                }
+                // Translator.CppToCSharp() will take care of 'interfacifying' the class name
+                type.BaseTypes.Add(translator.CppToCSharp(data.Smoke->classes + *parent));
+                parent++;
+            }
+        }
 
         PropertyGenerator pg = new PropertyGenerator(data, translator);
         pg.Run();
