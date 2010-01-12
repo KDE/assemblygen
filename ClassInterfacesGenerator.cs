@@ -105,7 +105,9 @@ unsafe class ClassInterfacesGenerator {
                 }
 
                 CodeMemberMethod cmm = mg.GenerateBasicMethodDefinition(meth);
-                ifaceDecl.Members.Add(cmm);
+                if (cmm != null) {
+                    ifaceDecl.Members.Add(cmm);
+                }
             }
 
             data.GetTypeCollection(prefix).Add(ifaceDecl);
