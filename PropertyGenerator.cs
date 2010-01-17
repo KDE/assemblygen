@@ -126,6 +126,10 @@ unsafe class PropertyGenerator {
                     }
 
                     Smoke.Method* getter = data.Smoke->methods + getterId;
+                    if (getter->classId != classId) {
+                        // The actual get method is defined in a parent class - don't create a property for it.
+                        continue;
+                    }
                     if (   (getter->flags & (uint) Smoke.MethodFlags.mf_virtual) == 0
                         && (getter->flags & (uint) Smoke.MethodFlags.mf_purevirtual) == 0)
                     {
@@ -165,7 +169,13 @@ unsafe class PropertyGenerator {
                         )
                     ));
                 } else {
-                    string setterName = ByteArrayManager.GetString(data.Smoke->methodNames[data.Smoke->methods[setterMethId].name]);
+                    Smoke.Method* setter = data.Smoke->methods + setterMethId;
+                    if (setter->classId != classId) {
+                        // defined in parent class, continue
+                        type.Members.Add(cmp);
+                        continue;
+                    }
+                    string setterName = ByteArrayManager.GetString(data.Smoke->methodNames[setter->name]);
                     if (!cmp.HasGet) {
                         // so the 'get' method is virtual - generating a property for only the 'set' method is a bad idea
                         MethodsGenerator mg = new MethodsGenerator(data, translator, type);
