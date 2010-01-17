@@ -90,6 +90,9 @@ unsafe class EnumGenerator {
             return;
 
         string typeName = ByteArrayManager.GetString(data.Smoke->types[meth->ret].name);
+        if (typeName == "long") // unnamed enum
+            return;
+
         CodeTypeDeclaration enumType;
         if (!data.EnumTypeMap.TryGetValue(typeName, out enumType)) {
             enumType = DefineEnum(typeName);

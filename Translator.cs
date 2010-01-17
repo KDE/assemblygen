@@ -66,6 +66,8 @@ unsafe class Translator {
         { "double", typeof(double) },
         { "bool", typeof(bool) },
         { "void", typeof(void) },
+
+        { "qreal", typeof(double) },
     };
 
     // map a C++ type string to a .NET type string
@@ -90,7 +92,7 @@ unsafe class Translator {
         { "QThread", delegate { throw new NotSupportedException(); } },
         { "QMutex", delegate { throw new NotSupportedException(); } },
         { "QDebug", delegate { throw new NotSupportedException(); } },
-        { "QWidget", delegate { throw new NotSupportedException(); } },
+//         { "QWidget", delegate { throw new NotSupportedException(); } },
         { "QEventPrivate", delegate { throw new NotSupportedException(); } },
         { "QFlags", delegate { throw new NotSupportedException(); } },
         { "QFlag", delegate { throw new NotSupportedException(); } },

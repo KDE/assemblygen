@@ -18,6 +18,7 @@
 */
 
 using System;
+using System.Reflection;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -43,6 +44,7 @@ class MainClass {
 
     public unsafe static int Main(string[] args) {
         List<CodeCompileUnit> codeSnippets = new List<CodeCompileUnit>();
+        List<Assembly> references = new List<Assembly>();
         StringBuilder compilerOptions = new StringBuilder();
         bool codeOnly = false;
         string codeFile = string.Empty;
@@ -65,6 +67,12 @@ class MainClass {
                 continue;
             } else if (arg.StartsWith("-warn:")) {
                 warnLevel = int.Parse(arg.Substring(6));
+                continue;
+            } else if (arg.StartsWith("-r:")) {
+                references.Add(Assembly.LoadFrom(arg.Substring(3)));
+                continue;
+            } else if (arg.StartsWith("-reference:")) {
+                references.Add(Assembly.LoadFrom(arg.Substring(11)));
                 continue;
             } else if (arg.StartsWith("-")) {
                 compilerOptions.Append(" /");
@@ -89,7 +97,7 @@ class MainClass {
             return SmokeLoadingFailure;
         }
 
-        GeneratorData data = new GeneratorData(smoke, "Qyoto");
+        GeneratorData data = new GeneratorData(smoke, "Qyoto", references);
         Translator translator = new Translator(data);
 
         ClassesGenerator classgen = new ClassesGenerator(data, translator);

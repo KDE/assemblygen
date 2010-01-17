@@ -263,11 +263,11 @@ unsafe class MethodsGenerator {
                 string tmp = builder.ToString();
 
                 // If the new name clashes with a name of a type declaration, keep the lower-case name.
-                var typesWithSameName = from typeDecl in data.GetAccessibleNestedMembers(data.Smoke->classes + method->classId)
-                                        where (typeDecl is CodeTypeDeclaration
-                                           || typeDecl is CodeMemberProperty)
-                                           && typeDecl.Name == tmp
-                                        select typeDecl;
+                var typesWithSameName = from member in data.GetAccessibleMembers(data.Smoke->classes + method->classId)
+                                        where (   member.Type == MemberType.Class
+                                               || member.Type == MemberType.Property)
+                                               && member.Name == tmp
+                                        select member;
                 if (typesWithSameName.Count() > 0) {
                     Debug.Print("  |--Conflicting names: method/(type or property): {0} in class {1} - keeping original method name", tmp, className);
                 } else if (tmp == csharpClassName) {

@@ -89,10 +89,10 @@ unsafe class PropertyGenerator {
                 string capitalized = builder.ToString();
 
                 // If the new name clashes with a name of a type declaration, keep the lower-case name.
-                var typesWithSameName = from typeDecl in data.GetAccessibleNestedMembers(data.Smoke->classes + classId)
-                                        where typeDecl is CodeTypeDeclaration
-                                        where typeDecl.Name == capitalized
-                                        select typeDecl;
+                var typesWithSameName = from member in data.GetAccessibleMembers(data.Smoke->classes + classId)
+                                        where member.Type == MemberType.Class
+                                           && member.Name == capitalized
+                                        select member;
                 if (typesWithSameName.Count() > 0) {
                     Debug.Print("  |--Conflicting names: property/type: {0} in class {1} - keeping original property name", capitalized, className);
                 } else {
