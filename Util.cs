@@ -26,7 +26,7 @@ static class Util {
         type = type.Replace("unsigned ", "u");
         if (   type == "char" || type == "uchar" || type == "short" || type == "ushort" || type == "int" || type == "uint"
             || type == "long" || type == "long long" || type == "ulong" || type == "ulong long" || type == "float" || type == "double"
-            || type == "bool" || type == "void")
+            || type == "bool" || type == "void" || type == "qreal" || type == "QString")
         {
             return true;
         }
