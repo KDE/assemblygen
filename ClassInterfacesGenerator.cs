@@ -72,6 +72,7 @@ unsafe class ClassInterfacesGenerator {
 
     public void Run() {
         MethodsGenerator mg = null;
+        AttributeGenerator ag = null;
         foreach (short idx in GetClassList()) {
             Smoke.Class* klass = data.Smoke->classes + idx;
             string className = ByteArrayManager.GetString(klass->className);
@@ -84,8 +85,9 @@ unsafe class ClassInterfacesGenerator {
             CodeTypeDeclaration ifaceDecl = new CodeTypeDeclaration('I' + name);
             ifaceDecl.IsInterface = true;
             mg = new MethodsGenerator(data, translator, ifaceDecl);
+            ag = new AttributeGenerator(data, translator, ifaceDecl);
 
-            // TODO: replace this algorithm, it's highly inefficient
+            ///TODO: replace this algorithm, it's highly inefficient
             for (short i = 0; i <= data.Smoke->numMethods && data.Smoke->methods[i].classId <= idx; i++) {
                 Smoke.Method *meth = data.Smoke->methods + i;
                 if (meth->classId != idx)
@@ -102,12 +104,19 @@ unsafe class ClassInterfacesGenerator {
                     || methName.StartsWith("operator"))
                 {
                     continue;
+                } else if ((meth->flags & (ushort) Smoke.MethodFlags.mf_attribute) > 0) {
+                    ag.ScheduleAttributeAccessor(meth);
+                    continue;
                 }
 
                 CodeMemberMethod cmm = mg.GenerateBasicMethodDefinition(meth);
                 if (cmm != null) {
                     ifaceDecl.Members.Add(cmm);
                 }
+            }
+
+            foreach (CodeMemberProperty prop in ag.GenerateBasicAttributeDefinitions()) {
+                ifaceDecl.Members.Add(prop);
             }
 
             data.GetTypeCollection(prefix).Add(ifaceDecl);

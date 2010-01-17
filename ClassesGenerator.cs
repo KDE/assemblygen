@@ -262,6 +262,7 @@ unsafe class ClassesGenerator {
                         continue;
                     } else if ((meth->flags & (ushort) Smoke.MethodFlags.mf_attribute) > 0) {
                         attrgen.ScheduleAttributeAccessor(meth);
+                        continue;
                     }
 
                     methgen.GenerateMethod(meth, pair.Value);
