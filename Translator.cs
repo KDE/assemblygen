@@ -111,6 +111,8 @@ unsafe class Translator {
         { "QVariant::Private", delegate { throw new NotSupportedException(); } },
         { "QVariant::Handler", delegate { throw new NotSupportedException(); } },
 
+        { "QGraphicsEffectSource", delegate { throw new NotSupportedException(); } },
+        { "QFileDialogArgs", delegate { throw new NotSupportedException(); } },
         { "QX11InfoData", delegate { throw new NotSupportedException(); } },
         { "QTextEngine", delegate { throw new NotSupportedException(); } },
         { "QWindowSurface", delegate { throw new NotSupportedException(); } },
