@@ -146,7 +146,12 @@ unsafe partial struct Smoke {
     }
 
     // adapted from QtRuby's findAllMethods()
-    public void FindAllMethods(short c, IDictionary<short, string> ret, bool searchSuperClasses) {
+    public void FindAllMethods(short c, IDictionary<Smoke.ModuleIndex, string> ret, bool searchSuperClasses) {
+        Smoke *thisPtr;
+        fixed (Smoke *smoke = &this) {
+            thisPtr = smoke;    // hackish, but this is the cleanest way that I know to get the 'this' pointer
+        }
+
         short imax = numMethodMaps;
         short imin = 0, icur = -1, methmin = -1, methmax = -1;
         int icmp = -1;
@@ -176,10 +181,10 @@ unsafe partial struct Smoke {
             string mungedName = ByteArrayManager.GetString(methodNames[methodMaps[i].name]);
             short methId = methodMaps[i].method;
             if (methId > 0) {
-                ret[methId] = mungedName;
+                ret[new Smoke.ModuleIndex(thisPtr, methId)] = mungedName;
             } else {
                 for (short *overload = ambiguousMethodList + (-methId); *overload > 0; overload++) {
-                    ret[*overload] = mungedName;
+                    ret[new Smoke.ModuleIndex(thisPtr, *overload)] = mungedName;
                 }
             }
         }
@@ -202,8 +207,8 @@ unsafe partial struct Smoke {
     }
 
     // convenience overload
-    public Dictionary<short, string> FindAllMethods(short classId, bool searchSuperClasses) {
-        Dictionary<short, string> ret = new Dictionary<short, string>();
+    public Dictionary<Smoke.ModuleIndex, string> FindAllMethods(short classId, bool searchSuperClasses) {
+        Dictionary<Smoke.ModuleIndex, string> ret = new Dictionary<Smoke.ModuleIndex, string>();
         FindAllMethods(classId, ret, searchSuperClasses);
         return ret;
     }

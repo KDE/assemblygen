@@ -18,6 +18,7 @@
 */
 
 using System;
+using System.Reflection;
 using System.Diagnostics;
 using System.Linq;
 using System.Collections;
@@ -91,6 +92,7 @@ unsafe class MethodsGenerator {
     GeneratorData data;
     Translator translator;
     CodeTypeDeclaration type;
+    Smoke.Class *smokeClass;
 
     static List<string> binaryOperators = new List<string>() {
         "!=", "==", "%", "&", "*", "+", "-", "/", "<", "<=", ">", ">=", "^", "|"
@@ -99,30 +101,31 @@ unsafe class MethodsGenerator {
         "!", "~", "+", "++", "-", "--"
     };
     static List<string> unsupportedOperators = new List<string>() {
-        "=", "->", "+=", "-=", "/=", "*=", "%=", "^=", "&=", "|=", "[]"
+        "=", "->", "+=", "-=", "/=", "*=", "%=", "^=", "&=", "|=", "[]", "()"
     };
 
-    public MethodsGenerator(GeneratorData data, Translator translator, CodeTypeDeclaration type) {
+    public MethodsGenerator(GeneratorData data, Translator translator, CodeTypeDeclaration type, Smoke.Class *klass) {
         this.data = data;
         this.translator = translator;
         this.type = type;
+        this.smokeClass = klass;
     }
 
     bool MethodOverrides(Smoke.Method* method, out MemberAttributes access) {
-        Dictionary<short, string> allMethods = data.Smoke->FindAllMethods(method->classId, true);
+        Dictionary<Smoke.ModuleIndex, string> allMethods = data.Smoke->FindAllMethods(method->classId, true);
         // Do this with linq... there's probably room for optimization here.
         // Select virtual and pure virtual methods from superclasses.
-        var inheritedVirtuals = from entry in allMethods
-                                where ((data.Smoke->methods[entry.Key].flags & (ushort) Smoke.MethodFlags.mf_virtual) > 0
-                                    || (data.Smoke->methods[entry.Key].flags & (ushort) Smoke.MethodFlags.mf_purevirtual) > 0)
-                                where data.Smoke->methods[entry.Key].classId != method->classId
-                                select entry.Key;
+        var inheritedVirtuals = from key in allMethods.Keys
+                                where ((key.smoke->methods[key.index].flags & (ushort) Smoke.MethodFlags.mf_virtual) > 0
+                                    || (key.smoke->methods[key.index].flags & (ushort) Smoke.MethodFlags.mf_purevirtual) > 0)
+                                where key.smoke->methods[key.index].classId != method->classId
+                                select key;
 
         access = MemberAttributes.Public;
         bool ret = false;
 
-        foreach (short index in inheritedVirtuals) {
-            Smoke.Method* meth = data.Smoke->methods + index;
+        foreach (Smoke.ModuleIndex mi in inheritedVirtuals) {
+            Smoke.Method* meth = mi.smoke->methods + mi.index;
             if (meth->name == method->name && meth->args == method->args &&
                 (meth->flags & (uint) Smoke.MethodFlags.mf_const) == (method->flags & (uint) Smoke.MethodFlags.mf_const))
             {
@@ -139,11 +142,19 @@ unsafe class MethodsGenerator {
     }
 
     public CodeMemberMethod GenerateBasicMethodDefinition(Smoke.Method *method) {
+        return GenerateBasicMethodDefinition(method, (CodeTypeReference) null);
+    }
+
+    public CodeMemberMethod GenerateBasicMethodDefinition(Smoke.Method *method, CodeTypeReference iface) {
         string cppSignature = data.Smoke->GetMethodSignature(method);
-        return GenerateBasicMethodDefinition(method, cppSignature);
+        return GenerateBasicMethodDefinition(method, cppSignature, iface);
     }
 
     public CodeMemberMethod GenerateBasicMethodDefinition(Smoke.Method *method, string cppSignature) {
+        return GenerateBasicMethodDefinition(method, cppSignature, null);
+    }
+
+    public CodeMemberMethod GenerateBasicMethodDefinition(Smoke.Method *method, string cppSignature, CodeTypeReference iface) {
         // do we actually want that method?
         foreach (Regex regex in data.ExcludedMethods) {
             if (regex.IsMatch(cppSignature))
@@ -153,7 +164,7 @@ unsafe class MethodsGenerator {
         List<CodeParameterDeclarationExpression> args = new List<CodeParameterDeclarationExpression>();
         int count = 1;
         bool isRef;
-        string className = ByteArrayManager.GetString(data.Smoke->classes[method->classId].className);
+        string className = ByteArrayManager.GetString(smokeClass->className);
         string csharpClassName = className;
         int indexOfColon = csharpClassName.LastIndexOf("::");
         if (indexOfColon != -1) {
@@ -182,8 +193,8 @@ unsafe class MethodsGenerator {
             if (binaryOperators.Contains(op) || unaryOperators.Contains(op)) {
                 // instance operator
                 if (data.Smoke->classes[method->classId].size > 0) {
-                    if (op == "*" && method->numArgs == 0) {
-                        // dereference operator not supported
+                    if (op == "*" && method->numArgs == 0 || (op == "++" || op == "--") && method->numArgs == 1) {
+                        // dereference operator and postfix in-/decrement operator are not supported
                         Debug.Print("  |--Won't wrap method {0}::{1}", className, cppSignature);
                         return null;
                     }
@@ -197,8 +208,8 @@ unsafe class MethodsGenerator {
                         return null;
                     }
                 } else {    // global operator
-                    if (op == "*" && method->numArgs == 1) {
-                        // dereference operator not supported
+                    if (op == "*" && method->numArgs == 0 || (op == "++" || op == "--") && method->numArgs == 2) {
+                        // dereference operator and postfix in-/decrement operator are not supported
                         Debug.Print("  |--Won't wrap method {0}::{1}", className, cppSignature);
                         return null;
                     }
@@ -263,13 +274,17 @@ unsafe class MethodsGenerator {
                 string tmp = builder.ToString();
 
                 // If the new name clashes with a name of a type declaration, keep the lower-case name.
-                var typesWithSameName = from member in data.GetAccessibleMembers(data.Smoke->classes + method->classId)
-                                        where (   member.Type == MemberType.Class
-                                               || member.Type == MemberType.Property)
+                var typesWithSameName = from member in data.GetAccessibleMembers(smokeClass)
+                                        where (   member.Type == MemberTypes.NestedType
+                                               || member.Type == MemberTypes.Property)
                                                && member.Name == tmp
                                         select member;
+                data.Debug = false;
                 if (typesWithSameName.Count() > 0) {
                     Debug.Print("  |--Conflicting names: method/(type or property): {0} in class {1} - keeping original method name", tmp, className);
+/*                    if (iface != null) {
+                        cmm.PrivateImplementationType = iface;
+                    }*/
                 } else if (tmp == csharpClassName) {
                     Debug.Print("  |--Conflicting names: method/classname: {0} in class {1} - keeping original method name", tmp, className);
                 } else {
@@ -324,13 +339,21 @@ unsafe class MethodsGenerator {
         return cmm;
     }
 
+    public void GenerateMethod(short idx, string mungedName, CodeTypeReference iface) {
+        GenerateMethod(data.Smoke->methods + idx, mungedName, iface);
+    }
+
     public void GenerateMethod(short idx, string mungedName) {
-        GenerateMethod(data.Smoke->methods + idx, mungedName);
+        GenerateMethod(data.Smoke->methods + idx, mungedName, null);
     }
 
     public void GenerateMethod(Smoke.Method *method, string mungedName) {
+        GenerateMethod(method, mungedName, null);
+    }
+
+    public void GenerateMethod(Smoke.Method *method, string mungedName, CodeTypeReference iface) {
         string cppSignature = data.Smoke->GetMethodSignature(method);
-        CodeMemberMethod cmm = GenerateBasicMethodDefinition(method, cppSignature);
+        CodeMemberMethod cmm = GenerateBasicMethodDefinition(method, cppSignature, iface);
         if (cmm == null)
             return;
 

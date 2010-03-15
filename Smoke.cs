@@ -33,20 +33,34 @@ unsafe partial struct Smoke {
     /**
      * Describe one index in a given module.
      */
-    public struct ModuleIndex {
+    public struct ModuleIndex : IEquatable<ModuleIndex> {
         public Smoke* smoke;
         public short index;
+
+        public ModuleIndex(Smoke *smoke, short index) {
+            this.smoke = smoke;
+            this.index = index;
+        }
+
+        bool IEquatable<ModuleIndex>.Equals(ModuleIndex other) {
+            return smoke == other.smoke && index == other.index;
+        }
+
+        public override bool Equals(object other) {
+            if (!(other is ModuleIndex)) return false;
+            return Equals((ModuleIndex) other);
+        }
+
+        public override int GetHashCode() {
+            return (((long) smoke) ^ index).GetHashCode();
+        }
     };
-    
-    /**
-     * A ModuleIndex with both fields set to 0.
-     */
-    public ModuleIndex NullModuleIndex;
 
     public enum ClassFlags {
         cf_constructor = 0x01,  // has a constructor
         cf_deepcopy = 0x02,     // has copy constructor
         cf_virtual = 0x04,      // has virtual destructor
+        cf_namespace = 0x08,
         cf_undefined = 0x10     // defined elsewhere
     }
     

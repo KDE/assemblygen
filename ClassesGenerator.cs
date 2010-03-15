@@ -44,7 +44,7 @@ unsafe class ClassesGenerator {
     public ClassesGenerator(GeneratorData data, Translator translator) {
         this.data = data;
         this.translator = translator;
-        smokeMethodComparer = new SmokeMethodEqualityComparer(data.Smoke);
+        smokeMethodComparer = new SmokeMethodEqualityComparer();
         eg = new EnumGenerator(data);
     }
 
@@ -217,7 +217,7 @@ unsafe class ClassesGenerator {
 
         // Contains inherited methods that have to be implemented by the current class.
         // We use our custom comparer, so we don't end up with the same method multiple times.
-        IDictionary<short, string> implementMethods = new Dictionary<short, string>(smokeMethodComparer);
+        IDictionary<Smoke.ModuleIndex, string> implementMethods = new Dictionary<Smoke.ModuleIndex, string>(smokeMethodComparer);
 
         for (short i = 1; i < data.Smoke->numMethodMaps; i++) {
             Smoke.MethodMap *map = data.Smoke->methodMaps + i;
@@ -228,7 +228,7 @@ unsafe class ClassesGenerator {
                 klass = data.Smoke->classes + currentClassId;
                 type = data.SmokeTypeMap[(IntPtr) klass];
 
-                methgen = new MethodsGenerator(data, translator, type);
+                methgen = new MethodsGenerator(data, translator, type, klass);
 
                 if (attrgen != null) {
                     // generate all scheduled attributes
@@ -249,8 +249,8 @@ unsafe class ClassesGenerator {
                     data.Smoke->FindAllMethods(*parent, implementMethods, true);
                 }
 
-                foreach (KeyValuePair<short, string> pair in implementMethods) {
-                    Smoke.Method *meth = data.Smoke->methods + pair.Key;
+                foreach (KeyValuePair<Smoke.ModuleIndex, string> pair in implementMethods) {
+                    Smoke.Method *meth = pair.Key.smoke->methods + pair.Key.index;
                     if (   (meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0
                         || (meth->flags & (ushort) Smoke.MethodFlags.mf_ctor) > 0
                         || (meth->flags & (ushort) Smoke.MethodFlags.mf_copyctor) > 0
@@ -265,7 +265,12 @@ unsafe class ClassesGenerator {
                         continue;
                     }
 
-                    methgen.GenerateMethod(meth, pair.Value);
+                    Smoke.Class* ifaceKlass = pair.Key.smoke->classes + meth->classId;
+                    CodeTypeDeclaration ifaceDecl;
+                    if (!data.InterfaceTypeMap.TryGetValue(ByteArrayManager.GetString(ifaceKlass->className), out ifaceDecl)) {
+                        Console.Error.WriteLine("** ERROR: ** Missing type declaration for interface class {0} for {1}", ByteArrayManager.GetString(ifaceKlass->className), pair.Key);
+                    }
+                    methgen.GenerateMethod(meth, pair.Value, new CodeTypeReference(data.InterfaceTypeMap[ByteArrayManager.GetString(ifaceKlass->className)].Name));
                 }
             }
 
@@ -288,7 +293,7 @@ unsafe class ClassesGenerator {
                 }
 
                 // already implemented?
-                if (implementMethods.ContainsKey(map->method))
+                if (implementMethods.ContainsKey(new Smoke.ModuleIndex(data.Smoke, map->method)))
                     continue;
 
                 methgen.GenerateMethod(map->method, mungedName);
@@ -318,7 +323,7 @@ unsafe class ClassesGenerator {
                     }
 
                     // already implemented?
-                    if (implementMethods.ContainsKey(*overload))
+                    if (implementMethods.ContainsKey(new Smoke.ModuleIndex(data.Smoke, *overload)))
                         continue;
 
                     methgen.GenerateMethod(*overload, mungedName);

@@ -10,11 +10,11 @@ main.exe: libsmokeloader.so $(CS_SOURCE)
 	gmcs -define:DEBUG -debug -unsafe -out:main.exe $(CS_SOURCE)
 
 qtcore: main.exe
-	mono main.exe -unsafe -out:qyoto-qtcore.dll -code-file:qyoto-qtcore.cs -keyfile:$$HOME/dev/KDE/kdebindings/csharp/key.snk -verbose libsmokeqtcore.so \
+	mono --debug main.exe -unsafe -out:qyoto-qtcore.dll -code-file:qyoto-qtcore.cs -keyfile:$$HOME/dev/KDE/kdebindings/csharp/key.snk libsmokeqtcore.so \
 		QPair.cs QVariantExtras.cs ~/dev/KDE/kdebindings/csharp/qyoto/src/*.cs
 
 qtgui: main.exe
-	mono main.exe -unsafe -out:qyoto-qtcore.dll -code-file:qyoto-qtgui.cs -keyfile:$$HOME/dev/KDE/kdebindings/csharp/key.snk -r:qyoto-qtcore.dll libsmokeqtgui.so
+	mono --debug main.exe -unsafe -out:qyoto-qtcore.dll -code-file:qyoto-qtgui.cs -keyfile:$$HOME/dev/KDE/kdebindings/csharp/key.snk -r:qyoto-qtcore.dll libsmokeqtgui.so
 
 kdecore: main.exe
 	mono main.exe -unsafe -out:kimono-kdecore.dll -code-file:kimono-kdecore.cs -keyfile:$$HOME/dev/KDE/kdebindings/csharp/key.snk libsmokekdecore.so \

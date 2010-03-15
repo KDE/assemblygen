@@ -26,13 +26,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
 
-enum MemberType {
-    Class,
-    Method,
-    Field,
-    Property,
-}
-
 unsafe class GeneratorData {
 
     public Smoke* Smoke = (Smoke*) IntPtr.Zero;
@@ -100,6 +93,8 @@ unsafe class GeneratorData {
         new Regex(@"^qt_.*\("),
     };
 
+    public bool Debug = false;
+
     /*
      * Returns the collection of sub-types for a given prefix (which may be a namespace or a class).
      * If 'prefix' is empty, returns the collection of the default namespace.
@@ -145,61 +140,60 @@ unsafe class GeneratorData {
     }
 
     public class InternalMemberInfo {
-        public MemberType Type;
+        public MemberTypes Type;
         public string Name;
 
-        public InternalMemberInfo(MemberType type, string name) {
+        public InternalMemberInfo(MemberTypes type, string name) {
             Type = type;
             Name = name;
         }
     }
 
-    Dictionary<IntPtr, List<InternalMemberInfo>> membersCache = new Dictionary<IntPtr, List<InternalMemberInfo>>();
     /*
      * Returns a list of accessible members from class 'klass' and superclasses (just nested classes and properties for now).
      */
     public List<InternalMemberInfo> GetAccessibleMembers(Smoke.Class* klass) {
-        List<InternalMemberInfo> members;
-        if (membersCache.TryGetValue((IntPtr) klass, out members)) {
-            return members;
+        List<InternalMemberInfo> members = new List<InternalMemberInfo>();
+        GetAccessibleMembers(klass, members);
+        return members;
+    }
+
+    void GetAccessibleMembers(Smoke.Class* klass, List<InternalMemberInfo> list) {
+        if (Debug) {
+            Console.Error.WriteLine("members from class {0}", ByteArrayManager.GetString(klass->className));
+        }
+        if (klass->external) {
+            AddReferencedMembers(klass, list);
+            return;
         }
 
-        members = new List<InternalMemberInfo>();
-        for (; klass->className != (char*) IntPtr.Zero;
-               klass = Smoke->classes + Smoke->inheritanceList[klass->parents])
-        {
-            // loop through superclasses (only the first ones - others are only implemented as interfaces)
-            try {
-                foreach (CodeTypeMember member in SmokeTypeMap[(IntPtr) klass].Members) {
-                    if (member is CodeTypeDeclaration) {
-                        members.Add(new InternalMemberInfo(MemberType.Class, member.Name));
-                    } else if (member is CodeMemberProperty) {
-                        members.Add(new InternalMemberInfo(MemberType.Property, member.Name));
+        CodeTypeDeclaration typeDecl = null;
+        if (!SmokeTypeMap.TryGetValue((IntPtr) klass, out typeDecl)) {
+            Console.Error.WriteLine("*** ERROR: klass not mapped: {0} ***", ByteArrayManager.GetString(klass->className));
+        } else {
+            foreach (CodeTypeMember member in typeDecl.Members) {
+                if (member is CodeMemberProperty) {
+                    if (Debug) {
+                        Console.Error.WriteLine("Adding property {0}", member.Name);
                     }
-                }
-            } catch (KeyNotFoundException) {
-                try {
-                    Type type = referencedTypeMap[ByteArrayManager.GetString(klass->className)];
-                    while (type != null && type.GetCustomAttributes(smokeClassAttribute, false).Length > 0) {
-                        foreach (Type nested in type.GetNestedTypes(BindingFlags.Public | BindingFlags.NonPublic)) {
-                            members.Add(new InternalMemberInfo(MemberType.Class, nested.Name));
-                        }
-
-                        foreach (PropertyInfo pi in type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic
-                                                                       | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly))
-                        {
-                            members.Add(new InternalMemberInfo(MemberType.Property, pi.Name));
-                        }
-
-                        type = type.BaseType;
-                    }
-                    break;
-                } catch (KeyNotFoundException) {
-                    // don't use Debug.Print here - this is important!
-                    Console.Error.WriteLine("  |--Can't find class: {0}", ByteArrayManager.GetString(klass->className));
+                    list.Add(new InternalMemberInfo(MemberTypes.Property, member.Name));
+                } else if (member is CodeMemberMethod) {
+                    list.Add(new InternalMemberInfo(MemberTypes.Method, member.Name));
+                } else if (member is CodeMemberField) {
+                    list.Add(new InternalMemberInfo(MemberTypes.Field, member.Name));
+                } else if (member is CodeTypeDeclaration) {
+                    list.Add(new InternalMemberInfo(MemberTypes.NestedType, member.Name));
                 }
             }
         }
-        return members;
+
+        for (short *parent = Smoke->inheritanceList + klass->parents; *parent > 0; parent++) {
+            Smoke.Class *parentClass = Smoke->classes + *parent;
+            GetAccessibleMembers(parentClass, list);
+        }
+    }
+
+    void AddReferencedMembers(Smoke.Class *klass, List<InternalMemberInfo> list) {
+//         Console.WriteLine("Add referenced members for class {0}", ByteArrayManager.GetString(klass->className));
     }
 }

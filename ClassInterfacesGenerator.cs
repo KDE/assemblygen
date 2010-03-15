@@ -62,7 +62,7 @@ unsafe class ClassInterfacesGenerator {
 
                 set.Add(*parent);
                 Smoke.Class *baseClass = data.Smoke->classes + *parent;
-                // also generate interfaces for the base classes of the base classes ;)
+                // also generate interfaces for the base classes of the base classes
                 AddBaseClassesToHashSet(baseClass, set);
                 parent++;
             }
@@ -84,7 +84,7 @@ unsafe class ClassInterfacesGenerator {
 
             CodeTypeDeclaration ifaceDecl = new CodeTypeDeclaration('I' + name);
             ifaceDecl.IsInterface = true;
-            mg = new MethodsGenerator(data, translator, ifaceDecl);
+            mg = new MethodsGenerator(data, translator, ifaceDecl, klass);
             ag = new AttributeGenerator(data, translator, ifaceDecl);
 
             ///TODO: replace this algorithm, it's highly inefficient

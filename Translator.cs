@@ -89,21 +89,46 @@ unsafe class Translator {
     {
         { "size_t", delegate { throw new NotSupportedException(); } },
         { "_IO_FILE", delegate { throw new NotSupportedException(); } },
+
+        { "_XEvent", delegate { throw new NotSupportedException(); } },
+        { "_XDisplay", delegate { throw new NotSupportedException(); } },
+        { "_XRegion", delegate { throw new NotSupportedException(); } },
+        { "FT_FaceRec_", delegate { throw new NotSupportedException(); } },
+
         { "QThread", delegate { throw new NotSupportedException(); } },
         { "QMutex", delegate { throw new NotSupportedException(); } },
         { "QDebug", delegate { throw new NotSupportedException(); } },
 //         { "QWidget", delegate { throw new NotSupportedException(); } },
-        { "QEventPrivate", delegate { throw new NotSupportedException(); } },
+
         { "QFlags", delegate { throw new NotSupportedException(); } },
         { "QFlag", delegate { throw new NotSupportedException(); } },
         { "QIncompatibleFlag", delegate { throw new NotSupportedException(); } },
+
         { "QString::Null", delegate { throw new NotSupportedException(); } },
         { "QHashDummyValue", delegate { throw new NotSupportedException(); } },
         { "QPostEventList", delegate { throw new NotSupportedException(); } },
         { "QTextStreamManipulator", delegate { throw new NotSupportedException(); } },
         { "QVariant::Private", delegate { throw new NotSupportedException(); } },
         { "QVariant::Handler", delegate { throw new NotSupportedException(); } },
+
+        { "QX11InfoData", delegate { throw new NotSupportedException(); } },
+        { "QTextEngine", delegate { throw new NotSupportedException(); } },
+        { "QWindowSurface", delegate { throw new NotSupportedException(); } },
+
+        { "QImageData", delegate { throw new NotSupportedException(); } },
+        { "QDrawPixmaps::Data", delegate { throw new NotSupportedException(); } },
+
+        { "QEventPrivate", delegate { throw new NotSupportedException(); } },
+        { "QGraphicsSceneEventPrivate", delegate { throw new NotSupportedException(); } },
+        { "QIconPrivate", delegate { throw new NotSupportedException(); } },
+        { "QKeySequencePrivate", delegate { throw new NotSupportedException(); } },
+        { "QPenPrivate", delegate { throw new NotSupportedException(); } },
         { "QUrlPrivate", delegate { throw new NotSupportedException(); } },
+        { "QTextDocumentPrivate", delegate { throw new NotSupportedException(); } },
+
+        { "QGenericMatrix", delegate { throw new NotSupportedException(); } },
+        { "QScopedPointer", delegate { throw new NotSupportedException(); } },
+        { "QExplicitlySharedDataPointer", delegate { throw new NotSupportedException(); } },
 
         { "void", type => (type.PointerDepth == 0) ? new CodeTypeReference(typeof(void)) : new CodeTypeReference(typeof(IntPtr)) },
         { "char", delegate(TypeInfo type) {

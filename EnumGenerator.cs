@@ -69,6 +69,11 @@ unsafe class EnumGenerator {
             return null;
         }
 
+        if (data.Smoke->classes[type->classId].external) {
+            // defined elsewhere
+            return null;
+        }
+
         string enumName = ByteArrayManager.GetString(type->name);
         return DefineEnum(enumName);
     }

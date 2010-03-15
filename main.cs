@@ -135,6 +135,9 @@ class MainClass {
         cp.GenerateInMemory = false;
         cp.WarningLevel = warnLevel;
         cp.CompilerOptions = compilerOptions.ToString();
+        foreach (Assembly assembly in references) {
+            cp.ReferencedAssemblies.Add(assembly.Location);
+        }
         CompilerResults cr = csharp.CompileAssemblyFromDom(cp, codeSnippets.ToArray());
 
         bool errorsOccured = false;

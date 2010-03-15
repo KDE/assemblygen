@@ -18,6 +18,7 @@
 */
 
 using System;
+using System.Reflection;
 using System.Diagnostics;
 using System.Text;
 using System.Collections.Generic;
@@ -59,7 +60,7 @@ unsafe class AttributeGenerator {
 
         // If the new name clashes with a name of a type declaration, keep the lower-case name.
         var typesWithSameName = from member in data.GetAccessibleMembers(data.Smoke->classes + meth->classId)
-                                where member.Type == MemberType.Class
+                                where member.Type == MemberTypes.NestedType
                                    && member.Name == name
                                 select member;
         if (typesWithSameName.Count() > 0) {

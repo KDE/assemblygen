@@ -18,6 +18,7 @@
 */
 
 using System;
+using System.Reflection;
 using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -90,11 +91,12 @@ unsafe class PropertyGenerator {
 
                 // If the new name clashes with a name of a type declaration, keep the lower-case name.
                 var typesWithSameName = from member in data.GetAccessibleMembers(data.Smoke->classes + classId)
-                                        where member.Type == MemberType.Class
+                                        where (   member.Type == MemberTypes.NestedType
+                                               || member.Type == MemberTypes.Method)
                                            && member.Name == capitalized
                                         select member;
                 if (typesWithSameName.Count() > 0) {
-                    Debug.Print("  |--Conflicting names: property/type: {0} in class {1} - keeping original property name", capitalized, className);
+                    Debug.Print("  |--Conflicting names: property/(type or method): {0} in class {1} - keeping original property name", capitalized, className);
                 } else {
                     cmp.Name = capitalized;
                 }
@@ -178,7 +180,7 @@ unsafe class PropertyGenerator {
                     string setterName = ByteArrayManager.GetString(data.Smoke->methodNames[setter->name]);
                     if (!cmp.HasGet) {
                         // so the 'get' method is virtual - generating a property for only the 'set' method is a bad idea
-                        MethodsGenerator mg = new MethodsGenerator(data, translator, type);
+                        MethodsGenerator mg = new MethodsGenerator(data, translator, type, klass);
                         mg.GenerateMethod(setterMethId, setterName + mungedSuffix);
                         continue;
                     } else {
