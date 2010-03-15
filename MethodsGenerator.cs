@@ -280,10 +280,13 @@ unsafe class MethodsGenerator {
                                                && member.Name == tmp
                                         select member;
                 data.Debug = false;
-                if (iface != null && (typesWithSameName.Count() > 0 || tmp == csharpClassName)) {
-                    Console.Error.WriteLine("Private implementation: {0}.{1}", iface.BaseType, tmp);
-                    cmm.PrivateImplementationType = iface;
-                    csName = tmp;
+                if (iface != null && typesWithSameName.Count() == 1) {
+                    foreach (var member in typesWithSameName) {
+                        if (member.Type == MemberTypes.Property) {
+                            cmm.PrivateImplementationType = iface;
+                            csName = tmp;
+                        }
+                    }
                 } else {
                     if (typesWithSameName.Count() > 0) {
                         Debug.Print("  |--Conflicting names: method/(type or property): {0} in class {1} - keeping original method name", tmp, className);
