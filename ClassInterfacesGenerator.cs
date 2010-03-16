@@ -73,7 +73,10 @@ unsafe class ClassInterfacesGenerator {
     public void Run() {
         MethodsGenerator mg = null;
         AttributeGenerator ag = null;
-        foreach (short idx in GetClassList()) {
+        HashSet<short> interfaceClasses = GetClassList();
+
+        // Make the interfaces known first, otherwise Translator won't work correctly.
+        foreach (short idx in interfaceClasses) {
             Smoke.Class* klass = data.Smoke->classes + idx;
             string className = ByteArrayManager.GetString(klass->className);
             string prefix;
@@ -84,6 +87,17 @@ unsafe class ClassInterfacesGenerator {
 
             CodeTypeDeclaration ifaceDecl = new CodeTypeDeclaration('I' + name);
             ifaceDecl.IsInterface = true;
+
+            data.GetTypeCollection(prefix).Add(ifaceDecl);
+            data.InterfaceTypeMap[className] = ifaceDecl;
+        }
+
+        // Now generate the methods.
+        foreach (short idx in interfaceClasses) {
+            Smoke.Class* klass = data.Smoke->classes + idx;
+            string className = ByteArrayManager.GetString(klass->className);
+            CodeTypeDeclaration ifaceDecl = data.InterfaceTypeMap[className];
+
             mg = new MethodsGenerator(data, translator, ifaceDecl, klass);
             ag = new AttributeGenerator(data, translator, ifaceDecl);
 
@@ -101,6 +115,7 @@ unsafe class ClassInterfacesGenerator {
                     || (meth->flags & (ushort) Smoke.MethodFlags.mf_dtor) > 0
                     || (meth->flags & (ushort) Smoke.MethodFlags.mf_static) > 0
                     || (meth->flags & (ushort) Smoke.MethodFlags.mf_internal) > 0
+                    || (meth->flags & (ushort) Smoke.MethodFlags.mf_protected) > 0
                     || methName.StartsWith("operator"))
                 {
                     continue;
@@ -110,7 +125,7 @@ unsafe class ClassInterfacesGenerator {
                 }
 
                 CodeMemberMethod cmm = mg.GenerateBasicMethodDefinition(meth);
-                if (cmm != null) {
+                if (cmm != null && !ifaceDecl.HasMethod(cmm)) {
                     ifaceDecl.Members.Add(cmm);
                 }
             }
@@ -118,9 +133,6 @@ unsafe class ClassInterfacesGenerator {
             foreach (CodeMemberProperty prop in ag.GenerateBasicAttributeDefinitions()) {
                 ifaceDecl.Members.Add(prop);
             }
-
-            data.GetTypeCollection(prefix).Add(ifaceDecl);
-            data.InterfaceTypeMap[className] = ifaceDecl;
         }
     }
 }
