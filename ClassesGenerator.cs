@@ -268,7 +268,7 @@ unsafe class ClassesGenerator {
                     Smoke.Class* ifaceKlass = pair.Key.smoke->classes + meth->classId;
                     CodeTypeDeclaration ifaceDecl;
                     if (!data.InterfaceTypeMap.TryGetValue(ByteArrayManager.GetString(ifaceKlass->className), out ifaceDecl)) {
-                        Console.Error.WriteLine("** ERROR: ** Missing type declaration for interface class {0} for {1}", ByteArrayManager.GetString(ifaceKlass->className), pair.Key);
+                        throw new Exception(String.Format("** ERROR: ** Missing type declaration for interface class {0} for {1}", ByteArrayManager.GetString(ifaceKlass->className), pair.Key));
                     }
                     methgen.GenerateMethod(meth, pair.Value, new CodeTypeReference(data.InterfaceTypeMap[ByteArrayManager.GetString(ifaceKlass->className)].Name));
                 }
@@ -341,7 +341,7 @@ unsafe class ClassesGenerator {
     delegate void AddComplementingOperatorsFn(IList<CodeMemberMethod> a, IList<CodeMemberMethod> b, string opName, string returnExpression);
 
     /*
-     * Adds complement operators if necessary.
+     * Adds complementing operators if necessary.
      */
     void AddMissingOperators() {
         for (short i = 1; i <= data.Smoke->numClasses; i++) {

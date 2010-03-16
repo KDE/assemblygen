@@ -67,7 +67,16 @@ unsafe class Translator {
         { "bool", typeof(bool) },
         { "void", typeof(void) },
 
+        // used in properties
         { "qreal", typeof(double) },
+
+        // flag types that are not recognised as such
+        { "ChangeFlags", typeof(uint) },
+        { "ColorDialogOptions", typeof(uint) },
+        { "FontDialogOptions", typeof(uint) },
+        { "Options", typeof(uint) },
+        { "PageSetupDialogOptions", typeof(uint) },
+        { "PrintDialogOptions", typeof(uint) },
     };
 
     // map a C++ type string to a .NET type string
