@@ -345,23 +345,23 @@ unsafe class MethodsGenerator {
         return cmm;
     }
 
-    public void GenerateMethod(short idx, string mungedName, CodeTypeReference iface) {
-        GenerateMethod(data.Smoke->methods + idx, mungedName, iface);
+    public CodeMemberMethod GenerateMethod(short idx, string mungedName, CodeTypeReference iface) {
+        return GenerateMethod(data.Smoke->methods + idx, mungedName, iface);
     }
 
-    public void GenerateMethod(short idx, string mungedName) {
-        GenerateMethod(data.Smoke->methods + idx, mungedName, null);
+    public CodeMemberMethod GenerateMethod(short idx, string mungedName) {
+        return GenerateMethod(data.Smoke->methods + idx, mungedName, null);
     }
 
-    public void GenerateMethod(Smoke.Method *method, string mungedName) {
-        GenerateMethod(method, mungedName, null);
+    public CodeMemberMethod GenerateMethod(Smoke.Method *method, string mungedName) {
+        return GenerateMethod(method, mungedName, null);
     }
 
-    public void GenerateMethod(Smoke.Method *method, string mungedName, CodeTypeReference iface) {
+    public CodeMemberMethod GenerateMethod(Smoke.Method *method, string mungedName, CodeTypeReference iface) {
         string cppSignature = data.Smoke->GetMethodSignature(method);
         CodeMemberMethod cmm = GenerateBasicMethodDefinition(method, cppSignature, iface);
         if (cmm == null)
-            return;
+            return null;
 
         // put the method into the correct type
         CodeTypeDeclaration containingType = type;
@@ -370,14 +370,14 @@ unsafe class MethodsGenerator {
                 if (cmm.Parameters.Count < 2 || !data.CSharpTypeMap.TryGetValue(cmm.Parameters[1].Type.GetStringRepresentation(), out containingType)) {
                     Debug.Print("  |--Can't find containing type for {0} - skipping", cppSignature);
                 }
-                return;
+                return null;
             }
         }
 
         // already implemented?
         if (containingType.HasMethod(cmm)) {
             Debug.Print("  |--Skipping already implemented method {0}", cppSignature);
-            return;
+            return null;
         }
 
         // generate the SmokeMethod attribute
@@ -432,5 +432,6 @@ unsafe class MethodsGenerator {
         cmm.Statements.Add(statement);
 
         containingType.Members.Add(cmm);
+        return cmm;
     }
 }
