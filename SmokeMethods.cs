@@ -174,8 +174,11 @@ unsafe partial struct Smoke {
             else
                 imin = (short) (icur + 1);
         }
-        if (icmp != 0)
+
+        if (icmp != 0) {
+            Console.Error.WriteLine("WARNING: FindAllMethods failed for class {0}", ByteArrayManager.GetString(classes[c].className));
             return;
+        }
 
         for (short i = methmin; i <= methmax; i++) {
             string mungedName = ByteArrayManager.GetString(methodNames[methodMaps[i].name]);
