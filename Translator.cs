@@ -104,6 +104,8 @@ unsafe class Translator {
         { "_XRegion", delegate { throw new NotSupportedException(); } },
         { "FT_FaceRec_", delegate { throw new NotSupportedException(); } },
 
+        // this is only temporary so that qtgui compiles
+        { "Qt::HitTestAccuracy", delegate { throw new NotSupportedException(); } },
         { "QThread", delegate { throw new NotSupportedException(); } },
         { "QMutex", delegate { throw new NotSupportedException(); } },
         { "QDebug", delegate { throw new NotSupportedException(); } },

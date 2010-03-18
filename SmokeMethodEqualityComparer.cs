@@ -48,7 +48,7 @@ unsafe class SmokeMethodEqualityComparer : IEqualityComparer<Smoke.ModuleIndex> 
         bool isConst = ((method->flags & (ushort) Smoke.MethodFlags.mf_const) > 0);
         bool isStatic = ((method->flags & (ushort) Smoke.MethodFlags.mf_static) > 0);
 
-        long hash = method->name * 10000000 + method->args * 100 + (isConst? 10 : 0) + (isStatic? 1 : 0);
+        int hash = method->name << 18 + method->args << 2 + (isConst? 1 : 0) << 1 + (isStatic? 1 : 0);
         return (hash ^ (long) mi.smoke).GetHashCode();
     }
 
