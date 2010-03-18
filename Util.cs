@@ -33,6 +33,33 @@ static class Util {
         return false;
     }
 
+    public static string StackItemFieldFromType(Type type) {
+        if (type == typeof(bool))
+            return "s_bool";
+        else if (type == typeof(sbyte))
+            return "s_char";
+        else if (type == typeof(byte))
+            return "s_uchar";
+        else if (type == typeof(short))
+            return "s_short";
+        else if (type == typeof(ushort))
+            return "s_ushort";
+        else if (type == typeof(int))
+            return "s_int";
+        else if (type == typeof(uint))
+            return "s_uint";
+        else if (type == typeof(long))
+            return "s_long";
+        else if (type == typeof(ulong))
+            return "s_ulong";
+        else if (type == typeof(float))
+            return "s_float";
+        else if (type == typeof(double))
+            return "s_double";
+        else
+            return "s_class";
+    }
+
     public static List<string> SplitUnenclosed(string input, char delimeter, char open, char close) {
         int enclosed = 0;
         int lastDelimeter = -1;

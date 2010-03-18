@@ -380,6 +380,15 @@ unsafe class MethodsGenerator {
             return null;
         }
 
+        // do we have pass-by-ref parameters?
+        bool generateInvokeForRefParams = false;
+        foreach (CodeParameterDeclarationExpression expr in cmm.Parameters) {
+            if (expr.Direction == FieldDirection.Ref) {
+                generateInvokeForRefParams = true;
+                break;
+            }
+        }
+
         // generate the SmokeMethod attribute
         CodeAttributeDeclaration attr = new CodeAttributeDeclaration("SmokeMethod",
             new CodeAttributeArgument(new CodePrimitiveExpression(cppSignature)));
@@ -408,23 +417,49 @@ unsafe class MethodsGenerator {
         } else {
             returnType = cmm.ReturnType;
         }
-        // add the return type
-        invoke.Parameters.Add(new CodeTypeOfExpression(returnType));
 
-        // add the parameters
-        foreach (CodeParameterDeclarationExpression param in cmm.Parameters) {
-            invoke.Parameters.Add(new CodeTypeOfExpression(param.Type));
-            invoke.Parameters.Add(new CodeArgumentReferenceExpression(param.Name));
-        }
+        if (!generateInvokeForRefParams) {
+            // add the return type
+            invoke.Parameters.Add(new CodeTypeOfExpression(returnType));
 
-        // we have to call "CreateProxy()" in constructors
-        if (cmm is CodeConstructor) {
-            cmm.Statements.Add(new CodeExpressionStatement(new CodeMethodInvokeExpression(new CodeThisReferenceExpression(), "CreateProxy")));
+            // add the parameters
+            foreach (CodeParameterDeclarationExpression param in cmm.Parameters) {
+                invoke.Parameters.Add(new CodeTypeOfExpression(param.Type));
+                invoke.Parameters.Add(new CodeArgumentReferenceExpression(param.Name));
+            }
+
+            // we have to call "CreateProxy()" in constructors
+            if (cmm is CodeConstructor) {
+                cmm.Statements.Add(new CodeExpressionStatement(new CodeMethodInvokeExpression(new CodeThisReferenceExpression(), "CreateProxy")));
+            }
+        } else {
+            // we have a method with by-ref parameters
+            CodeVariableDeclarationStatement stackDecl = new CodeVariableDeclarationStatement(new CodeTypeReference("StackItem[]", 0), "stack",
+                new CodeArrayCreateExpression(new CodeTypeReference("StackItem"), cmm.Parameters.Count + 1));
+            cmm.Statements.Add(stackDecl);
+
+            int i = 1;
+            foreach (CodeParameterDeclarationExpression param in cmm.Parameters) {
+                Type t = Type.GetType(param.Type.BaseType);
+                string stackItemField = Util.StackItemFieldFromType(t);
+                cmm.Statements.Add(new CodeAssignStatement(
+                    new CodeFieldReferenceExpression(
+                        new CodeArrayIndexerExpression(
+                            new CodeSnippetExpression("stack"), new CodeExpression[] { new CodePrimitiveExpression(i) } ),
+                        stackItemField),
+                    (t != null && t.IsPrimitive) ?
+                        new CodeSnippetExpression(string.Format("arg{0}", i)) :
+                        new CodeSnippetExpression(string.Format("(IntPtr) System.Runtime.InteropServices.GCHandle.Alloc(arg{0})", i))
+                ));
+                i++;
+            }
+
+            invoke.Parameters.Add(new CodeVariableReferenceExpression("stack"));
         }
 
         // add the method call statement
         CodeStatement statement;
-        if (method->ret > 0 && (method->flags & (uint) Smoke.MethodFlags.mf_ctor) == 0) {
+        if (method->ret > 0 && (method->flags & (uint) Smoke.MethodFlags.mf_ctor) == 0 && !generateInvokeForRefParams) {
             statement = new CodeMethodReturnStatement(new CodeCastExpression(returnType, invoke));
         } else {
             statement = new CodeExpressionStatement(invoke);
