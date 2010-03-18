@@ -98,6 +98,12 @@ unsafe class ClassInterfacesGenerator {
             string className = ByteArrayManager.GetString(klass->className);
             CodeTypeDeclaration ifaceDecl = data.InterfaceTypeMap[className];
 
+            short *parent = data.Smoke->inheritanceList + klass->parents;
+            while (*parent > 0) {
+                ifaceDecl.BaseTypes.Add(translator.CppToCSharp(data.Smoke->classes + *parent));
+                parent++;
+            }
+
             mg = new MethodsGenerator(data, translator, ifaceDecl, klass);
             ag = new AttributeGenerator(data, translator, ifaceDecl);
 
