@@ -459,8 +459,37 @@ unsafe class MethodsGenerator {
 
         // add the method call statement
         CodeStatement statement;
-        if (method->ret > 0 && (method->flags & (uint) Smoke.MethodFlags.mf_ctor) == 0 && !generateInvokeForRefParams) {
-            statement = new CodeMethodReturnStatement(new CodeCastExpression(returnType, invoke));
+        if (method->ret > 0 && (method->flags & (uint) Smoke.MethodFlags.mf_ctor) == 0) {
+            if (!generateInvokeForRefParams) {
+                statement = new CodeMethodReturnStatement(new CodeCastExpression(returnType, invoke));
+            } else {
+                // add invoke call
+                statement = new CodeExpressionStatement(invoke);
+                cmm.Statements.Add(statement);
+
+                Type t = Type.GetType(returnType.BaseType);
+                string stackItemField = Util.StackItemFieldFromType(t);
+                CodeExpression fieldReference = new CodeFieldReferenceExpression(
+                    new CodeArrayIndexerExpression(
+                        new CodeVariableReferenceExpression("stack"),
+                        new CodeExpression[] { new CodePrimitiveExpression(0) }
+                    ), stackItemField);
+
+                if (t != null && t.IsPrimitive) {
+                    // primitive types can be returned directly
+                    statement = new CodeMethodReturnStatement(fieldReference);
+                } else {
+                    statement = new CodeVariableDeclarationStatement(new CodeTypeReference("System.Runtime.InteropServices.GCHandle"), "returnedHandle",
+                        new CodeCastExpression(new CodeTypeReference("System.Runtime.InteropServices.GCHandle"), fieldReference));
+                    cmm.Statements.Add(statement);
+                    statement = new CodeVariableDeclarationStatement(returnType, "returnValue",
+                        new CodeCastExpression(returnType, new CodePropertyReferenceExpression(new CodeVariableReferenceExpression("returnedHandle"), "Target")));
+                    cmm.Statements.Add(statement);
+                    statement = new CodeExpressionStatement(new CodeMethodInvokeExpression(new CodeVariableReferenceExpression("returnedHandle"), "Free"));
+                    cmm.Statements.Add(statement);
+                    statement = new CodeMethodReturnStatement(new CodeVariableReferenceExpression("returnValue"));
+                }
+            }
         } else {
             statement = new CodeExpressionStatement(invoke);
         }
