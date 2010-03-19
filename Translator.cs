@@ -270,7 +270,7 @@ unsafe class Translator {
             }
             ret += '>';
         }
-        if (pointerDepth == 2 || (pointerDepth == 1 && Util.IsPrimitiveType(ret)) || (isCppRef && !isConst)) {
+        if (pointerDepth == 2 || (Util.IsPrimitiveType(ret) && (pointerDepth == 1 || (isCppRef && !isConst)))) {
             isRef = true;
         }
         Type type;
