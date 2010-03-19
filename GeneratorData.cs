@@ -43,6 +43,7 @@ unsafe class GeneratorData {
 
         DefaultNamespace = new CodeNamespace(defaultNamespace);
         DefaultNamespace.Imports.Add(new CodeNamespaceImport("System"));
+        DefaultNamespace.Imports.Add(new CodeNamespaceImport("System.Runtime.InteropServices"));
         References = references;
         foreach (Assembly assembly in References) {
             smokeClassAttribute = assembly.GetType("Qyoto.SmokeClass", false);
@@ -133,6 +134,7 @@ unsafe class GeneratorData {
         // Define a new namespace.
         nspace = new CodeNamespace(name);
         nspace.Imports.Add(new CodeNamespaceImport("System"));
+        nspace.Imports.Add(new CodeNamespaceImport("System.Runtime.InteropServices"));
         nspace.Imports.Add(new CodeNamespaceImport(DefaultNamespace.Name));
         parentCollection.Add(nspace);
         NamespaceMap[prefix] = nspace;

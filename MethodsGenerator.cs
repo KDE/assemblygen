@@ -446,10 +446,13 @@ unsafe class MethodsGenerator {
                     new CodeFieldReferenceExpression(
                         new CodeArrayIndexerExpression(
                             new CodeSnippetExpression("stack"), new CodeExpression[] { new CodePrimitiveExpression(i) } ),
-                        stackItemField),
+                        stackItemField
+                    ),
                     (t != null && t.IsPrimitive) ?
-                        new CodeSnippetExpression(string.Format("arg{0}", i)) :
-                        new CodeSnippetExpression(string.Format("(IntPtr) System.Runtime.InteropServices.GCHandle.Alloc(arg{0})", i))
+                        (CodeExpression) new CodeArgumentReferenceExpression(string.Format("arg{0}", i)) :
+                        (CodeExpression) new CodeCastExpression(new CodeTypeReference(typeof(IntPtr)),
+                            new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("GCHandle"), "Alloc",
+                                new CodeExpression[] { new CodeArgumentReferenceExpression(string.Format("arg{0}", i)) } ))
                 ));
                 i++;
             }
