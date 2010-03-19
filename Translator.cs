@@ -155,11 +155,6 @@ unsafe class Translator {
                     return null;
                   }},
         { "QString", type => (type.PointerDepth > 0) ? "System.Text.StringBuilder" : "String" },
-        { "QByteArray", delegate(TypeInfo type) {
-                            if (type.PointerDepth > 0)
-                                type.IsRef = true;
-                            return type.Name;
-                        }},
     };
 
 #endregion
