@@ -75,6 +75,12 @@ unsafe class EnumGenerator {
         }
 
         string enumName = ByteArrayManager.GetString(type->name);
+
+        if (type->classId == 0 && enumName.Contains("::")) {
+            // enum has a parent, but the parent isn't wrapped -> we don't want that enum
+            return null;
+        }
+
         return DefineEnum(enumName);
     }
 

@@ -16,6 +16,9 @@ qtcore: main.exe
 qtgui: main.exe
 	mono --debug main.exe -unsafe -out:qyoto-qtgui.dll -code-file:qyoto-qtgui.cs -keyfile:$$HOME/dev/KDE/kdebindings/csharp/key.snk -r:qyoto-qtcore.dll libsmokeqtgui.so
 
+qtnetwork: main.exe
+	mono --debug main.exe -unsafe -out:qyoto-qtnetwork.dll -code-file:qyoto-qtnetwork.cs -keyfile:$$HOME/dev/KDE/kdebindings/csharp/key.snk -r:qyoto-qtcore.dll libsmokeqtnetwork.so
+
 kdecore: main.exe
 	mono main.exe -unsafe -out:kimono-kdecore.dll -code-file:kimono-kdecore.cs -keyfile:$$HOME/dev/KDE/kdebindings/csharp/key.snk libsmokekdecore.so \
 		QPair.cs QVariantExtras.cs ~/dev/KDE/kdebindings/csharp/qyoto/src/*.cs -r:qyoto-qtcore.dll

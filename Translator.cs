@@ -87,6 +87,7 @@ unsafe class Translator {
         { "QVector", "System.Collections.Generic.List" },
         { "QHash", "System.Collections.Generic.Dictionary" },
         { "QMap", "System.Collections.Generic.Dictionary" },
+        { "QMultiMap", "System.Collections.Generic.Dictionary" },
         // a hash set would be better, but do we want to depend on System.Core.dll (i.e. .NET 3.5)?
         { "QSet", "System.Collections.Generic.List" },
         { "QQueue", "System.Collections.Generic.Queue" },
@@ -97,6 +98,7 @@ unsafe class Translator {
     Dictionary<string, TranslateFunc> typeCodeMap = new Dictionary<string, TranslateFunc>()
     {
         { "size_t", delegate { throw new NotSupportedException(); } },
+        { "sockaddr", delegate { throw new NotSupportedException(); } },
         { "_IO_FILE", delegate { throw new NotSupportedException(); } },
 
         { "_XEvent", delegate { throw new NotSupportedException(); } },
