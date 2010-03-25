@@ -322,6 +322,8 @@ unsafe class MethodsGenerator {
                 // virtual/final
                 if ((method->flags & (uint) Smoke.MethodFlags.mf_virtual) == 0) {
                     cmm.Attributes |= MemberAttributes.Final | MemberAttributes.New;
+                } else if ((method->flags & (uint) Smoke.MethodFlags.mf_purevirtual) > 0) {
+                    cmm.Attributes |= MemberAttributes.Abstract;
                 } else {
                     MemberAttributes access;
                     if (MethodOverrides(method, out access)) {

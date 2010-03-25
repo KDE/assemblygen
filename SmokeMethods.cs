@@ -216,6 +216,39 @@ unsafe partial struct Smoke {
         return ret;
     }
 
+    public unsafe bool IsClassAbstract(short classId) {
+        Dictionary<Smoke.ModuleIndex, string> methods =
+            new Dictionary<Smoke.ModuleIndex, string>(SmokeMethodEqualityComparer.AbstractRespectingComparer);
+        SmokeMethodEqualityComparer defaultComparer = SmokeMethodEqualityComparer.DefaultEqualityComparer;
+
+        FindAllMethods(classId, methods, true);
+        Stack<Smoke.ModuleIndex> abstractMethods = new Stack<Smoke.ModuleIndex>();
+
+        foreach (Smoke.ModuleIndex mi in methods.Keys) {
+            Smoke.Method *meth = mi.smoke->methods + mi.index;
+            if ((meth->flags & (ushort) Smoke.MethodFlags.mf_purevirtual) == 0) {
+                // only compare pure-virtuals
+                continue;
+            }
+            abstractMethods.Push(mi);
+
+            foreach (Smoke.ModuleIndex other in methods.Keys) {
+                Smoke.Method *otherMeth = other.smoke->methods + other.index;
+                if ((otherMeth->flags & (ushort) Smoke.MethodFlags.mf_purevirtual) == 0 && defaultComparer.Equals(mi, other)) {
+                    // this pure-virtual is overriden
+                    abstractMethods.Pop();
+                    break;
+                }
+            }
+        }
+
+        if (abstractMethods.Count > 0) {
+            return true;
+        }
+
+        return false;
+    }
+
     public override string ToString() {
         return ByteArrayManager.GetString(module_name);
     }

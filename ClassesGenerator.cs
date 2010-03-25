@@ -18,6 +18,7 @@
 */
 
 using System;
+using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 using System.CodeDom;
@@ -27,9 +28,6 @@ unsafe class ClassesGenerator {
     GeneratorData data;
     Translator translator;
     EnumGenerator eg;
-
-    // needed to filter out superfluous methods from base classes
-    SmokeMethodEqualityComparer smokeMethodComparer;
 
     static string qObjectDummyCtorCode =
 "            try {\n" +
@@ -44,7 +42,6 @@ unsafe class ClassesGenerator {
     public ClassesGenerator(GeneratorData data, Translator translator) {
         this.data = data;
         this.translator = translator;
-        smokeMethodComparer = new SmokeMethodEqualityComparer();
         eg = new EnumGenerator(data);
     }
 
@@ -53,7 +50,8 @@ unsafe class ClassesGenerator {
      * A class Namespace::Foo is mapped to Namespace.Foo. Classes that are not in any namespace go into the default namespace.
      * For namespaces that contain functions, a Namespace.Global class is created which holds the functions as methods.
      */
-    CodeTypeDeclaration DefineClass(Smoke.Class* smokeClass) {
+    CodeTypeDeclaration DefineClass(short classId) {
+        Smoke.Class* smokeClass = data.Smoke->classes + classId;
         string smokeName = ByteArrayManager.GetString(smokeClass->className);
         string mapName = smokeName;
         string name;
@@ -91,6 +89,10 @@ unsafe class ClassesGenerator {
             if (*parent > 0) {
                 type.BaseTypes.Add(new CodeTypeReference(ByteArrayManager.GetString((data.Smoke->classes + *parent)->className).Replace("::", ".")));
             }
+        }
+
+        if (data.Smoke->IsClassAbstract(classId)) {
+            type.TypeAttributes |= TypeAttributes.Abstract;
         }
 
         DefineWrapperClassFieldsAndMethods(smokeClass, type);
@@ -164,7 +166,7 @@ unsafe class ClassesGenerator {
             if (klass->external)
                 continue;
 
-            DefineClass(klass);
+            DefineClass(i);
         }
 
         eg.DefineEnums();
@@ -217,7 +219,8 @@ unsafe class ClassesGenerator {
 
         // Contains inherited methods that have to be implemented by the current class.
         // We use our custom comparer, so we don't end up with the same method multiple times.
-        IDictionary<Smoke.ModuleIndex, string> implementMethods = new Dictionary<Smoke.ModuleIndex, string>(smokeMethodComparer);
+        IDictionary<Smoke.ModuleIndex, string> implementMethods =
+            new Dictionary<Smoke.ModuleIndex, string>(SmokeMethodEqualityComparer.DefaultEqualityComparer);
 
         for (short i = 1; i < data.Smoke->numMethodMaps; i++) {
             Smoke.MethodMap *map = data.Smoke->methodMaps + i;

@@ -3,9 +3,20 @@ using System.Collections.Generic;
 
 unsafe class SmokeMethodEqualityComparer : IEqualityComparer<Smoke.ModuleIndex> {
 
+    public static SmokeMethodEqualityComparer DefaultEqualityComparer = new SmokeMethodEqualityComparer();
+    public static SmokeMethodEqualityComparer AbstractRespectingComparer = new SmokeMethodEqualityComparer(true);
+
+    readonly bool m_abstractIsDifference;
+
+    private SmokeMethodEqualityComparer() : this(false) {}
+
+    private SmokeMethodEqualityComparer(bool abstractIsDifference) {
+        m_abstractIsDifference = abstractIsDifference;
+    }
+
     public bool Equals(Smoke.ModuleIndex first, Smoke.ModuleIndex second) {
         Smoke.Method* firstMeth = first.smoke->methods + first.index;
-        Smoke.Method* secondMeth = first.smoke->methods + second.index;
+        Smoke.Method* secondMeth = second.smoke->methods + second.index;
 
         bool firstConst = ((firstMeth->flags & (ushort) Smoke.MethodFlags.mf_const) > 0);
         bool secondConst = ((secondMeth->flags & (ushort) Smoke.MethodFlags.mf_const) > 0);
@@ -13,7 +24,12 @@ unsafe class SmokeMethodEqualityComparer : IEqualityComparer<Smoke.ModuleIndex> 
         bool firstStatic = ((firstMeth->flags & (ushort) Smoke.MethodFlags.mf_static) > 0);
         bool secondStatic = ((secondMeth->flags & (ushort) Smoke.MethodFlags.mf_static) > 0);
 
-        if (firstConst != secondConst || firstStatic != secondStatic) {
+        bool firstAbstract = ((firstMeth->flags & (ushort) Smoke.MethodFlags.mf_purevirtual) > 0);
+        bool secondAbstract = ((secondMeth->flags & (ushort) Smoke.MethodFlags.mf_purevirtual) > 0);
+
+        if (firstConst != secondConst || firstStatic != secondStatic ||
+            (m_abstractIsDifference && (firstAbstract != secondAbstract)) )
+        {
             return false;
         }
 
@@ -34,6 +50,8 @@ unsafe class SmokeMethodEqualityComparer : IEqualityComparer<Smoke.ModuleIndex> 
                     if (ByteArrayManager.strcmp(first.smoke->types[*firstMethodArgPtr].name, second.smoke->types[*secondMethodArgPtr].name) != 0) {
                         return false;
                     }
+                    firstMethodArgPtr++;
+                    secondMethodArgPtr++;
                 }
 
                 return true;
