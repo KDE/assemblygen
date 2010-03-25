@@ -52,8 +52,6 @@ unsafe class EnumGenerator {
 
         CodeTypeDeclaration typeDecl = new CodeTypeDeclaration(name);
         typeDecl.IsEnum = true;
-        // we derive from uint so we have more possible values
-        typeDecl.BaseTypes.Add(new CodeTypeReference(typeof(uint)));
         data.GetTypeCollection(prefix).Add(typeDecl);
         data.EnumTypeMap[cppName] = typeDecl;
         return typeDecl;
@@ -105,7 +103,7 @@ unsafe class EnumGenerator {
         }
         CodeMemberField member = new CodeMemberField();
         member.Name = ByteArrayManager.GetString(data.Smoke->methodNames[meth->name]);
-        member.InitExpression = new CodePrimitiveExpression((uint) GetEnumValue(data.Smoke, meth));
+        member.InitExpression = new CodePrimitiveExpression(GetEnumValue(data.Smoke, meth));
         enumType.Members.Add(member);
     }
 }

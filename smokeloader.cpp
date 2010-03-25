@@ -70,7 +70,7 @@ Q_DECL_EXPORT bool GetModuleIndexFromClassName(const char* name, Smoke** smoke, 
     return true;
 }
 
-Q_DECL_EXPORT long GetEnumValue(Smoke* smoke, Smoke::Method* meth)
+Q_DECL_EXPORT qint64 GetEnumValue(Smoke* smoke, Smoke::Method* meth)
 {
     Smoke::ClassFn fn = smoke->classes[meth->classId].classFn;
     Smoke::StackItem ret;
