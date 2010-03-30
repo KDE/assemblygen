@@ -46,6 +46,14 @@ unsafe partial struct Smoke {
             return smoke == other.smoke && index == other.index;
         }
 
+        public static bool operator==(ModuleIndex lhs, ModuleIndex rhs) {
+            return lhs.smoke == rhs.smoke && lhs.index == rhs.index;
+        }
+
+        public static bool operator!=(ModuleIndex lhs, ModuleIndex rhs) {
+            return !(lhs == rhs);
+        }
+
         public override bool Equals(object other) {
             if (!(other is ModuleIndex)) return false;
             return Equals((ModuleIndex) other);

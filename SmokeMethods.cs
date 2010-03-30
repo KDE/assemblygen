@@ -233,10 +233,17 @@ unsafe partial struct Smoke {
             abstractMethods.Push(mi);
 
             foreach (Smoke.ModuleIndex other in methods.Keys) {
+                // Break if we encounter our original Index. Anything after this one will be further up in the
+                // hierarchy and thus can't override anything.
+                if (mi == other)
+                    break;
+
                 Smoke.Method *otherMeth = other.smoke->methods + other.index;
-                if ((otherMeth->flags & (ushort) Smoke.MethodFlags.mf_purevirtual) == 0 && defaultComparer.Equals(mi, other)) {
-                    // this pure-virtual is overriden
-                    abstractMethods.Pop();
+                if (defaultComparer.Equals(mi, other)) {
+                    if ((otherMeth->flags & (ushort) Smoke.MethodFlags.mf_purevirtual) == 0) {
+                        // overriden with implementation
+                        abstractMethods.Pop();
+                    }
                     break;
                 }
             }
