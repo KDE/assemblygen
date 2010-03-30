@@ -121,7 +121,7 @@ unsafe class MethodsGenerator {
         var inheritedVirtuals = from key in allMethods.Keys
                                 where ((key.smoke->methods[key.index].flags & (ushort) Smoke.MethodFlags.mf_virtual) > 0
                                     || (key.smoke->methods[key.index].flags & (ushort) Smoke.MethodFlags.mf_purevirtual) > 0)
-                                where key.smoke->methods[key.index].classId != method->classId
+                                    && (key.smoke == data.Smoke ? (key.smoke->methods[key.index].classId != method->classId) : true)
                                 select key;
 
         access = MemberAttributes.Public;
