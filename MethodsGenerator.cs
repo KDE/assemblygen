@@ -111,7 +111,7 @@ unsafe class MethodsGenerator {
         this.smokeClass = klass;
     }
 
-    bool MethodOverrides(Smoke.Method* method, out MemberAttributes access) {
+    bool MethodOverrides(Smoke.Method* method, out MemberAttributes access, out bool foundInInterface) {
         long id = method - data.Smoke->methods;
         Smoke.ModuleIndex methodModuleIndex = new Smoke.ModuleIndex(data.Smoke, (short) id);
 
@@ -127,6 +127,7 @@ unsafe class MethodsGenerator {
         access = MemberAttributes.Public;
         Smoke.Method *firstMethod = (Smoke.Method*) IntPtr.Zero;
         Smoke *smoke = (Smoke*) IntPtr.Zero;
+        foundInInterface = false;
 
         foreach (Smoke.ModuleIndex mi in inheritedVirtuals) {
             Smoke.Method* meth = mi.smoke->methods + mi.index;
@@ -150,6 +151,9 @@ unsafe class MethodsGenerator {
             string firstMethodClassName = ByteArrayManager.GetString(smoke->classes[firstMethod->classId].className);
             List<string> interfaces = Util.GetInterfacifiedSuperClasses(new Smoke.ModuleIndex(smoke, method->classId));
             if (interfaces.Contains(firstMethodClassName)) {
+                if ((firstMethod->flags & (uint) Smoke.MethodFlags.mf_protected) == 0) {
+                    foundInInterface = true;
+                }
                 return false;
             }
             return true;
@@ -342,9 +346,11 @@ unsafe class MethodsGenerator {
                     cmm.Attributes |= MemberAttributes.Final | MemberAttributes.New;
                 } else {
                     MemberAttributes access;
-                    bool isOverride;
-                    if (isOverride = MethodOverrides(method, out access)) {
+                    bool isOverride; bool foundInInterface;
+                    if (isOverride = MethodOverrides(method, out access, out foundInInterface)) {
                         cmm.Attributes = access | MemberAttributes.Override;
+                    } else if (foundInInterface) {
+                        cmm.Attributes = access;
                     }
 
                     if ((method->flags & (uint) Smoke.MethodFlags.mf_purevirtual) > 0) {
