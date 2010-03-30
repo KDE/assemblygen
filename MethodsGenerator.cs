@@ -148,7 +148,6 @@ unsafe class MethodsGenerator {
         // we can't use the 'override' keyword, because the method needs to implement the interface.
         if (firstMethod != (Smoke.Method*) IntPtr.Zero) {
             string firstMethodClassName = ByteArrayManager.GetString(smoke->classes[firstMethod->classId].className);
-            Smoke.Class *klass = data.Smoke->classes + method->classId;
             List<string> interfaces = Util.GetInterfacifiedSuperClasses(new Smoke.ModuleIndex(smoke, method->classId));
             if (interfaces.Contains(firstMethodClassName)) {
                 return false;
@@ -337,14 +336,24 @@ unsafe class MethodsGenerator {
                 cmm.Attributes |= MemberAttributes.Final | MemberAttributes.Static;
             } else {
                 // virtual/final
-                if ((method->flags & (uint) Smoke.MethodFlags.mf_virtual) == 0) {
+                if ((method->flags & (uint) Smoke.MethodFlags.mf_virtual) == 0 &&
+                    (method->flags & (uint) Smoke.MethodFlags.mf_purevirtual) == 0)
+                {
                     cmm.Attributes |= MemberAttributes.Final | MemberAttributes.New;
-                } else if ((method->flags & (uint) Smoke.MethodFlags.mf_purevirtual) > 0) {
-                    cmm.Attributes |= MemberAttributes.Abstract;
                 } else {
                     MemberAttributes access;
-                    if (MethodOverrides(method, out access)) {
+                    bool isOverride;
+                    if (isOverride = MethodOverrides(method, out access)) {
                         cmm.Attributes = access | MemberAttributes.Override;
+                    }
+
+                    if ((method->flags & (uint) Smoke.MethodFlags.mf_purevirtual) > 0) {
+                        cmm.Attributes = (cmm.Attributes & ~MemberAttributes.ScopeMask) | MemberAttributes.Abstract;
+
+                        // The code generator doesn't like MemberAttributes.Abstract | MemberAttributes.Override being set.
+                        if (isOverride && !type.IsInterface) {
+                            cmm.ReturnType.BaseType = "override " + cmm.ReturnType.BaseType;
+                        }
                     }
                 }
 
