@@ -143,23 +143,15 @@ unsafe class MethodsGenerator {
             }
         }
 
-        // Check whether the found method is declared in a class which is a direct ancestor of the class in which
-        // 'method' was declared and which is not its first ancestor. Then the method is declared in an interface
-        // in C# and we can't use the 'override' keyword, because the method needs to implement the interface.
+        // Check whether the found method is declared in a class which is a interfacified ancestor of the
+        // class in which 'method' was declared. Then the method is declared in an interface in C# and
+        // we can't use the 'override' keyword, because the method needs to implement the interface.
         if (firstMethod != (Smoke.Method*) IntPtr.Zero) {
-            byte* firstMethodClassName = smoke->classes[firstMethod->classId].className;
+            string firstMethodClassName = ByteArrayManager.GetString(smoke->classes[firstMethod->classId].className);
             Smoke.Class *klass = data.Smoke->classes + method->classId;
-
-            bool firstParent = true;
-            for (short *parent = data.Smoke->inheritanceList + klass->parents; *parent > 0; parent++) {
-                if (firstParent) {
-                    firstParent = false;
-                    continue;
-                }
-
-                if (ByteArrayManager.strcmp(firstMethodClassName, data.Smoke->classes[*parent].className) == 0) {
-                    return false;
-                }
+            List<string> interfaces = Util.GetInterfacifiedSuperClasses(new Smoke.ModuleIndex(smoke, method->classId));
+            if (interfaces.Contains(firstMethodClassName)) {
+                return false;
             }
             return true;
         }

@@ -18,10 +18,48 @@
 */
 
 using System;
+using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using System.Text;
 
 static class Util {
+    [DllImport("smokeloader", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
+    [return: MarshalAs(UnmanagedType.U1)]
+    public static extern unsafe bool GetModuleIndexFromClassName(byte* name, ref Smoke* smoke, ref short index);
+
+    public static unsafe void GetAllSuperClasses(Smoke.ModuleIndex mi, List<string> list) {
+        Smoke.Class *klass = mi.smoke->classes + mi.index;
+        if (klass->external && GetModuleIndexFromClassName(klass->className, ref mi.smoke, ref mi.index)) {
+            GetAllSuperClasses(mi, list);
+            return;
+        }
+
+        for (short *parent = mi.smoke->inheritanceList + klass->parents; *parent > 0; parent++) {
+            Smoke.Class *baseClass = mi.smoke->classes + *parent;
+            list.Add(ByteArrayManager.GetString(baseClass->className));
+            mi.index = *parent;
+            GetAllSuperClasses(mi, list);
+        }
+    }
+
+    public unsafe static List<string> GetInterfacifiedSuperClasses(Smoke.ModuleIndex mi) {
+        List<string> ret = new List<string>();
+        Smoke.Class *klass = mi.smoke->classes + mi.index;
+        bool firstParent = true;
+
+        for (short *parent = mi.smoke->inheritanceList + klass->parents; *parent > 0; parent++) {
+            if (firstParent) {
+                firstParent = false;
+                continue;
+            }
+
+            ret.Add(ByteArrayManager.GetString(mi.smoke->classes[*parent].className));
+            GetAllSuperClasses(new Smoke.ModuleIndex(mi.smoke, *parent), ret);
+        }
+
+        return ret;
+    }
+
     public static bool IsPrimitiveType(string type) {
         type = type.Replace("unsigned ", "u");
         if (   type == "char" || type == "uchar" || type == "short" || type == "ushort" || type == "int" || type == "uint"

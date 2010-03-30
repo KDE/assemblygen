@@ -25,11 +25,6 @@ using System.Runtime.InteropServices;
 // Extension methods would be nice, but 'Smoke' is a struct and would be
 // copied every time we use an extension method.
 unsafe partial struct Smoke {
-
-    [DllImport("smokeloader", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
-    [return: MarshalAs(UnmanagedType.U1)]
-    static extern unsafe bool GetModuleIndexFromClassName(byte* name, ref Smoke* smoke, ref short index);
-
     public short idClass(string name) {
         byte[] bytes = ByteArrayManager.GetCString(name);
         fixed (byte* c = bytes) {
@@ -197,7 +192,7 @@ unsafe partial struct Smoke {
                 if (klass->external) {
                     Smoke* smoke = (Smoke*) 0;
                     short index = 0;
-                    if (!GetModuleIndexFromClassName(klass->className, ref smoke, ref index)) {
+                    if (!Util.GetModuleIndexFromClassName(klass->className, ref smoke, ref index)) {
                         Console.Error.WriteLine("  |--Failed resolving external class {0}", ByteArrayManager.GetString(klass->className));
                         continue;
                     }
