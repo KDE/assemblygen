@@ -35,11 +35,12 @@ unsafe class SmokeMethodEqualityComparer : IEqualityComparer<Smoke.ModuleIndex> 
 
         if (first.smoke == second.smoke) {
             // when the methods are in the same module, we can be rather quick
-            if (firstMeth->name == secondMeth->name && firstMeth->args == secondMeth->args)
+            if (firstMeth->name == secondMeth->name && firstMeth->args == secondMeth->args && firstMeth->ret == secondMeth->ret)
                 return true;
             return false;
         } else {
             if (ByteArrayManager.strcmp(first.smoke->methodNames[firstMeth->name], second.smoke->methodNames[secondMeth->name]) == 0 &&
+                ByteArrayManager.strcmp(first.smoke->types[firstMeth->ret].name, second.smoke->types[secondMeth->ret].name) == 0 &&
                 firstMeth->numArgs == secondMeth->numArgs)
             {
                 // name and number of arguments match, now compare the arguments individually

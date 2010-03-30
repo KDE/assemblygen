@@ -44,6 +44,10 @@ unsafe class ByteArrayManager {
     }
 
     public static long strcmp(byte* str1, byte* str2) {
+        if (str1 == str2) return 0;
+        if (str1 == (byte*) 0) return -1;
+        if (str2 == (byte*) 0) return 1;
+
         while (*str1 != 0 && *str1 == *str2) {
             str1++; str2++;
         }

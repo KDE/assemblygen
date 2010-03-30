@@ -404,8 +404,12 @@ unsafe class MethodsGenerator {
 
         // already implemented?
         if (containingType.HasMethod(cmm)) {
-            Debug.Print("  |--Skipping already implemented method {0}", cppSignature);
-            return null;
+            if (iface == null) {
+                Debug.Print("  |--Skipping already implemented method {0}", cppSignature);
+                return null;
+            } else {
+                cmm.PrivateImplementationType = iface;
+            }
         }
 
         // do we have pass-by-ref parameters?
