@@ -18,6 +18,7 @@
 */
 
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
@@ -207,6 +208,50 @@ unsafe class ClassesGenerator {
         GenerateMethods();
     }
 
+    void GenerateInheritedMethods(Smoke.Class *klass, MethodsGenerator methgen, AttributeGenerator attrgen, List<Smoke.ModuleIndex> alreadyImplemented) {
+        // Contains inherited methods that have to be implemented by the current class.
+        // We use our custom comparer, so we don't end up with the same method multiple times.
+        IDictionary<Smoke.ModuleIndex, string> implementMethods =
+            new Dictionary<Smoke.ModuleIndex, string>(SmokeMethodEqualityComparer.DefaultEqualityComparer);
+
+        bool firstParent = true;
+        for (short *parent = data.Smoke->inheritanceList + klass->parents; *parent > 0; parent++) {
+            if (firstParent) {
+                // we're only interested in parents implemented as interfaces
+                firstParent = false;
+                continue;
+            }
+            // collect all methods (+ inherited ones) and add them to the implementMethods Dictionary
+            data.Smoke->FindAllMethods(*parent, implementMethods, true);
+        }
+
+        foreach (KeyValuePair<Smoke.ModuleIndex, string> pair in implementMethods) {
+            Smoke.Method *meth = pair.Key.smoke->methods + pair.Key.index;
+            if (   (meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0
+                || (meth->flags & (ushort) Smoke.MethodFlags.mf_ctor) > 0
+                || (meth->flags & (ushort) Smoke.MethodFlags.mf_copyctor) > 0
+                || (meth->flags & (ushort) Smoke.MethodFlags.mf_dtor) > 0
+                || (meth->flags & (ushort) Smoke.MethodFlags.mf_static) > 0
+                || (meth->flags & (ushort) Smoke.MethodFlags.mf_internal) > 0)
+            {
+                // no need to check for properties here - QObjects don't support multiple inheritance anyway
+                continue;
+            } else if (alreadyImplemented.Contains(pair.Key, SmokeMethodEqualityComparer.DefaultEqualityComparer)) {
+                continue;
+            } else if ((meth->flags & (ushort) Smoke.MethodFlags.mf_attribute) > 0) {
+                attrgen.ScheduleAttributeAccessor(meth);
+                continue;
+            }
+
+            Smoke.Class* ifaceKlass = pair.Key.smoke->classes + meth->classId;
+            CodeTypeDeclaration ifaceDecl;
+            if (!data.InterfaceTypeMap.TryGetValue(ByteArrayManager.GetString(ifaceKlass->className), out ifaceDecl)) {
+                throw new Exception(String.Format("** ERROR: ** Missing type declaration for interface class {0} for {1}", ByteArrayManager.GetString(ifaceKlass->className), pair.Key));
+            }
+            methgen.GenerateMethod(meth, pair.Value, new CodeTypeReference(data.InterfaceTypeMap[ByteArrayManager.GetString(ifaceKlass->className)].Name));
+        }
+    }
+
     /*
      * Adds the methods to the classes created by Run()
      */
@@ -216,65 +261,28 @@ unsafe class ClassesGenerator {
         MethodsGenerator methgen = null;
         AttributeGenerator attrgen = null;
         CodeTypeDeclaration type = null;
-
-        // Contains inherited methods that have to be implemented by the current class.
-        // We use our custom comparer, so we don't end up with the same method multiple times.
-        IDictionary<Smoke.ModuleIndex, string> implementMethods =
-            new Dictionary<Smoke.ModuleIndex, string>(SmokeMethodEqualityComparer.DefaultEqualityComparer);
+        List<Smoke.ModuleIndex> alreadyImplemented = new List<Smoke.ModuleIndex>();
 
         for (short i = 1; i < data.Smoke->numMethodMaps; i++) {
             Smoke.MethodMap *map = data.Smoke->methodMaps + i;
 
             if (currentClassId != map->classId) {
                 // we encountered a new class
+                if (attrgen != null) {
+                    // generate inherited methods
+                    GenerateInheritedMethods(klass, methgen, attrgen, alreadyImplemented);
+
+                    // generate all scheduled attributes
+                    attrgen.Run();
+                }
+
                 currentClassId = map->classId;
                 klass = data.Smoke->classes + currentClassId;
                 type = data.SmokeTypeMap[(IntPtr) klass];
 
-                methgen = new MethodsGenerator(data, translator, type, klass);
-
-                if (attrgen != null) {
-                    // generate all scheduled attributes
-                    attrgen.Run();
-                }
+                alreadyImplemented.Clear();
                 attrgen = new AttributeGenerator(data, translator, type);
-
-                implementMethods.Clear();
-
-                bool firstParent = true;
-                for (short *parent = data.Smoke->inheritanceList + klass->parents; *parent > 0; parent++) {
-                    if (firstParent) {
-                        // we're only interested in parents implemented as interfaces
-                        firstParent = false;
-                        continue;
-                    }
-                    // collect all methods (+ inherited ones) and add them to the implementMethods Dictionary
-                    data.Smoke->FindAllMethods(*parent, implementMethods, true);
-                }
-
-                foreach (KeyValuePair<Smoke.ModuleIndex, string> pair in implementMethods) {
-                    Smoke.Method *meth = pair.Key.smoke->methods + pair.Key.index;
-                    if (   (meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0
-                        || (meth->flags & (ushort) Smoke.MethodFlags.mf_ctor) > 0
-                        || (meth->flags & (ushort) Smoke.MethodFlags.mf_copyctor) > 0
-                        || (meth->flags & (ushort) Smoke.MethodFlags.mf_dtor) > 0
-                        || (meth->flags & (ushort) Smoke.MethodFlags.mf_static) > 0
-                        || (meth->flags & (ushort) Smoke.MethodFlags.mf_internal) > 0)
-                    {
-                        // no need to check for properties here - QObjects don't support multiple inheritance anyway
-                        continue;
-                    } else if ((meth->flags & (ushort) Smoke.MethodFlags.mf_attribute) > 0) {
-                        attrgen.ScheduleAttributeAccessor(meth);
-                        continue;
-                    }
-
-                    Smoke.Class* ifaceKlass = pair.Key.smoke->classes + meth->classId;
-                    CodeTypeDeclaration ifaceDecl;
-                    if (!data.InterfaceTypeMap.TryGetValue(ByteArrayManager.GetString(ifaceKlass->className), out ifaceDecl)) {
-                        throw new Exception(String.Format("** ERROR: ** Missing type declaration for interface class {0} for {1}", ByteArrayManager.GetString(ifaceKlass->className), pair.Key));
-                    }
-                    methgen.GenerateMethod(meth, pair.Value, new CodeTypeReference(data.InterfaceTypeMap[ByteArrayManager.GetString(ifaceKlass->className)].Name));
-                }
+                methgen = new MethodsGenerator(data, translator, type, klass);
             }
 
             string mungedName = ByteArrayManager.GetString(data.Smoke->methodNames[map->name]);
@@ -295,11 +303,8 @@ unsafe class ClassesGenerator {
                     continue;
                 }
 
-                // already implemented?
-                if (implementMethods.ContainsKey(new Smoke.ModuleIndex(data.Smoke, map->method)))
-                    continue;
-
                 methgen.GenerateMethod(map->method, mungedName);
+                alreadyImplemented.Add(new Smoke.ModuleIndex(data.Smoke, map->method));
             } else if (map->method < 0) {
                 for (short *overload = data.Smoke->ambiguousMethodList + (-map->method); *overload > 0; overload++) {
                     Smoke.Method *meth = data.Smoke->methods + *overload;
@@ -325,11 +330,8 @@ unsafe class ClassesGenerator {
                             nextDiffersByConst = true;
                     }
 
-                    // already implemented?
-                    if (implementMethods.ContainsKey(new Smoke.ModuleIndex(data.Smoke, *overload)))
-                        continue;
-
                     methgen.GenerateMethod(*overload, mungedName);
+                    alreadyImplemented.Add(new Smoke.ModuleIndex(data.Smoke, *overload));
                     if (nextDiffersByConst)
                         overload++;
                 }
@@ -338,6 +340,9 @@ unsafe class ClassesGenerator {
 
         // Generate the last scheduled attributes
         attrgen.Run();
+        // Generate remaining inherited methods
+        GenerateInheritedMethods(klass, methgen, attrgen, alreadyImplemented);
+
         AddMissingOperators();
     }
 

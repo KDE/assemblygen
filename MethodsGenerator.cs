@@ -125,7 +125,8 @@ unsafe class MethodsGenerator {
                                 select key;
 
         access = MemberAttributes.Public;
-        bool ret = false;
+        Smoke.Method *firstMethod = (Smoke.Method*) IntPtr.Zero;
+        Smoke *smoke = (Smoke*) IntPtr.Zero;
 
         foreach (Smoke.ModuleIndex mi in inheritedVirtuals) {
             Smoke.Method* meth = mi.smoke->methods + mi.index;
@@ -137,10 +138,32 @@ unsafe class MethodsGenerator {
                     access = MemberAttributes.Public;
                 }
                 // don't return here - we need the access of the method in the topmost superclass
-                ret = true;
+                firstMethod = meth;
+                smoke = mi.smoke;
             }
         }
-        return ret;
+
+        // Check whether the found method is declared in a class which is a direct ancestor of the class in which
+        // 'method' was declared and which is not its first ancestor. Then the method is declared in an interface
+        // in C# and we can't use the 'override' keyword, because the method needs to implement the interface.
+        if (firstMethod != (Smoke.Method*) IntPtr.Zero) {
+            byte* firstMethodClassName = smoke->classes[firstMethod->classId].className;
+            Smoke.Class *klass = data.Smoke->classes + method->classId;
+
+            bool firstParent = true;
+            for (short *parent = data.Smoke->inheritanceList + klass->parents; *parent > 0; parent++) {
+                if (firstParent) {
+                    firstParent = false;
+                    continue;
+                }
+
+                if (ByteArrayManager.strcmp(firstMethodClassName, data.Smoke->classes[*parent].className) == 0) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     public CodeMemberMethod GenerateBasicMethodDefinition(Smoke.Method *method) {
