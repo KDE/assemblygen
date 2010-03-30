@@ -112,6 +112,9 @@ unsafe class MethodsGenerator {
     }
 
     bool MethodOverrides(Smoke.Method* method, out MemberAttributes access) {
+        long id = method - data.Smoke->methods;
+        Smoke.ModuleIndex methodModuleIndex = new Smoke.ModuleIndex(data.Smoke, (short) id);
+
         Dictionary<Smoke.ModuleIndex, string> allMethods = data.Smoke->FindAllMethods(method->classId, true);
         // Do this with linq... there's probably room for optimization here.
         // Select virtual and pure virtual methods from superclasses.
@@ -126,8 +129,7 @@ unsafe class MethodsGenerator {
 
         foreach (Smoke.ModuleIndex mi in inheritedVirtuals) {
             Smoke.Method* meth = mi.smoke->methods + mi.index;
-            if (meth->name == method->name && meth->args == method->args &&
-                (meth->flags & (uint) Smoke.MethodFlags.mf_const) == (method->flags & (uint) Smoke.MethodFlags.mf_const))
+            if (SmokeMethodEqualityComparer.DefaultEqualityComparer.Equals(methodModuleIndex, mi))
             {
                 if ((meth->flags & (uint) Smoke.MethodFlags.mf_protected) > 0) {
                     access = MemberAttributes.Family;
