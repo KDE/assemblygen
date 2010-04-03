@@ -40,6 +40,17 @@ unsafe class ClassesGenerator {
 "                Console.WriteLine(\"Could not retrieve signal interface: {0}\", e);\n" +
 "            }";
 
+    static CodeSnippetTypeMember getHashCode = new CodeSnippetTypeMember(
+        "public override int GetHashCode() { return interceptor.GetHashCode(); }"
+    );
+
+    static string equalsCode =
+        "public override bool Equals(object o) {{\n" +
+"            if (!(o is {0})) {{ return false; }}\n" +
+"            return this == ({0}) o;\n" +
+"        }}";
+
+
     public ClassesGenerator(GeneratorData data, Translator translator) {
         this.data = data;
         this.translator = translator;
@@ -416,6 +427,15 @@ unsafe class ClassesGenerator {
 
             checkAndAdd(equalOperators, inequalOperators, "operator!=", "!(arg1 == arg2)");
             checkAndAdd(inequalOperators, equalOperators, "operator==", "!(arg1 != arg2)");
+
+            if (equalOperators.Count == 0 && inequalOperators.Count == 0)
+                continue;   // then we're done
+
+            // add Equals(object) and GetHashCode() overrides
+            CodeSnippetTypeMember equals = new CodeSnippetTypeMember(string.Format(equalsCode, typeDecl.Name));
+
+            typeDecl.Members.Add(equals);
+            typeDecl.Members.Add(getHashCode);
         }
     }
 }
