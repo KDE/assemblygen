@@ -338,6 +338,8 @@ unsafe class MethodsGenerator {
 
             if (isOperator) {
                 cmm.Attributes |= MemberAttributes.Final | MemberAttributes.Static;
+            } else if (cmm.Name == "ToString" && args.Count == 0) {
+                cmm.Attributes = MemberAttributes.Public | MemberAttributes.Override;
             } else {
                 // virtual/final
                 if ((method->flags & (uint) Smoke.MethodFlags.mf_virtual) == 0 &&
