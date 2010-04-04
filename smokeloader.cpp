@@ -104,4 +104,9 @@ Q_DECL_EXPORT bool GetProperties(Smoke* smoke, Smoke::Index classId, void (*addP
     return true;
 }
 
+Q_DECL_EXPORT bool IsDerivedFrom(const char *className, const char *baseClassName)
+{
+    return Smoke::isDerivedFrom(className, baseClassName);
+}
+
 }

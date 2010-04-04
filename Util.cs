@@ -27,6 +27,18 @@ static class Util {
     [return: MarshalAs(UnmanagedType.U1)]
     public static extern unsafe bool GetModuleIndexFromClassName(byte* name, ref Smoke* smoke, ref short index);
 
+    [DllImport("smokeloader", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
+    [return: MarshalAs(UnmanagedType.U1)]
+    public static extern unsafe bool IsDerivedFrom(string className, string baseClassName);
+
+    [DllImport("smokeloader", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
+    [return: MarshalAs(UnmanagedType.U1)]
+    public static extern unsafe bool IsDerivedFrom(byte* className, byte* baseClassName);
+
+    public static bool IsQObject(string className) {
+        return IsDerivedFrom(className, "QObject");
+    }
+
     public static unsafe void GetAllSuperClasses(Smoke.ModuleIndex mi, List<string> list) {
         Smoke.Class *klass = mi.smoke->classes + mi.index;
         if (klass->external && GetModuleIndexFromClassName(klass->className, ref mi.smoke, ref mi.index)) {
