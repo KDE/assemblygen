@@ -149,7 +149,7 @@ unsafe class MethodsGenerator {
         // we can't use the 'override' keyword, because the method needs to implement the interface.
         if (firstMethod != (Smoke.Method*) IntPtr.Zero) {
             string firstMethodClassName = ByteArrayManager.GetString(smoke->classes[firstMethod->classId].className);
-            List<string> interfaces = Util.GetInterfacifiedSuperClasses(new Smoke.ModuleIndex(smoke, method->classId));
+            List<string> interfaces = Util.GetInterfacifiedSuperClasses(new Smoke.ModuleIndex(data.Smoke, method->classId));
             if (interfaces.Contains(firstMethodClassName)) {
                 if ((firstMethod->flags & (uint) Smoke.MethodFlags.mf_protected) == 0) {
                     foundInInterface = true;
