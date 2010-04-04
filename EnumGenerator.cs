@@ -103,7 +103,14 @@ unsafe class EnumGenerator {
         }
         CodeMemberField member = new CodeMemberField();
         member.Name = ByteArrayManager.GetString(data.Smoke->methodNames[meth->name]);
-        member.InitExpression = new CodePrimitiveExpression(GetEnumValue(data.Smoke, meth));
+        long value = GetEnumValue(data.Smoke, meth);
+
+        if (value > int.MaxValue && enumType.BaseTypes.Count == 0) {
+            // make the enum derive from 'long' if necessary
+            enumType.BaseTypes.Add(new CodeTypeReference(typeof(long)));
+        }
+
+        member.InitExpression = new CodePrimitiveExpression(value);
         enumType.Members.Add(member);
     }
 }
