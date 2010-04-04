@@ -24,21 +24,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.CodeDom;
 
+unsafe delegate void ClassHook(Smoke *smoke, Smoke.Class *klass, CodeTypeDeclaration typeDecl);
+
 unsafe class ClassesGenerator {
 
     GeneratorData data;
     Translator translator;
     EnumGenerator eg;
-
-    static string qObjectDummyCtorCode =
-"            try {\n" +
-"                Type proxyInterface = Qyoto.GetSignalsInterface(GetType());\n" +
-"                SignalInvocation realProxy = new SignalInvocation(proxyInterface, this);\n" +
-"                Q_EMIT = realProxy.GetTransparentProxy();\n" +
-"            }\n" +
-"            catch (Exception e) {\n" +
-"                Console.WriteLine(\"Could not retrieve signal interface: {0}\", e);\n" +
-"            }";
 
     static CodeSnippetTypeMember getHashCode = new CodeSnippetTypeMember(
         "public override int GetHashCode() { return interceptor.GetHashCode(); }"
@@ -56,6 +48,10 @@ unsafe class ClassesGenerator {
         this.translator = translator;
         eg = new EnumGenerator(data);
     }
+
+    public static event ClassHook PreMembersHooks;
+    public static event ClassHook PostMembersHooks;
+    public static event MethodHook SupportingMethodsHooks;
 
     /*
      * Create a .NET class from a smoke class.
@@ -90,13 +86,7 @@ unsafe class ClassesGenerator {
         type.CustomAttributes.Add(attr);
         type.IsPartial = true;
 
-        if (smokeClass->parents == 0) {
-            if (smokeName == "QObject") {
-                type.BaseTypes.Add(new CodeTypeReference("Qt"));
-            } else {
-                type.BaseTypes.Add(new CodeTypeReference(typeof(object)));
-            }
-        } else {
+        if (smokeClass->parents != 0) {
             short *parent = data.Smoke->inheritanceList + smokeClass->parents;
             if (*parent > 0) {
                 type.BaseTypes.Add(new CodeTypeReference(ByteArrayManager.GetString((data.Smoke->classes + *parent)->className).Replace("::", ".")));
@@ -105,6 +95,10 @@ unsafe class ClassesGenerator {
 
         if (data.Smoke->IsClassAbstract(classId)) {
             type.TypeAttributes |= TypeAttributes.Abstract;
+        }
+
+        if (PreMembersHooks != null) {
+            PreMembersHooks(data.Smoke, smokeClass, type);
         }
 
         DefineWrapperClassFieldsAndMethods(smokeClass, type);
@@ -116,8 +110,6 @@ unsafe class ClassesGenerator {
     }
 
     void DefineWrapperClassFieldsAndMethods(Smoke.Class* smokeClass, CodeTypeDeclaration type) {
-        string smokeName = ByteArrayManager.GetString(smokeClass->className);
-
         // define the dummy constructor
         if (smokeClass->size > 0) {
             CodeConstructor dummyCtor = new CodeConstructor();
@@ -126,12 +118,8 @@ unsafe class ClassesGenerator {
                 dummyCtor.BaseConstructorArgs.Add(new CodeSnippetExpression("(System.Type) null"));
             }
             dummyCtor.Attributes = MemberAttributes.Family;
-            if (smokeName == "QObject") {
-                dummyCtor.Statements.Add(new CodeSnippetStatement(qObjectDummyCtorCode));
-                CodeMemberField Q_EMIT = new CodeMemberField(typeof(object), "Q_EMIT");
-                Q_EMIT.Attributes = MemberAttributes.Family;
-                Q_EMIT.InitExpression = new CodePrimitiveExpression(null);
-                type.Members.Add(Q_EMIT);
+            if (SupportingMethodsHooks != null) {
+                SupportingMethodsHooks(data.Smoke, (Smoke.Method*) 0, dummyCtor, type);
             }
             type.Members.Add(dummyCtor);
         }
@@ -285,6 +273,10 @@ unsafe class ClassesGenerator {
 
                     // generate all scheduled attributes
                     attrgen.Run();
+
+                    if (PostMembersHooks != null) {
+                        PostMembersHooks(data.Smoke, klass, type);
+                    }
                 }
 
                 currentClassId = map->classId;
@@ -353,6 +345,10 @@ unsafe class ClassesGenerator {
         attrgen.Run();
         // Generate remaining inherited methods
         GenerateInheritedMethods(klass, methgen, attrgen, alreadyImplemented);
+
+        if (PostMembersHooks != null) {
+            PostMembersHooks(data.Smoke, klass, type);
+        }
 
         AddMissingOperators();
     }

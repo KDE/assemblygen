@@ -1,7 +1,11 @@
 using System;
 using System.CodeDom;
 
-unsafe class QyotoHooks {
+interface IHookProvider {
+    void RegisterHooks();
+}
+
+unsafe class QyotoHooks : IHookProvider {
 
     static string qObjectDummyCtorCode =
 "            try {\n" +
@@ -13,7 +17,12 @@ unsafe class QyotoHooks {
 "                Console.WriteLine(\"Could not retrieve signal interface: {0}\", e);\n" +
 "            }";
 
-    public void PreMethodsHook(Smoke *smoke, Smoke.Class *klass, CodeTypeDeclaration type) {
+    public void RegisterHooks() {
+        ClassesGenerator.PreMembersHooks += PreMembersHook;
+        ClassesGenerator.SupportingMethodsHooks += SupportingMethodsHook;
+    }
+
+    public void PreMembersHook(Smoke *smoke, Smoke.Class *klass, CodeTypeDeclaration type) {
         if (type.Name == "QObject") {
             // Add 'Qt' base class
             type.BaseTypes.Add(new CodeTypeReference("Qt"));

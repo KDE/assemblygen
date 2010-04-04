@@ -100,6 +100,9 @@ class MainClass {
         GeneratorData data = new GeneratorData(smoke, "Qyoto", references);
         Translator translator = new Translator(data);
 
+        IHookProvider hooks = new QyotoHooks();
+        hooks.RegisterHooks();
+
         ClassesGenerator classgen = new ClassesGenerator(data, translator);
         Console.Error.WriteLine("Generating CodeCompileUnit...");
         classgen.Run();

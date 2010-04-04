@@ -88,6 +88,8 @@ static class CodeDomExtensions {
     }
 }
 
+unsafe delegate void MethodHook(Smoke *smoke, Smoke.Method *smokeMethod, CodeMemberMethod cmm, CodeTypeDeclaration typeDecl);
+
 unsafe class MethodsGenerator {
     GeneratorData data;
     Translator translator;
@@ -110,6 +112,9 @@ unsafe class MethodsGenerator {
         this.type = type;
         this.smokeClass = klass;
     }
+
+    public static event MethodHook PreMethodBodyHooks;
+    public static event MethodHook PostMethodBodyHooks;
 
     bool MethodOverrides(Smoke.Method* method, out MemberAttributes access, out bool foundInInterface) {
         long id = method - data.Smoke->methods;
@@ -420,6 +425,10 @@ unsafe class MethodsGenerator {
             }
         }
 
+        if (PreMethodBodyHooks != null) {
+            PreMethodBodyHooks(data.Smoke, method, cmm, containingType);
+        }
+
         // do we have pass-by-ref parameters?
         bool generateInvokeForRefParams = false;
         foreach (CodeParameterDeclarationExpression expr in cmm.Parameters) {
@@ -572,6 +581,10 @@ unsafe class MethodsGenerator {
                 statement = new CodeExpressionStatement(invoke);
             }
             cmm.Statements.Add(statement);
+        }
+
+        if (PostMethodBodyHooks != null) {
+            PostMethodBodyHooks(data.Smoke, method, cmm, containingType);
         }
 
         containingType.Members.Add(cmm);
