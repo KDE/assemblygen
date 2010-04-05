@@ -6,7 +6,8 @@ libsmokeloader.so: smokeloader.cpp
 KEYFILE=$$HOME/dev/kde/kdebindings/csharp/key.snk
 
 CS_SOURCE=Smoke.cs SmokeMethods.cs ByteArrayManager.cs MethodsGenerator.cs PropertyGenerator.cs ClassesGenerator.cs EnumGenerator.cs Translator.cs \
-	  SmokeSupport.cs ClassInterfacesGenerator.cs SmokeMethodEqualityComparer.cs GeneratorData.cs Util.cs AttributeGenerator.cs QyotoHooks.cs main.cs
+	  SmokeSupport.cs ClassInterfacesGenerator.cs SmokeMethodEqualityComparer.cs GeneratorData.cs Util.cs AttributeGenerator.cs QyotoHooks.cs \
+	  CodeDomExtensions.cs main.cs
 
 main.exe: libsmokeloader.so $(CS_SOURCE)
 	gmcs -define:DEBUG -debug -unsafe -out:main.exe $(CS_SOURCE)
