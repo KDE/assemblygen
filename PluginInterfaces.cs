@@ -17,6 +17,15 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+using System;
+using System.Collections.Generic;
+
 public interface IHookProvider {
     void RegisterHooks();
+}
+
+public interface ICustomTranslator {
+    IDictionary<string, Type> TypeMap { get; }
+    IDictionary<string, string> TypeStringMap { get; }
+    IDictionary<string, Translator.TranslateFunc> TypeCodeMap { get; }
 }

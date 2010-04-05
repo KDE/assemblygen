@@ -54,6 +54,7 @@ class MainClass {
         string smokeLib = null;
 
         List<Assembly> plugins = new List<Assembly>();
+        List<ICustomTranslator> customTranslators = new List<ICustomTranslator>();
 
         foreach (string arg in args) {
             if (arg == "-verbose") {
@@ -108,9 +109,6 @@ class MainClass {
             return SmokeLoadingFailure;
         }
 
-        GeneratorData data = new GeneratorData(smoke, "Qyoto", imports, references);
-        Translator translator = new Translator(data);
-
         foreach (Assembly plugin in plugins) {
             foreach (Type type in plugin.GetTypes()) {
                 foreach (Type iface in type.GetInterfaces()) {
@@ -118,10 +116,16 @@ class MainClass {
                         IHookProvider provider = (IHookProvider) Activator.CreateInstance(type);
                         provider.RegisterHooks();
                         break;
+                    } else if (iface == typeof(ICustomTranslator)) {
+                        ICustomTranslator customTranslator = (ICustomTranslator) Activator.CreateInstance(type);
+                        customTranslators.Add(customTranslator);
                     }
                 }
             }
         }
+
+        GeneratorData data = new GeneratorData(smoke, "Qyoto", imports, references);
+        Translator translator = new Translator(data, customTranslators);
 
         ClassesGenerator classgen = new ClassesGenerator(data, translator);
         Console.Error.WriteLine("Generating CodeCompileUnit...");

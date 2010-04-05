@@ -23,20 +23,40 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
+static class CollectionExtensions {
+    public static void AddRange<T, U>(this IDictionary<T, U> self, IDictionary<T, U> dict) {
+        foreach (KeyValuePair<T, U> pair in dict) {
+            if (self.ContainsKey(pair.Key)) {
+                Console.Error.WriteLine("IDictionary already contains {0}", pair.Key);
+            }
+
+            self.Add(pair.Key, pair.Value);
+        }
+    }
+}
+
 public unsafe class Translator {
 
     GeneratorData data;
 
-    public Translator(GeneratorData data) {
+    public Translator(GeneratorData data) : this (data, new List<ICustomTranslator>()) {}
+
+    public Translator(GeneratorData data, List<ICustomTranslator> customTranslators) {
         this.data = data;
+        foreach (ICustomTranslator translator in customTranslators) {
+            typeMap.AddRange(translator.TypeMap);
+            typeStringMap.AddRange(translator.TypeStringMap);
+            typeCodeMap.AddRange(translator.TypeCodeMap);
+        }
     }
 
 #region private data
 
     public class TypeInfo {
         public TypeInfo() {}
-        public TypeInfo(string name, int pDepth, bool isRef, bool isConst, bool isUnsigned, string templateParams) {
+        public TypeInfo(string name, int pDepth, bool isRef, bool isConst, bool isUnsigned, string templateParams, GeneratorData data) {
             Name = name; PointerDepth = pDepth; IsCppRef = isRef; IsConst = isConst; IsUnsigned = isUnsigned; TemplateParameters = templateParams;
+            GeneratorData = data;
         }
         public string Name = string.Empty;
         public int PointerDepth = 0;
@@ -45,9 +65,10 @@ public unsafe class Translator {
         public bool IsUnsigned = false;
         public bool IsRef = false;
         public string TemplateParameters = string.Empty;
+        public readonly GeneratorData GeneratorData;
     }
 
-    delegate object TranslateFunc(TypeInfo type);
+    public delegate object TranslateFunc(TypeInfo type);
 
     // map a C++ type string to a .NET type
     Dictionary<string, Type> typeMap = new Dictionary<string, Type>()
@@ -66,32 +87,11 @@ public unsafe class Translator {
         { "double", typeof(double) },
         { "bool", typeof(bool) },
         { "void", typeof(void) },
-
-        // used in properties
-        { "qreal", typeof(double) },
-
-        // flag types that are not recognised as such
-        { "ChangeFlags", typeof(uint) },
-        { "ColorDialogOptions", typeof(uint) },
-        { "FontDialogOptions", typeof(uint) },
-        { "Options", typeof(uint) },
-        { "PageSetupDialogOptions", typeof(uint) },
-        { "PrintDialogOptions", typeof(uint) },
     };
 
     // map a C++ type string to a .NET type string
     Dictionary<string, string> typeStringMap = new Dictionary<string, string>()
     {
-        { "QList", "System.Collections.Generic.List" },
-        { "QStringList", "System.Collections.Generic.List<string>" },
-        { "QVector", "System.Collections.Generic.List" },
-        { "QHash", "System.Collections.Generic.Dictionary" },
-        { "QMap", "System.Collections.Generic.Dictionary" },
-        { "QMultiMap", "System.Collections.Generic.Dictionary" },
-        // a hash set would be better, but do we want to depend on System.Core.dll (i.e. .NET 3.5)?
-        { "QSet", "System.Collections.Generic.List" },
-        { "QQueue", "System.Collections.Generic.Queue" },
-        { "QStack", "System.Collections.Generic.Stack" },
     };
 
     // custom translation code
@@ -105,57 +105,6 @@ public unsafe class Translator {
         { "_XDisplay", delegate { throw new NotSupportedException(); } },
         { "_XRegion", delegate { throw new NotSupportedException(); } },
         { "FT_FaceRec_", delegate { throw new NotSupportedException(); } },
-
-        // this is only temporary so that qtgui compiles
-        { "QThread", delegate { throw new NotSupportedException(); } },
-        { "QMutex", delegate { throw new NotSupportedException(); } },
-        { "QDebug", delegate { throw new NotSupportedException(); } },
-//         { "QWidget", delegate { throw new NotSupportedException(); } },
-
-        { "QFlags", delegate { throw new NotSupportedException(); } },
-        { "QFlag", delegate { throw new NotSupportedException(); } },
-        { "QIncompatibleFlag", delegate { throw new NotSupportedException(); } },
-
-        { "QString::Null", delegate { throw new NotSupportedException(); } },
-        { "QHashDummyValue", delegate { throw new NotSupportedException(); } },
-        { "QPostEventList", delegate { throw new NotSupportedException(); } },
-        { "QTextStreamManipulator", delegate { throw new NotSupportedException(); } },
-        { "QVariant::Private", delegate { throw new NotSupportedException(); } },
-        { "QVariant::Handler", delegate { throw new NotSupportedException(); } },
-
-        { "QGraphicsEffectSource", delegate { throw new NotSupportedException(); } },
-        { "QFileDialogArgs", delegate { throw new NotSupportedException(); } },
-        { "QX11InfoData", delegate { throw new NotSupportedException(); } },
-        { "QTextEngine", delegate { throw new NotSupportedException(); } },
-        { "QWindowSurface", delegate { throw new NotSupportedException(); } },
-
-        { "QImageData", delegate { throw new NotSupportedException(); } },
-        { "QDrawPixmaps::Data", delegate { throw new NotSupportedException(); } },
-
-        { "QEventPrivate", delegate { throw new NotSupportedException(); } },
-        { "QGraphicsSceneEventPrivate", delegate { throw new NotSupportedException(); } },
-        { "QIconPrivate", delegate { throw new NotSupportedException(); } },
-        { "QKeySequencePrivate", delegate { throw new NotSupportedException(); } },
-        { "QPenPrivate", delegate { throw new NotSupportedException(); } },
-        { "QUrlPrivate", delegate { throw new NotSupportedException(); } },
-        { "QTextDocumentPrivate", delegate { throw new NotSupportedException(); } },
-
-        { "QGenericMatrix", delegate { throw new NotSupportedException(); } },
-        { "QScopedPointer", delegate { throw new NotSupportedException(); } },
-        { "QExplicitlySharedDataPointer", delegate { throw new NotSupportedException(); } },
-
-        { "void", type => (type.PointerDepth == 0) ? new CodeTypeReference(typeof(void)) : new CodeTypeReference(typeof(IntPtr)) },
-        { "char", delegate(TypeInfo type) {
-                    if (type.PointerDepth == 1) {
-                        if (type.IsUnsigned)
-                            return new CodeTypeReference("Pointer<byte>");
-                        if (type.IsConst)
-                            return "String";
-                        return new CodeTypeReference("Pointer<sbyte>");
-                    }
-                    return null;
-                  }},
-        { "QString", type => (type.PointerDepth > 0) ? "System.Text.StringBuilder" : "String" },
     };
 
 #endregion
@@ -233,7 +182,7 @@ public unsafe class Translator {
             name = partialTypeStr;
         } else if (typeCodeMap.TryGetValue(name, out typeFunc)) {
             // try to look up custom translation code
-            TypeInfo typeInfo = new TypeInfo(name, pointerDepth, isCppRef, isConst, isUnsigned, templateArgument);
+            TypeInfo typeInfo = new TypeInfo(name, pointerDepth, isCppRef, isConst, isUnsigned, templateArgument, data);
             object obj = typeFunc(typeInfo);
             isRef = typeInfo.IsRef;
             if (obj is string) {
