@@ -21,7 +21,7 @@ using System;
 using System.Collections;
 using System.Runtime.InteropServices;
 
-unsafe class ByteArrayManager {
+public unsafe class ByteArrayManager {
     static Hashtable maps = new Hashtable();
     
 /*    public static unsafe long strlen(byte *str) {

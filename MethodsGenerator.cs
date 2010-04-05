@@ -27,7 +27,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.CodeDom;
 
-static class CodeDomExtensions {
+public static class CodeDomExtensions {
 
     public static bool TypeEquals(this CodeTypeReference self, CodeTypeReference other) {
         if (self.BaseType != other.BaseType || self.TypeArguments.Count != other.TypeArguments.Count)
@@ -88,9 +88,9 @@ static class CodeDomExtensions {
     }
 }
 
-unsafe delegate void MethodHook(Smoke *smoke, Smoke.Method *smokeMethod, CodeMemberMethod cmm, CodeTypeDeclaration typeDecl);
+public unsafe delegate void MethodHook(Smoke *smoke, Smoke.Method *smokeMethod, CodeMemberMethod cmm, CodeTypeDeclaration typeDecl);
 
-unsafe class MethodsGenerator {
+public unsafe class MethodsGenerator {
     GeneratorData data;
     Translator translator;
     CodeTypeDeclaration type;

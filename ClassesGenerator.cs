@@ -24,9 +24,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.CodeDom;
 
-unsafe delegate void ClassHook(Smoke *smoke, Smoke.Class *klass, CodeTypeDeclaration typeDecl);
+public unsafe delegate void ClassHook(Smoke *smoke, Smoke.Class *klass, CodeTypeDeclaration typeDecl);
 
-unsafe class ClassesGenerator {
+public unsafe class ClassesGenerator {
 
     GeneratorData data;
     Translator translator;

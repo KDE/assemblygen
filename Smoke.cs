@@ -20,7 +20,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-unsafe partial struct Smoke {
+public unsafe partial struct Smoke {
     public byte *module_name;
 
     public enum EnumOperation {

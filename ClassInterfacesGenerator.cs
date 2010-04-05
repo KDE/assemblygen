@@ -21,7 +21,7 @@ using System;
 using System.CodeDom;
 using System.Collections.Generic;
 
-unsafe class ClassInterfacesGenerator {
+public unsafe class ClassInterfacesGenerator {
 
     GeneratorData data;
     Translator translator;

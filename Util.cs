@@ -22,7 +22,7 @@ using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using System.Text;
 
-static class Util {
+public static class Util {
     [DllImport("smokeloader", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.U1)]
     public static extern unsafe bool GetModuleIndexFromClassName(byte* name, ref Smoke* smoke, ref short index);

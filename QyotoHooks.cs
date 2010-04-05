@@ -1,11 +1,11 @@
 using System;
 using System.CodeDom;
 
-interface IHookProvider {
+public interface IHookProvider {
     void RegisterHooks();
 }
 
-unsafe class QyotoHooks : IHookProvider {
+public unsafe class QyotoHooks : IHookProvider {
 
     static string qObjectDummyCtorCode =
 "            try {\n" +

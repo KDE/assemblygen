@@ -27,7 +27,7 @@ using System.Runtime.InteropServices;
 using System.CodeDom;
 using System.Linq;
 
-unsafe class PropertyGenerator {
+public unsafe class PropertyGenerator {
 
     class Property {
         public string Name;

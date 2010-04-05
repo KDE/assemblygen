@@ -26,7 +26,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
 
-unsafe class GeneratorData {
+public unsafe class GeneratorData {
 
     public Smoke* Smoke = (Smoke*) IntPtr.Zero;
 

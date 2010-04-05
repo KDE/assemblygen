@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-unsafe class SmokeMethodEqualityComparer : IEqualityComparer<Smoke.ModuleIndex> {
+public unsafe class SmokeMethodEqualityComparer : IEqualityComparer<Smoke.ModuleIndex> {
 
     public static SmokeMethodEqualityComparer DefaultEqualityComparer = new SmokeMethodEqualityComparer();
     public static SmokeMethodEqualityComparer AbstractRespectingComparer = new SmokeMethodEqualityComparer(true);

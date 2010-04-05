@@ -23,7 +23,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
-unsafe class Translator {
+public unsafe class Translator {
 
     GeneratorData data;
 
@@ -33,7 +33,7 @@ unsafe class Translator {
 
 #region private data
 
-    class TypeInfo {
+    public class TypeInfo {
         public TypeInfo() {}
         public TypeInfo(string name, int pDepth, bool isRef, bool isConst, bool isUnsigned, string templateParams) {
             Name = name; PointerDepth = pDepth; IsCppRef = isRef; IsConst = isConst; IsUnsigned = isUnsigned; TemplateParameters = templateParams;
