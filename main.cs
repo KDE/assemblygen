@@ -45,6 +45,7 @@ class MainClass {
     public unsafe static int Main(string[] args) {
         List<CodeCompileUnit> codeSnippets = new List<CodeCompileUnit>();
         List<Assembly> references = new List<Assembly>();
+        List<string> imports = new List<string>();
         StringBuilder compilerOptions = new StringBuilder();
         bool codeOnly = false;
         string codeFile = string.Empty;
@@ -74,6 +75,9 @@ class MainClass {
             } else if (arg.StartsWith("-reference:")) {
                 references.Add(Assembly.LoadFrom(arg.Substring(11)));
                 continue;
+            } else if (arg.StartsWith("-import:")) {
+                imports.AddRange(arg.Substring(8).Split(','));
+                continue;
             } else if (arg.StartsWith("-")) {
                 compilerOptions.Append(" /");
                 compilerOptions.Append(arg.Substring(1));
@@ -97,7 +101,7 @@ class MainClass {
             return SmokeLoadingFailure;
         }
 
-        GeneratorData data = new GeneratorData(smoke, "Qyoto", references);
+        GeneratorData data = new GeneratorData(smoke, "Qyoto", imports, references);
         Translator translator = new Translator(data);
 
         IHookProvider hooks = new QyotoHooks();

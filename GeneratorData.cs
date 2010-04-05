@@ -34,16 +34,26 @@ unsafe class GeneratorData {
     public CodeNamespace DefaultNamespace = null;
     public string GlobalSpaceClassName = "Global";
     public List<Assembly> References;
+    public List<string> Imports;
 
-    public GeneratorData(Smoke* smoke, string defaultNamespace, List<Assembly> references) : this(smoke, defaultNamespace, references, new CodeCompileUnit()) {}
+    public GeneratorData(Smoke* smoke, string defaultNamespace, List<Assembly> references)
+        : this(smoke, defaultNamespace, new List<string>(), references, new CodeCompileUnit()) {}
 
-    public GeneratorData(Smoke* smoke, string defaultNamespace, List<Assembly> references, CodeCompileUnit unit) {
+    public GeneratorData(Smoke* smoke, string defaultNamespace, List<string> imports, List<Assembly> references)
+        : this(smoke, defaultNamespace, imports, references, new CodeCompileUnit()) {}
+
+    public GeneratorData(Smoke* smoke, string defaultNamespace, List<string> imports, List<Assembly> references, CodeCompileUnit unit) {
         Smoke = smoke;
         CompileUnit = unit;
+        Imports = imports;
 
         DefaultNamespace = new CodeNamespace(defaultNamespace);
         DefaultNamespace.Imports.Add(new CodeNamespaceImport("System"));
         DefaultNamespace.Imports.Add(new CodeNamespaceImport("System.Runtime.InteropServices"));
+        foreach (string import in imports) {
+            DefaultNamespace.Imports.Add(new CodeNamespaceImport(import));
+        }
+
         References = references;
         foreach (Assembly assembly in References) {
             smokeClassAttribute = assembly.GetType("Qyoto.SmokeClass", false);
@@ -136,6 +146,10 @@ unsafe class GeneratorData {
         nspace.Imports.Add(new CodeNamespaceImport("System"));
         nspace.Imports.Add(new CodeNamespaceImport("System.Runtime.InteropServices"));
         nspace.Imports.Add(new CodeNamespaceImport(DefaultNamespace.Name));
+        foreach (string import in Imports) {
+            DefaultNamespace.Imports.Add(new CodeNamespaceImport(import));
+        }
+
         parentCollection.Add(nspace);
         NamespaceMap[prefix] = nspace;
         return nspace.Types;
