@@ -35,6 +35,7 @@ public unsafe class QyotoHooks : IHookProvider {
     public void RegisterHooks() {
         ClassesGenerator.PreMembersHooks += PreMembersHook;
         ClassesGenerator.SupportingMethodsHooks += SupportingMethodsHook;
+        Console.WriteLine("Registered Qyoto hooks.");
     }
 
     public void PreMembersHook(Smoke *smoke, Smoke.Class *klass, CodeTypeDeclaration type) {

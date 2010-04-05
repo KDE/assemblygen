@@ -53,6 +53,8 @@ class MainClass {
         int warnLevel = 0;
         string smokeLib = null;
 
+        List<Assembly> plugins = new List<Assembly>();
+
         foreach (string arg in args) {
             if (arg == "-verbose") {
                 Debug.Listeners.Add(new ConsoleTraceListener(true));
@@ -77,6 +79,11 @@ class MainClass {
                 continue;
             } else if (arg.StartsWith("-import:")) {
                 imports.AddRange(arg.Substring(8).Split(','));
+                continue;
+            } else if (arg.StartsWith("-plugins:")) {
+                foreach (string str in arg.Substring(9).Split(',')) {
+                    plugins.Add(Assembly.LoadFrom(str));
+                }
                 continue;
             } else if (arg.StartsWith("-")) {
                 compilerOptions.Append(" /");
@@ -104,8 +111,17 @@ class MainClass {
         GeneratorData data = new GeneratorData(smoke, "Qyoto", imports, references);
         Translator translator = new Translator(data);
 
-        IHookProvider hooks = new QyotoHooks();
-        hooks.RegisterHooks();
+        foreach (Assembly plugin in plugins) {
+            foreach (Type type in plugin.GetTypes()) {
+                foreach (Type iface in type.GetInterfaces()) {
+                    if (iface == typeof(IHookProvider)) {
+                        IHookProvider provider = (IHookProvider) Activator.CreateInstance(type);
+                        provider.RegisterHooks();
+                        break;
+                    }
+                }
+            }
+        }
 
         ClassesGenerator classgen = new ClassesGenerator(data, translator);
         Console.Error.WriteLine("Generating CodeCompileUnit...");
