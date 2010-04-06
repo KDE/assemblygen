@@ -200,7 +200,8 @@ public unsafe class PropertyGenerator {
 
     short FindQPropertyGetAccessorMethodMapId(short classId, Property prop, string capitalized) {
         short getterMapId = 0;
-        string otherPrefixName = "is" + capitalized;
+        string firstPrefixName = "is" + capitalized;
+        string secondPrefixName = "has" + capitalized;
         short *parents = data.Smoke->inheritanceList + data.Smoke->classes[classId].parents;
 
         while (getterMapId == 0 && classId > 0) {
@@ -208,8 +209,14 @@ public unsafe class PropertyGenerator {
             getterMapId = data.Smoke->idMethod(classId, methNameId);
             if (getterMapId == 0 && prop.Type == "bool") {
                 // bool methods often begin with isFoo()
-                methNameId = data.Smoke->idMethodName(otherPrefixName);
+                methNameId = data.Smoke->idMethodName(firstPrefixName);
                 getterMapId = data.Smoke->idMethod(classId, methNameId);
+
+                if (getterMapId == 0) {
+                    // or hasFoo()
+                    methNameId = data.Smoke->idMethodName(secondPrefixName);
+                    getterMapId = data.Smoke->idMethod(classId, methNameId);
+                }
             }
             classId = *(parents++);
         }
