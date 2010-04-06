@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 public interface IHookProvider {
     void RegisterHooks();
@@ -28,4 +29,7 @@ public interface ICustomTranslator {
     IDictionary<string, Type> TypeMap { get; }
     IDictionary<string, string> TypeStringMap { get; }
     IDictionary<string, Translator.TranslateFunc> TypeCodeMap { get; }
+
+    IList<Regex> ExcludedMethods { get; }
+    IList<string> NamespacesAsClasses { get; }
 }

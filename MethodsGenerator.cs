@@ -120,15 +120,16 @@ public unsafe class MethodsGenerator {
 
     public CodeMemberMethod GenerateBasicMethodDefinition(Smoke.Method *method, string cppSignature, CodeTypeReference iface) {
         // do we actually want that method?
-        foreach (Regex regex in data.ExcludedMethods) {
-            if (regex.IsMatch(cppSignature))
+        string className = ByteArrayManager.GetString(smokeClass->className);
+        string completeSignature = className + "::" + cppSignature;
+        foreach (Regex regex in translator.ExcludedMethods) {
+            if (regex.IsMatch(completeSignature))
                 return null;
         }
 
         List<CodeParameterDeclarationExpression> args = new List<CodeParameterDeclarationExpression>();
         int count = 1;
         bool isRef;
-        string className = ByteArrayManager.GetString(smokeClass->className);
         string csharpClassName = className;
         int indexOfColon = csharpClassName.LastIndexOf("::");
         if (indexOfColon != -1) {

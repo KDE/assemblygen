@@ -47,6 +47,8 @@ public unsafe class Translator {
             typeMap.AddRange(translator.TypeMap);
             typeStringMap.AddRange(translator.TypeStringMap);
             typeCodeMap.AddRange(translator.TypeCodeMap);
+            ExcludedMethods.AddRange(translator.ExcludedMethods);
+            NamespacesAsClasses.AddRange(translator.NamespacesAsClasses);
         }
     }
 
@@ -105,6 +107,16 @@ public unsafe class Translator {
         { "_XDisplay", delegate { throw new NotSupportedException(); } },
         { "_XRegion", delegate { throw new NotSupportedException(); } },
         { "FT_FaceRec_", delegate { throw new NotSupportedException(); } },
+    };
+
+    // C++ method signatures (without return type) that should be excluded
+    public List<Regex> ExcludedMethods = new List<Regex>()
+    {
+    };
+
+    // C++ namespaces that should be mapped to .NET classes
+    public List<string> NamespacesAsClasses = new List<string>()
+    {
     };
 
 #endregion

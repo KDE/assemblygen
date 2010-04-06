@@ -64,7 +64,7 @@ public unsafe class ClassesGenerator {
         string mapName = smokeName;
         string name;
         string prefix = string.Empty;
-        if (smokeClass->size == 0 && !data.NamespacesAsClasses.Contains(smokeName)) {
+        if (smokeClass->size == 0 && !translator.NamespacesAsClasses.Contains(smokeName)) {
             if (smokeName == "QGlobalSpace") {  // global space
                 name = data.GlobalSpaceClassName;
             } else {

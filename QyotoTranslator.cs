@@ -20,6 +20,7 @@
 using System;
 using System.Collections.Generic;
 using System.CodeDom;
+using System.Text.RegularExpressions;
 
 public class QyotoTranslator : ICustomTranslator {
 
@@ -112,7 +113,22 @@ public class QyotoTranslator : ICustomTranslator {
                      }},
     };
 
+    List<Regex> excludedMethods = new List<Regex>()
+    {
+        new Regex(@".*::qt_.*\("),
+        new Regex(@"QCoreApplication::QCoreApplication.*"),
+        new Regex(@"QApplication::QApplication.*"),
+    };
+
+    List<string> namespacesAsClasses = new List<string>()
+    {
+        "Qt",
+    };
+
     public IDictionary<string, Type> TypeMap { get { return typeMap; } }
     public IDictionary<string, string> TypeStringMap { get { return typeStringMap; } }
     public IDictionary<string, Translator.TranslateFunc> TypeCodeMap { get { return typeCodeMap; } }
+
+    public IList<Regex> ExcludedMethods { get { return excludedMethods; } }
+    public IList<string> NamespacesAsClasses { get { return namespacesAsClasses; } }
 }

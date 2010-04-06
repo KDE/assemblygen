@@ -91,19 +91,6 @@ public unsafe class GeneratorData {
     // maps a smoke enum type to a .NET enum
     public readonly Dictionary<string, CodeTypeDeclaration> EnumTypeMap = new Dictionary<string, CodeTypeDeclaration>();
 
-    // C++ namespaces that should be mapped to .NET classes
-    public List<string> NamespacesAsClasses = new List<string>()
-    {
-        "Qt",
-        "KDE"
-    };
-
-    // C++ method signatures (without return type) that should be excluded
-    public List<Regex> ExcludedMethods = new List<Regex>()
-    {
-        new Regex(@"^qt_.*\("),
-    };
-
     public bool Debug = false;
 
     /*
