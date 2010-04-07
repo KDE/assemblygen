@@ -34,6 +34,10 @@ qtdbus: main.exe QyotoGenerator.dll
 		-r:qyoto-qtcore.dll -langversion:3 $(KDEBINDINGS_PATH)/csharp/qyoto/qdbus/QDBusReply.cs $(KDEBINDINGS_PATH)/csharp/qyoto/qdbus/QDBusVariant.cs \
 		QDBusSignature.cs QDBusObjectPath.cs
 
+qtsvg: main.exe QyotoGenerator.dll
+	mono --debug main.exe -unsafe -out:qyoto-qtsvg.dll -plugins:QyotoGenerator.dll -code-file:qyoto-qtsvg.cs -keyfile:$(KEYFILE) libsmokeqtnetwork.so \
+		-r:qyoto-qtcore.dll
+
 kdecore: main.exe QyotoGenerator.dll
 	mono main.exe -unsafe -out:kimono-kdecore.dll -plugins:QyotoGenerator.dll -code-file:kimono-kdecore.cs -keyfile:$$HOME/dev/KDE/kdebindings/csharp/key.snk libsmokekdecore.so \
 		QPair.cs QVariantExtras.cs ~/dev/KDE/kdebindings/csharp/qyoto/src/*.cs -r:qyoto-qtcore.dll
