@@ -46,6 +46,14 @@ qtopengl: main.exe QyotoGenerator.dll
 	mono --debug main.exe -unsafe -out:qyoto-qtopengl.dll -plugins:QyotoGenerator.dll -code-file:qyoto-qtopengl.cs -keyfile:$(KEYFILE) libsmokeqtopengl.so \
 		-r:qyoto-qtcore.dll -r:qyoto-qtgui.dll
 
+qtsql: main.exe QyotoGenerator.dll
+	mono --debug main.exe -unsafe -out:qyoto-qtsql.dll -plugins:QyotoGenerator.dll -code-file:qyoto-qtsql.cs -keyfile:$(KEYFILE) libsmokeqtsql.so \
+		-r:qyoto-qtcore.dll
+
+qtmultimedia: main.exe QyotoGenerator.dll
+	mono --debug main.exe -unsafe -out:qyoto-qtmultimedia.dll -plugins:QyotoGenerator.dll -code-file:qyoto-qtmultimedia.cs -keyfile:$(KEYFILE) libsmokeqtmultimedia.so \
+		-r:qyoto-qtcore.dll -r:qyoto-qtgui.dll
+
 qtwebkit: main.exe QyotoGenerator.dll
 	mono --debug main.exe -unsafe -out:qyoto-qtwebkit.dll -plugins:QyotoGenerator.dll -code-file:qyoto-qtwebkit.cs -keyfile:$(KEYFILE) libsmokeqtwebkit.so \
 		-r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:qyoto-qtnetwork.dll -r:qyoto-qtscript.dll
