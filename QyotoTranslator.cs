@@ -36,6 +36,9 @@ public class QyotoTranslator : ICustomTranslator {
         { "Options", typeof(uint) },
         { "PageSetupDialogOptions", typeof(uint) },
         { "PrintDialogOptions", typeof(uint) },
+        { "QScriptEngine.QObjectWrapOptions", typeof(uint) },
+        { "QScriptValue.PropertyFlags", typeof(uint) },
+        { "QScriptValue.ResolveFlags", typeof(uint) },
         { "WatchMode", typeof(uint) },
     };
 
@@ -86,6 +89,16 @@ public class QyotoTranslator : ICustomTranslator {
         { "QKeySequencePrivate", delegate { throw new NotSupportedException(); } },
         { "QPenPrivate", delegate { throw new NotSupportedException(); } },
         { "QUrlPrivate", delegate { throw new NotSupportedException(); } },
+
+        { "QScriptClassPrivate", delegate { throw new NotSupportedException(); } },
+        { "QScriptClassPropertyIteratorPrivate", delegate { throw new NotSupportedException(); } },
+        { "QScriptEnginePrivate", delegate { throw new NotSupportedException(); } },
+        { "QScriptEngineAgentPrivate", delegate { throw new NotSupportedException(); } },
+        { "QScriptProgram", delegate { throw new NotSupportedException(); } },
+
+        { "QWebPagePrivate", delegate { throw new NotSupportedException(); } },
+        { "QWebSettingsPrivate", delegate { throw new NotSupportedException(); } },
+
         { "QTextDocumentPrivate", delegate { throw new NotSupportedException(); } },
 
         { "QGenericMatrix", delegate { throw new NotSupportedException(); } },

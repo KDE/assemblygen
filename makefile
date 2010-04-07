@@ -35,8 +35,16 @@ qtdbus: main.exe QyotoGenerator.dll
 		QDBusSignature.cs QDBusObjectPath.cs
 
 qtsvg: main.exe QyotoGenerator.dll
-	mono --debug main.exe -unsafe -out:qyoto-qtsvg.dll -plugins:QyotoGenerator.dll -code-file:qyoto-qtsvg.cs -keyfile:$(KEYFILE) libsmokeqtnetwork.so \
+	mono --debug main.exe -unsafe -out:qyoto-qtsvg.dll -plugins:QyotoGenerator.dll -code-file:qyoto-qtsvg.cs -keyfile:$(KEYFILE) libsmokeqtsvg.so \
+		-r:qyoto-qtcore.dll -r:qyoto-qtgui.dll
+
+qtscript: main.exe QyotoGenerator.dll
+	mono --debug main.exe -unsafe -out:qyoto-qtscript.dll -plugins:QyotoGenerator.dll -code-file:qyoto-qtscript.cs -keyfile:$(KEYFILE) libsmokeqtscript.so \
 		-r:qyoto-qtcore.dll
+
+qtwebkit: main.exe QyotoGenerator.dll
+	mono --debug main.exe -unsafe -out:qyoto-qtwebkit.dll -plugins:QyotoGenerator.dll -code-file:qyoto-qtwebkit.cs -keyfile:$(KEYFILE) libsmokeqtwebkit.so \
+		-r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:qyoto-qtnetwork.dll -r:qyoto-qtscript.dll
 
 kdecore: main.exe QyotoGenerator.dll
 	mono main.exe -unsafe -out:kimono-kdecore.dll -plugins:QyotoGenerator.dll -code-file:kimono-kdecore.cs -keyfile:$$HOME/dev/KDE/kdebindings/csharp/key.snk libsmokekdecore.so \
