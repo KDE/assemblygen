@@ -42,6 +42,10 @@ qtscript: main.exe QyotoGenerator.dll
 	mono --debug main.exe -unsafe -out:qyoto-qtscript.dll -plugins:QyotoGenerator.dll -code-file:qyoto-qtscript.cs -keyfile:$(KEYFILE) libsmokeqtscript.so \
 		-r:qyoto-qtcore.dll
 
+qtopengl: main.exe QyotoGenerator.dll
+	mono --debug main.exe -unsafe -out:qyoto-qtopengl.dll -plugins:QyotoGenerator.dll -code-file:qyoto-qtopengl.cs -keyfile:$(KEYFILE) libsmokeqtopengl.so \
+		-r:qyoto-qtcore.dll -r:qyoto-qtgui.dll
+
 qtwebkit: main.exe QyotoGenerator.dll
 	mono --debug main.exe -unsafe -out:qyoto-qtwebkit.dll -plugins:QyotoGenerator.dll -code-file:qyoto-qtwebkit.cs -keyfile:$(KEYFILE) libsmokeqtwebkit.so \
 		-r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:qyoto-qtnetwork.dll -r:qyoto-qtscript.dll
