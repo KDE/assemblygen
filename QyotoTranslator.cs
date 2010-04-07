@@ -36,6 +36,7 @@ public class QyotoTranslator : ICustomTranslator {
         { "Options", typeof(uint) },
         { "PageSetupDialogOptions", typeof(uint) },
         { "PrintDialogOptions", typeof(uint) },
+        { "WatchMode", typeof(uint) },
     };
 
     Dictionary<string, string> typeStringMap = new Dictionary<string, string>()
@@ -74,6 +75,7 @@ public class QyotoTranslator : ICustomTranslator {
         { "QX11InfoData", delegate { throw new NotSupportedException(); } },
         { "QTextEngine", delegate { throw new NotSupportedException(); } },
         { "QWindowSurface", delegate { throw new NotSupportedException(); } },
+        { "DBusError", delegate { throw new NotSupportedException(); } },
 
         { "QImageData", delegate { throw new NotSupportedException(); } },
         { "QDrawPixmaps::Data", delegate { throw new NotSupportedException(); } },
