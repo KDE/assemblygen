@@ -132,7 +132,7 @@ class MainClass {
         classgen.Run();
         DestroySmoke((IntPtr) smoke);
 
-        CodeDomProvider csharp = CodeDomProvider.CreateProvider("CSharp");
+        CodeDomProvider csharp = new Microsoft.CSharp.CSharpCodeProvider();
         if (codeFile != string.Empty) {
             FileStream fs = new FileStream(codeFile, FileMode.Create);
             StreamWriter sw = new StreamWriter(fs);
