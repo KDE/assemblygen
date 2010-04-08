@@ -56,53 +56,57 @@ public unsafe class MethodsGenerator {
     public static event MethodHook PostMethodBodyHooks;
 
     bool MethodOverrides(Smoke.Method* method, out MemberAttributes access, out bool foundInInterface) {
+        access = MemberAttributes.Public;
+        foundInInterface = false;
+
+        if (data.Smoke->inheritanceList[data.Smoke->classes[method->classId].parents] == 0) {
+            return false;
+        }
+
         long id = method - data.Smoke->methods;
         Smoke.ModuleIndex methodModuleIndex = new Smoke.ModuleIndex(data.Smoke, (short) id);
 
-        Dictionary<Smoke.ModuleIndex, string> allMethods = data.Smoke->FindAllMethods(method->classId, true);
-        // Do this with linq... there's probably room for optimization here.
-        // Select virtual and pure virtual methods from superclasses.
-        var inheritedVirtuals = from key in allMethods.Keys
-                                where ((key.smoke->methods[key.index].flags & (ushort) Smoke.MethodFlags.mf_virtual) > 0
-                                    || (key.smoke->methods[key.index].flags & (ushort) Smoke.MethodFlags.mf_purevirtual) > 0)
-                                    && (key.smoke == data.Smoke ? (key.smoke->methods[key.index].classId != method->classId) : true)
-                                select key;
-
-        access = MemberAttributes.Public;
         Smoke.Method *firstMethod = (Smoke.Method*) IntPtr.Zero;
-        Smoke *smoke = (Smoke*) IntPtr.Zero;
-        foundInInterface = false;
+        short *firstParent = data.Smoke->inheritanceList + data.Smoke->classes[method->classId].parents;
 
-        foreach (Smoke.ModuleIndex mi in inheritedVirtuals) {
-            Smoke.Method* meth = mi.smoke->methods + mi.index;
-            if (SmokeMethodEqualityComparer.DefaultEqualityComparer.Equals(methodModuleIndex, mi))
-            {
-                if ((meth->flags & (uint) Smoke.MethodFlags.mf_protected) > 0) {
-                    access = MemberAttributes.Family;
-                } else {
-                    access = MemberAttributes.Public;
+        for (short *parent = firstParent; *parent > 0; parent++) {
+            if (firstMethod != (Smoke.Method*) IntPtr.Zero && !foundInInterface) {
+                // already found a method in the first parent class
+                break;
+            }
+
+            // Do this with linq... there's probably room for optimization here.
+            // Select virtual and pure virtual methods from superclasses.
+            var inheritedVirtuals = from key in data.Smoke->FindAllMethods(*parent, true).Keys
+                                    where ((key.smoke->methods[key.index].flags & (ushort) Smoke.MethodFlags.mf_virtual) > 0
+                                        || (key.smoke->methods[key.index].flags & (ushort) Smoke.MethodFlags.mf_purevirtual) > 0)
+                                    select key;
+
+            foreach (Smoke.ModuleIndex mi in inheritedVirtuals) {
+                Smoke.Method* meth = mi.smoke->methods + mi.index;
+                if (SmokeMethodEqualityComparer.DefaultEqualityComparer.Equals(methodModuleIndex, mi))
+                {
+                    if ((meth->flags & (uint) Smoke.MethodFlags.mf_protected) > 0) {
+                        access = MemberAttributes.Family;
+                    } else {
+                        access = MemberAttributes.Public;
+                    }
+                    // don't return here - we need the access of the method in the topmost superclass
+                    firstMethod = meth;
+                    if (parent != firstParent) {
+                        foundInInterface = true;
+                    }
                 }
-                // don't return here - we need the access of the method in the topmost superclass
-                firstMethod = meth;
-                smoke = mi.smoke;
             }
         }
 
-        // Check whether the found method is declared in a class which is a interfacified ancestor of the
-        // class in which 'method' was declared. Then the method is declared in an interface in C# and
-        // we can't use the 'override' keyword, because the method needs to implement the interface.
-        if (firstMethod != (Smoke.Method*) IntPtr.Zero) {
-            string firstMethodClassName = ByteArrayManager.GetString(smoke->classes[firstMethod->classId].className);
-            List<string> interfaces = Util.GetInterfacifiedSuperClasses(new Smoke.ModuleIndex(data.Smoke, method->classId));
-            if (interfaces.Contains(firstMethodClassName)) {
-                if ((firstMethod->flags & (uint) Smoke.MethodFlags.mf_protected) == 0) {
-                    foundInInterface = true;
-                }
-                return false;
-            }
-            return true;
-        }
-        return false;
+        // we need to have a method that's not in a interface to mark it as overriden
+        bool ret = firstMethod != (Smoke.Method*) IntPtr.Zero && !foundInInterface;
+
+        // we need to have a public method in one of the interfaces for this to be set
+        foundInInterface = firstMethod != (Smoke.Method*) IntPtr.Zero && foundInInterface && access == MemberAttributes.Public;
+
+        return ret;
     }
 
     public CodeMemberMethod GenerateBasicMethodDefinition(Smoke.Method *method) {

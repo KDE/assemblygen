@@ -100,6 +100,7 @@ public class QyotoTranslator : ICustomTranslator {
         { "QWebSettingsPrivate", delegate { throw new NotSupportedException(); } },
 
         { "QTextDocumentPrivate", delegate { throw new NotSupportedException(); } },
+        { "QDomNodePrivate", delegate { throw new NotSupportedException(); } },
 
         { "QGenericMatrix", delegate { throw new NotSupportedException(); } },
         { "QScopedPointer", delegate { throw new NotSupportedException(); } },

@@ -142,6 +142,18 @@ public unsafe partial struct Smoke {
 
     // adapted from QtRuby's findAllMethods()
     public void FindAllMethods(short c, IDictionary<Smoke.ModuleIndex, string> ret, bool searchSuperClasses) {
+        Smoke.Class* klass = classes + c;
+        if (klass->external) {
+            Smoke* smoke = (Smoke*) 0;
+            short index = 0;
+            if (!Util.GetModuleIndexFromClassName(klass->className, ref smoke, ref index)) {
+                Console.Error.WriteLine("  |--Failed resolving external class {0}", ByteArrayManager.GetString(klass->className));
+                return;
+            }
+            smoke->FindAllMethods(index, ret, true);
+            return;
+        }
+
         Smoke *thisPtr;
         fixed (Smoke *smoke = &this) {
             thisPtr = smoke;    // hackish, but this is the cleanest way that I know to get the 'this' pointer
@@ -188,18 +200,8 @@ public unsafe partial struct Smoke {
         }
         if (searchSuperClasses) {
             for (short *parent = inheritanceList + classes[c].parents; *parent > 0; parent++) {
-                Smoke.Class* klass = classes + *parent;
-                if (klass->external) {
-                    Smoke* smoke = (Smoke*) 0;
-                    short index = 0;
-                    if (!Util.GetModuleIndexFromClassName(klass->className, ref smoke, ref index)) {
-                        Console.Error.WriteLine("  |--Failed resolving external class {0}", ByteArrayManager.GetString(klass->className));
-                        continue;
-                    }
-                    smoke->FindAllMethods(index, ret, true);
-                } else {
-                    FindAllMethods(*parent, ret, true);
-                }
+                klass = classes + *parent;
+                FindAllMethods(*parent, ret, true);
             }
         }
     }
