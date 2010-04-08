@@ -54,6 +54,10 @@ qtxml: main.exe QyotoGenerator.dll
 	mono --debug main.exe -unsafe -out:qyoto-qtxml.dll -plugins:QyotoGenerator.dll -code-file:qyoto-qtxml.cs -keyfile:$(KEYFILE) libsmokeqtxml.so \
 		-r:qyoto-qtcore.dll
 
+qtxmlpatterns: main.exe QyotoGenerator.dll
+	mono --debug main.exe -unsafe -out:qyoto-qtxmlpatterns.dll -plugins:QyotoGenerator.dll -code-file:qyoto-qtxmlpatterns.cs -keyfile:$(KEYFILE) libsmokeqtxmlpatterns.so \
+		-r:qyoto-qtcore.dll -r:qyoto-qtxml.dll -r:qyoto-qtnetwork.dll
+
 qtmultimedia: main.exe QyotoGenerator.dll
 	mono --debug main.exe -unsafe -out:qyoto-qtmultimedia.dll -plugins:QyotoGenerator.dll -code-file:qyoto-qtmultimedia.cs -keyfile:$(KEYFILE) libsmokeqtmultimedia.so \
 		-r:qyoto-qtcore.dll -r:qyoto-qtgui.dll

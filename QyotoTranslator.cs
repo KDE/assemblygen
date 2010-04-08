@@ -90,6 +90,8 @@ public class QyotoTranslator : ICustomTranslator {
         { "QPenPrivate", delegate { throw new NotSupportedException(); } },
         { "QUrlPrivate", delegate { throw new NotSupportedException(); } },
 
+        { "QPatternist::Item", delegate { throw new NotSupportedException(); } },
+
         { "QScriptClassPrivate", delegate { throw new NotSupportedException(); } },
         { "QScriptClassPropertyIteratorPrivate", delegate { throw new NotSupportedException(); } },
         { "QScriptEnginePrivate", delegate { throw new NotSupportedException(); } },
