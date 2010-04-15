@@ -39,6 +39,10 @@ public static class Util {
         return IsDerivedFrom(className, "QObject");
     }
 
+    public unsafe static bool IsQObject(Smoke.Class *klass) {
+        return IsDerivedFrom(ByteArrayManager.GetString(klass->className), "QObject");
+    }
+
     public static bool IsPrimitiveType(string type) {
         type = type.Replace("unsigned ", "u");
         if (   type == "char" || type == "uchar" || type == "short" || type == "ushort" || type == "int" || type == "uint"

@@ -18,9 +18,24 @@
 */
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.CodeDom;
 
 public unsafe class QyotoHooks : IHookProvider {
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet=CharSet.Ansi)]
+    delegate void AddSignal(string signature, string name, string returnType, IntPtr metaMethod);
+
+    [DllImport("smokeloader", CallingConvention=CallingConvention.Cdecl)]
+    static extern void GetSignals(Smoke* smoke, void *klass, AddSignal addSignalFn);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet=CharSet.Ansi)]
+    delegate void AddParameter(string type, string name);
+
+    [DllImport("smokeloader", CallingConvention=CallingConvention.Cdecl)]
+    static extern void GetMetaMethodParameters(IntPtr metaMethod, AddParameter addParamFn);
 
     static string qObjectDummyCtorCode =
 "            try {\n" +
@@ -34,9 +49,13 @@ public unsafe class QyotoHooks : IHookProvider {
 
     public void RegisterHooks() {
         ClassesGenerator.PreMembersHooks += PreMembersHook;
+        ClassesGenerator.PostMembersHooks += PostMembersHook;
         ClassesGenerator.SupportingMethodsHooks += SupportingMethodsHook;
         Console.WriteLine("Registered Qyoto hooks.");
     }
+
+    public Translator Translator { get; set; }
+    public GeneratorData Data { get; set; }
 
     public void PreMembersHook(Smoke *smoke, Smoke.Class *klass, CodeTypeDeclaration type) {
         if (type.Name == "QObject") {
@@ -48,6 +67,55 @@ public unsafe class QyotoHooks : IHookProvider {
             Q_EMIT.Attributes = MemberAttributes.Family;
             Q_EMIT.InitExpression = new CodePrimitiveExpression(null);
             type.Members.Add(Q_EMIT);
+        }
+    }
+
+    public void PostMembersHook(Smoke *smoke, Smoke.Class *klass, CodeTypeDeclaration type) {
+        if (Util.IsQObject(klass)) {
+            CodeMemberProperty emit = new CodeMemberProperty();
+            emit.Name = "Emit";
+            emit.Attributes = MemberAttributes.Family | MemberAttributes.New | MemberAttributes.Final;
+            emit.HasGet = true;
+            emit.HasSet = false;
+
+            string signalsIfaceName = "I" + type.Name + "Signals";
+            CodeTypeReference returnType = new CodeTypeReference(signalsIfaceName);
+            emit.Type = returnType;
+
+            emit.GetStatements.Add(new CodeMethodReturnStatement(new CodeCastExpression(
+                returnType,
+                new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "Q_EMIT")
+            )));
+
+            type.Members.Add(emit);
+
+            string className = ByteArrayManager.GetString(klass->className);
+            int colon = className.LastIndexOf("::");
+            string prefix = (colon != -1) ? className.Substring(0, colon) : string.Empty;
+
+            IList typeCollection = Data.GetTypeCollection(prefix);
+            CodeTypeDeclaration ifaceDecl = new CodeTypeDeclaration(signalsIfaceName);
+            ifaceDecl.IsInterface = true;
+
+            if (className != "QObject") {
+                className = ByteArrayManager.GetString(smoke->classes[smoke->inheritanceList[klass->parents]].className);
+                colon = className.LastIndexOf("::");
+                prefix = (colon != -1) ? className.Substring(0, colon) : string.Empty;
+                if (colon != -1) {
+                    className = className.Substring(colon + 2);
+                }
+
+                string parentInterface = (prefix != string.Empty) ? prefix.Replace("::", ".") + "." : string.Empty;
+                parentInterface += "I" + className + "Signals";
+
+                ifaceDecl.BaseTypes.Add(new CodeTypeReference(parentInterface));
+            }
+
+            GetSignals(smoke, klass, delegate(string signature, string name, string typeName, IntPtr metaMethod) {
+                ///TODO: add a method definition for the signal here
+            });
+
+            typeCollection.Add(ifaceDecl);
         }
     }
 

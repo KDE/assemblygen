@@ -112,11 +112,7 @@ class MainClass {
         foreach (Assembly plugin in plugins) {
             foreach (Type type in plugin.GetTypes()) {
                 foreach (Type iface in type.GetInterfaces()) {
-                    if (iface == typeof(IHookProvider)) {
-                        IHookProvider provider = (IHookProvider) Activator.CreateInstance(type);
-                        provider.RegisterHooks();
-                        break;
-                    } else if (iface == typeof(ICustomTranslator)) {
+                    if (iface == typeof(ICustomTranslator)) {
                         ICustomTranslator customTranslator = (ICustomTranslator) Activator.CreateInstance(type);
                         customTranslators.Add(customTranslator);
                     }
@@ -126,6 +122,20 @@ class MainClass {
 
         GeneratorData data = new GeneratorData(smoke, "Qyoto", imports, references);
         Translator translator = new Translator(data, customTranslators);
+
+        foreach (Assembly plugin in plugins) {
+            foreach (Type type in plugin.GetTypes()) {
+                foreach (Type iface in type.GetInterfaces()) {
+                    if (iface == typeof(IHookProvider)) {
+                        IHookProvider provider = (IHookProvider) Activator.CreateInstance(type);
+                        provider.Translator = translator;
+                        provider.Data = data;
+                        provider.RegisterHooks();
+                        break;
+                    }
+                }
+            }
+        }
 
         ClassesGenerator classgen = new ClassesGenerator(data, translator);
         Console.Error.WriteLine("Generating CodeCompileUnit...");

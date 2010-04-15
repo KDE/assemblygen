@@ -23,6 +23,9 @@ using System.Text.RegularExpressions;
 
 public interface IHookProvider {
     void RegisterHooks();
+
+    Translator Translator { get; set; }
+    GeneratorData Data { get; set; }
 }
 
 public interface ICustomTranslator {
