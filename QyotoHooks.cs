@@ -18,6 +18,8 @@
 */
 
 using System;
+using System.Diagnostics;
+using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -98,21 +100,61 @@ public unsafe class QyotoHooks : IHookProvider {
             ifaceDecl.IsInterface = true;
 
             if (className != "QObject") {
-                className = ByteArrayManager.GetString(smoke->classes[smoke->inheritanceList[klass->parents]].className);
-                colon = className.LastIndexOf("::");
-                prefix = (colon != -1) ? className.Substring(0, colon) : string.Empty;
+                string parentClassName = ByteArrayManager.GetString(smoke->classes[smoke->inheritanceList[klass->parents]].className);
+                colon = parentClassName.LastIndexOf("::");
+                prefix = (colon != -1) ? parentClassName.Substring(0, colon) : string.Empty;
                 if (colon != -1) {
-                    className = className.Substring(colon + 2);
+                    parentClassName = parentClassName.Substring(colon + 2);
                 }
 
                 string parentInterface = (prefix != string.Empty) ? prefix.Replace("::", ".") + "." : string.Empty;
-                parentInterface += "I" + className + "Signals";
+                parentInterface += "I" + parentClassName + "Signals";
 
                 ifaceDecl.BaseTypes.Add(new CodeTypeReference(parentInterface));
             }
 
             GetSignals(smoke, klass, delegate(string signature, string name, string typeName, IntPtr metaMethod) {
-                ///TODO: add a method definition for the signal here
+                CodeMemberMethod signal = new CodeMemberMethod();
+
+                // capitalize the first letter
+                StringBuilder builder = new StringBuilder(name);
+                builder[0] = char.ToUpper(builder[0]);
+                string tmp = builder.ToString();
+
+                signal.Name = tmp;
+                bool isRef;
+                try {
+                    if (typeName == string.Empty)
+                        signal.ReturnType = new CodeTypeReference(typeof(void));
+                    else
+                        signal.ReturnType = Translator.CppToCSharp(typeName, out isRef);
+                } catch (NotSupportedException) {
+                    Debug.Print("  |--Won't wrap signal {0}::{1}", className, signature);
+                    return;
+                }
+
+                int argNum = 1;
+                GetMetaMethodParameters(metaMethod, delegate(string paramType, string paramName) {
+                    if (paramName == string.Empty) {
+                        paramName = "arg" + argNum.ToString();
+                    }
+                    argNum++;
+
+                    CodeParameterDeclarationExpression param;
+                    try {
+                        param = new CodeParameterDeclarationExpression(Translator.CppToCSharp(paramType, out isRef), paramName);
+                    } catch (NotSupportedException) {
+                        Debug.Print("  |--Won't wrap signal {0}::{1}", className, signature);
+                        return;
+                    }
+                    if (isRef) {
+                        param.Direction = FieldDirection.Ref;
+                    }
+
+                    signal.Parameters.Add(param);
+                });
+
+                ifaceDecl.Members.Add(signal);
             });
 
             typeCollection.Add(ifaceDecl);

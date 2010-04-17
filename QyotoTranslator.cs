@@ -26,8 +26,9 @@ public class QyotoTranslator : ICustomTranslator {
 
     Dictionary<string, Type> typeMap = new Dictionary<string, Type>()
     {
-        // used in properties
+        // used in properties, signals and slots
         { "qreal", typeof(double) },
+        { "qint64", typeof(long) },
 
         // flag types that are not recognised as such
         { "ChangeFlags", typeof(uint) },
