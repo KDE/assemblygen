@@ -133,6 +133,10 @@ public unsafe class QyotoHooks : IHookProvider {
                     return;
                 }
 
+                CodeAttributeDeclaration attr = new CodeAttributeDeclaration("Q_SIGNAL",
+                    new CodeAttributeArgument(new CodePrimitiveExpression(signature)));
+                signal.CustomAttributes.Add(attr);
+
                 int argNum = 1;
                 GetMetaMethodParameters(metaMethod, delegate(string paramType, string paramName) {
                     if (paramName == string.Empty) {
