@@ -17,6 +17,9 @@ main.exe: libsmokeloader.so $(CS_SOURCE)
 QyotoGenerator.dll: QyotoHooks.cs QyotoTranslator.cs main.exe
 	gmcs -debug -unsafe -target:library -r:main.exe -out:QyotoGenerator.dll QyotoHooks.cs QyotoTranslator.cs
 
+KimonoGenerator.dll: KimonoTranslator.cs main.exe
+	gmcs -debug -unsafe -target:library -r:main.exe -out:KimonoGenerator.dll KimonoTranslator.cs
+
 qtcore: main.exe QyotoGenerator.dll
 	mono --debug main.exe -unsafe -out:qyoto-qtcore.dll -plugins:QyotoGenerator.dll -code-file:qyoto-qtcore.cs -keyfile:$(KEYFILE) libsmokeqtcore.so \
 		QPair.cs QVariantExtras.cs QMetaTypeExtras.cs QtExtras.cs $(KDEBINDINGS_PATH)/csharp/qyoto/src/*.cs
@@ -66,8 +69,8 @@ qtwebkit: main.exe QyotoGenerator.dll
 	mono --debug main.exe -unsafe -out:qyoto-qtwebkit.dll -plugins:QyotoGenerator.dll -code-file:qyoto-qtwebkit.cs -keyfile:$(KEYFILE) libsmokeqtwebkit.so \
 		-r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:qyoto-qtnetwork.dll -r:qyoto-qtscript.dll
 
-kdecore: main.exe QyotoGenerator.dll
-	mono main.exe -unsafe -out:kimono-kdecore.dll -plugins:QyotoGenerator.dll -code-file:kimono-kdecore.cs -keyfile:$$HOME/dev/KDE/kdebindings/csharp/key.snk libsmokekdecore.so \
-		QPair.cs QVariantExtras.cs ~/dev/KDE/kdebindings/csharp/qyoto/src/*.cs -r:qyoto-qtcore.dll
+kdecore: main.exe QyotoGenerator.dll KimonoGenerator.dll
+	mono --debug main.exe -unsafe -out:kimono-kdecore.dll -plugins:QyotoGenerator.dll,KimonoGenerator.dll -code-file:kimono-kdecore.cs -keyfile:$(KEYFILE) libsmokekdecore.so \
+		-r:qyoto-qtcore.dll
 
 # kate: space-indent off; mixed-indent off
