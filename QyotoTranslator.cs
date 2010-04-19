@@ -28,18 +28,25 @@ public class QyotoTranslator : ICustomTranslator {
     {
         // used in properties, signals and slots
         { "qreal", typeof(double) },
+        { "quint16", typeof(ushort) },
         { "qint64", typeof(long) },
 
         // flag types that are not recognised as such
+        { "BlurHints", typeof(uint) },
         { "ChangeFlags", typeof(uint) },
         { "ColorDialogOptions", typeof(uint) },
+        { "DockWidgetFeatures", typeof(uint) },
         { "FontDialogOptions", typeof(uint) },
         { "Options", typeof(uint) },
         { "PageSetupDialogOptions", typeof(uint) },
         { "PrintDialogOptions", typeof(uint) },
+        { "QDockWidget.DockWidgetFeatures", typeof(uint) },
         { "QScriptEngine.QObjectWrapOptions", typeof(uint) },
         { "QScriptValue.PropertyFlags", typeof(uint) },
         { "QScriptValue.ResolveFlags", typeof(uint) },
+        { "Qt.DockWidgetAreas", typeof(uint) },
+        { "Qt.ToolBarAreas", typeof(uint) },
+        { "Qt.WindowStates", typeof(uint) },
         { "WatchMode", typeof(uint) },
     };
 
@@ -55,6 +62,8 @@ public class QyotoTranslator : ICustomTranslator {
         { "QSet", "System.Collections.Generic.List" },
         { "QQueue", "System.Collections.Generic.Queue" },
         { "QStack", "System.Collections.Generic.Stack" },
+
+        { "QModelIndexList", "System.Collections.Generic.List<QModelIndex>" },
     };
 
     Dictionary<string, Translator.TranslateFunc> typeCodeMap = new Dictionary<string, Translator.TranslateFunc>()
