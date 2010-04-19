@@ -226,6 +226,8 @@ public unsafe class ClassesGenerator {
 
         foreach (KeyValuePair<Smoke.ModuleIndex, string> pair in implementMethods) {
             Smoke.Method *meth = pair.Key.smoke->methods + pair.Key.index;
+            Smoke.Class* ifaceKlass = pair.Key.smoke->classes + meth->classId;
+
             if (   (meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0
                 || (meth->flags & (ushort) Smoke.MethodFlags.mf_ctor) > 0
                 || (meth->flags & (ushort) Smoke.MethodFlags.mf_copyctor) > 0
@@ -242,12 +244,7 @@ public unsafe class ClassesGenerator {
                 continue;
             }
 
-            Smoke.Class* ifaceKlass = pair.Key.smoke->classes + meth->classId;
-            CodeTypeDeclaration ifaceDecl;
-            if (!data.InterfaceTypeMap.TryGetValue(ByteArrayManager.GetString(ifaceKlass->className), out ifaceDecl)) {
-                throw new Exception(String.Format("** ERROR: ** Missing type declaration for interface class {0} for {1}", ByteArrayManager.GetString(ifaceKlass->className), pair.Key));
-            }
-            methgen.GenerateMethod(meth, pair.Value, new CodeTypeReference(data.InterfaceTypeMap[ByteArrayManager.GetString(ifaceKlass->className)].Name));
+            methgen.GenerateMethod(pair.Key.smoke, meth, pair.Value, translator.CppToCSharp(ByteArrayManager.GetString(ifaceKlass->className)));
         }
     }
 

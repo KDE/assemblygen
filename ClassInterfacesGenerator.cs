@@ -33,12 +33,12 @@ public unsafe class ClassInterfacesGenerator {
 
     // Recursively adds base classes to a hash set.
     void AddBaseClassesToHashSet(Smoke.Class *klass, HashSet<short> set) {
-        short *parent = data.Smoke->inheritanceList + klass->parents;
-        while (*parent > 0) {
+        for (short *parent = data.Smoke->inheritanceList + klass->parents; *parent > 0; parent++) {
             Smoke.Class *baseClass = data.Smoke->classes + *parent;
+            if (baseClass->external)
+                continue;
             set.Add(*parent);
             AddBaseClassesToHashSet(baseClass, set);
-            parent++;
         }
     }
 
@@ -50,21 +50,21 @@ public unsafe class ClassInterfacesGenerator {
         HashSet<short> set = new HashSet<short>();
         for (short i = 1; i <= data.Smoke->numClasses; i++) {
             Smoke.Class *klass = data.Smoke->classes + i;
-            short *parent = data.Smoke->inheritanceList + klass->parents;
             bool firstParent = true;
-            while (*parent > 0) {
+            for (short *parent = data.Smoke->inheritanceList + klass->parents; *parent > 0; parent++) {
                 if (firstParent) {
                     // don't generate interfaces for the first base class
                     firstParent = false;
-                    parent++;
                     continue;
                 }
 
-                set.Add(*parent);
                 Smoke.Class *baseClass = data.Smoke->classes + *parent;
+                if (baseClass->external) {
+                    continue;
+                }
+                set.Add(*parent);
                 // also generate interfaces for the base classes of the base classes
                 AddBaseClassesToHashSet(baseClass, set);
-                parent++;
             }
         }
         return set;
@@ -87,6 +87,9 @@ public unsafe class ClassInterfacesGenerator {
 
             CodeTypeDeclaration ifaceDecl = new CodeTypeDeclaration('I' + name);
             ifaceDecl.IsInterface = true;
+            CodeAttributeDeclaration attr = new CodeAttributeDeclaration("SmokeClass",
+                new CodeAttributeArgument(new CodePrimitiveExpression(className)));
+            ifaceDecl.CustomAttributes.Add(attr);
 
             data.GetTypeCollection(prefix).Add(ifaceDecl);
             data.InterfaceTypeMap[className] = ifaceDecl;
@@ -130,7 +133,7 @@ public unsafe class ClassInterfacesGenerator {
                     continue;
                 }
 
-                CodeMemberMethod cmm = mg.GenerateBasicMethodDefinition(meth);
+                CodeMemberMethod cmm = mg.GenerateBasicMethodDefinition(data.Smoke, meth);
                 if (cmm != null && !ifaceDecl.HasMethod(cmm)) {
                     ifaceDecl.Members.Add(cmm);
                 }
