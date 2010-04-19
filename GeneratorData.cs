@@ -68,7 +68,11 @@ public unsafe class GeneratorData {
                 if (attributes.Length == 0)
                     continue;
                 string smokeClassName = (string) smokeClassGetSignature.Invoke(attributes[0], null);
-                referencedTypeMap[smokeClassName] = type;
+                Type t;
+                if (ReferencedTypeMap.TryGetValue(smokeClassName, out t) && t.IsInterface) {
+                    continue;
+                }
+                ReferencedTypeMap[smokeClassName] = type;
             }
         }
 
@@ -76,9 +80,10 @@ public unsafe class GeneratorData {
         NamespaceMap[defaultNamespace] = DefaultNamespace;
     }
 
-    public Dictionary<string, Type> referencedTypeMap = new Dictionary<string, Type>();
     Type smokeClassAttribute = null;
     MethodInfo smokeClassGetSignature = null;
+
+    public Dictionary<string, Type> ReferencedTypeMap = new Dictionary<string, Type>();
 
     // maps a C++ class to a .NET interface (needed for multiple inheritance), populated by ClassInterfacesGenerator
     public readonly Dictionary<string, CodeTypeDeclaration> InterfaceTypeMap = new Dictionary<string, CodeTypeDeclaration>();

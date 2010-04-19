@@ -166,6 +166,11 @@ public unsafe class Translator {
         return CppToCSharp(typeString, out isRef);
     }
 
+    public CodeTypeReference CppToCSharp(string typeString) {
+        bool isRef;
+        return CppToCSharp(typeString, out isRef);
+    }
+
     public CodeTypeReference CppToCSharp(string typeString, out bool isRef) {
         // yes, this won't match Foo<...>::Bar - but we can't wrap that anyway
         isRef = false;
@@ -205,7 +210,8 @@ public unsafe class Translator {
         } else {
             // if everything fails, just do some standard mapping
             CodeTypeDeclaration ifaceDecl;
-            if (data.InterfaceTypeMap.TryGetValue(name, out ifaceDecl)) {
+            Type t;
+            if (data.InterfaceTypeMap.TryGetValue(name, out ifaceDecl) || (data.ReferencedTypeMap.TryGetValue(name, out t) && t.IsInterface)) {
                 // this class is used in multiple inheritance, we need the interface
                 int colon = name.LastIndexOf("::");
                 string prefix = (colon != -1) ? name.Substring(0, colon) : string.Empty;

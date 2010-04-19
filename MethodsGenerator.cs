@@ -109,20 +109,20 @@ public unsafe class MethodsGenerator {
         return ret;
     }
 
-    public CodeMemberMethod GenerateBasicMethodDefinition(Smoke.Method *method) {
-        return GenerateBasicMethodDefinition(method, (CodeTypeReference) null);
+    public CodeMemberMethod GenerateBasicMethodDefinition(Smoke *smoke, Smoke.Method *method) {
+        return GenerateBasicMethodDefinition(smoke, method, (CodeTypeReference) null);
     }
 
-    public CodeMemberMethod GenerateBasicMethodDefinition(Smoke.Method *method, CodeTypeReference iface) {
-        string cppSignature = data.Smoke->GetMethodSignature(method);
-        return GenerateBasicMethodDefinition(method, cppSignature, iface);
+    public CodeMemberMethod GenerateBasicMethodDefinition(Smoke *smoke, Smoke.Method *method, CodeTypeReference iface) {
+        string cppSignature = smoke->GetMethodSignature(method);
+        return GenerateBasicMethodDefinition(smoke, method, cppSignature, iface);
     }
 
-    public CodeMemberMethod GenerateBasicMethodDefinition(Smoke.Method *method, string cppSignature) {
-        return GenerateBasicMethodDefinition(method, cppSignature, null);
+    public CodeMemberMethod GenerateBasicMethodDefinition(Smoke *smoke, Smoke.Method *method, string cppSignature) {
+        return GenerateBasicMethodDefinition(smoke, method, cppSignature, null);
     }
 
-    public CodeMemberMethod GenerateBasicMethodDefinition(Smoke.Method *method, string cppSignature, CodeTypeReference iface) {
+    public CodeMemberMethod GenerateBasicMethodDefinition(Smoke *smoke, Smoke.Method *method, string cppSignature, CodeTypeReference iface) {
         // do we actually want that method?
         string className = ByteArrayManager.GetString(smokeClass->className);
         string completeSignature = className + "::" + cppSignature;
@@ -141,7 +141,7 @@ public unsafe class MethodsGenerator {
         }
 
         // make instance operators static and bring the arguments in the correct order
-        string methName = ByteArrayManager.GetString(data.Smoke->methodNames[method->name]);
+        string methName = ByteArrayManager.GetString(smoke->methodNames[method->name]);
         bool isOperator = false;
         string explicitConversionType = null;
         if (methName.StartsWith("operator")) {
@@ -161,7 +161,7 @@ public unsafe class MethodsGenerator {
             // binary/unary operator
             if (binaryOperators.Contains(op) || unaryOperators.Contains(op)) {
                 // instance operator
-                if (data.Smoke->classes[method->classId].size > 0) {
+                if (smoke->classes[method->classId].size > 0) {
                     if (op == "*" && method->numArgs == 0 || (op == "++" || op == "--") && method->numArgs == 1) {
                         // dereference operator and postfix in-/decrement operator are not supported
                         Debug.Print("  |--Won't wrap method {0}::{1}", className, cppSignature);
@@ -189,7 +189,7 @@ public unsafe class MethodsGenerator {
                 explicitConversionType = op.Substring(1);
                 try {
                     explicitConversionType = translator.CppToCSharp(explicitConversionType, out isRef).GetStringRepresentation();
-                    if (data.Smoke->classes[method->classId].size > 0) {
+                    if (smoke->classes[method->classId].size > 0) {
                         CodeParameterDeclarationExpression exp =
                             new CodeParameterDeclarationExpression(translator.CppToCSharp(className, out isRef), "arg" + count++);
                         args.Add(exp);
@@ -203,10 +203,10 @@ public unsafe class MethodsGenerator {
         }
 
         // translate arguments
-        for (short* typeIndex = data.Smoke->argumentList + method->args; *typeIndex > 0; typeIndex++) {
+        for (short* typeIndex = smoke->argumentList + method->args; *typeIndex > 0; typeIndex++) {
             try {
                 CodeParameterDeclarationExpression exp =
-                    new CodeParameterDeclarationExpression(translator.CppToCSharp(data.Smoke->types + *typeIndex, out isRef), "arg" + count++);
+                    new CodeParameterDeclarationExpression(translator.CppToCSharp(smoke->types + *typeIndex, out isRef), "arg" + count++);
                 if (isRef) {
                     exp.Direction = FieldDirection.Ref;
                 }
@@ -220,7 +220,7 @@ public unsafe class MethodsGenerator {
         // translate return type
         CodeTypeReference returnType = null;
         try {
-            returnType = translator.CppToCSharp(data.Smoke->types + method->ret, out isRef);
+            returnType = translator.CppToCSharp(smoke->types + method->ret, out isRef);
         } catch (NotSupportedException) {
             Debug.Print("  |--Won't wrap method {0}::{1}", className, cppSignature);
             return null;
@@ -331,20 +331,36 @@ public unsafe class MethodsGenerator {
     }
 
     public CodeMemberMethod GenerateMethod(short idx, string mungedName, CodeTypeReference iface) {
-        return GenerateMethod(data.Smoke->methods + idx, mungedName, iface);
+        return GenerateMethod(data.Smoke, idx, mungedName, iface);
     }
 
     public CodeMemberMethod GenerateMethod(short idx, string mungedName) {
-        return GenerateMethod(data.Smoke->methods + idx, mungedName, null);
+        return GenerateMethod(data.Smoke, idx, mungedName);
     }
 
     public CodeMemberMethod GenerateMethod(Smoke.Method *method, string mungedName) {
-        return GenerateMethod(method, mungedName, null);
+        return GenerateMethod(data.Smoke, method, mungedName);
     }
 
     public CodeMemberMethod GenerateMethod(Smoke.Method *method, string mungedName, CodeTypeReference iface) {
-        string cppSignature = data.Smoke->GetMethodSignature(method);
-        CodeMemberMethod cmm = GenerateBasicMethodDefinition(method, cppSignature, iface);
+        return GenerateMethod(data.Smoke, method, mungedName, iface);
+    }
+
+    public CodeMemberMethod GenerateMethod(Smoke *smoke, short idx, string mungedName, CodeTypeReference iface) {
+        return GenerateMethod(smoke, smoke->methods + idx, mungedName, iface);
+    }
+
+    public CodeMemberMethod GenerateMethod(Smoke *smoke, short idx, string mungedName) {
+        return GenerateMethod(smoke, smoke->methods + idx, mungedName, null);
+    }
+
+    public CodeMemberMethod GenerateMethod(Smoke *smoke, Smoke.Method *method, string mungedName) {
+        return GenerateMethod(smoke, method, mungedName, null);
+    }
+
+    public CodeMemberMethod GenerateMethod(Smoke *smoke, Smoke.Method *method, string mungedName, CodeTypeReference iface) {
+        string cppSignature = smoke->GetMethodSignature(method);
+        CodeMemberMethod cmm = GenerateBasicMethodDefinition(smoke, method, cppSignature, iface);
         if (cmm == null)
             return null;
 
@@ -370,7 +386,7 @@ public unsafe class MethodsGenerator {
         }
 
         if (PreMethodBodyHooks != null) {
-            PreMethodBodyHooks(data.Smoke, method, cmm, containingType);
+            PreMethodBodyHooks(smoke, method, cmm, containingType);
         }
 
         // do we have pass-by-ref parameters?
@@ -528,7 +544,7 @@ public unsafe class MethodsGenerator {
         }
 
         if (PostMethodBodyHooks != null) {
-            PostMethodBodyHooks(data.Smoke, method, cmm, containingType);
+            PostMethodBodyHooks(smoke, method, cmm, containingType);
         }
 
         containingType.Members.Add(cmm);
