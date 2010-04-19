@@ -240,7 +240,7 @@ public unsafe class ClassesGenerator {
             } else if (alreadyImplemented.Contains(pair.Key, SmokeMethodEqualityComparer.DefaultEqualityComparer)) {
                 continue;
             } else if ((meth->flags & (ushort) Smoke.MethodFlags.mf_attribute) > 0) {
-                attrgen.ScheduleAttributeAccessor(meth);
+                attrgen.ScheduleAttributeAccessor(pair.Key.smoke, meth);
                 continue;
             }
 

@@ -28,6 +28,7 @@ using System.Linq;
 unsafe class AttributeGenerator {
 
     class Attribute {
+        public Smoke *Smoke = (Smoke*) 0;
         public Smoke.Method *GetMethod = (Smoke.Method*) 0;
         public Smoke.Method *SetMethod = (Smoke.Method*) 0;
     }
@@ -45,7 +46,11 @@ unsafe class AttributeGenerator {
     }
 
     public void ScheduleAttributeAccessor(Smoke.Method* meth) {
-        string name = ByteArrayManager.GetString(data.Smoke->methodNames[meth->name]);
+        ScheduleAttributeAccessor(data.Smoke, meth);
+    }
+
+    public void ScheduleAttributeAccessor(Smoke *smoke, Smoke.Method* meth) {
+        string name = ByteArrayManager.GetString(smoke->methodNames[meth->name]);
         bool isSetMethod = false;
 
         if (name.StartsWith("set")) {
@@ -59,12 +64,12 @@ unsafe class AttributeGenerator {
         }
 
         // If the new name clashes with a name of a type declaration, keep the lower-case name.
-        var typesWithSameName = from member in data.GetAccessibleMembers(data.Smoke->classes + meth->classId)
+        var typesWithSameName = from member in data.GetAccessibleMembers(smoke->classes + meth->classId)
                                 where member.Type == MemberTypes.NestedType
                                    && member.Name == name
                                 select member;
         if (typesWithSameName.Count() > 0) {
-            string className = ByteArrayManager.GetString(data.Smoke->classes[meth->classId].className);
+            string className = ByteArrayManager.GetString(smoke->classes[meth->classId].className);
             Debug.Print("  |--Conflicting names: property/type: {0} in class {1} - keeping original property name", name, className);
             name = char.ToLower(name[0]) + name.Substring(1);
         }
@@ -72,6 +77,7 @@ unsafe class AttributeGenerator {
         Attribute attr;
         if (!attributes.TryGetValue(name, out attr)) {
             attr = new Attribute();
+            attr.Smoke = smoke;
             attributes.Add(name, attr);
         }
 
@@ -90,9 +96,9 @@ unsafe class AttributeGenerator {
             prop.Name = pair.Key;
             try {
                 bool isRef;
-                prop.Type = translator.CppToCSharp(data.Smoke->types + attr.GetMethod->ret, out isRef);
+                prop.Type = translator.CppToCSharp(attr.Smoke->types + attr.GetMethod->ret, out isRef);
             } catch (NotSupportedException) {
-                string className = ByteArrayManager.GetString(data.Smoke->classes[attr.GetMethod->classId].className);
+                string className = ByteArrayManager.GetString(attr.Smoke->classes[attr.GetMethod->classId].className);
                 Debug.Print("  |--Won't wrap Attribute {0}::{1}", className, prop.Name);
                 continue;
             }
@@ -119,15 +125,15 @@ unsafe class AttributeGenerator {
             CodeMethodReferenceExpression interceptorReference =
                 ((attr.GetMethod->flags & (uint) Smoke.MethodFlags.mf_static) == 0) ? SmokeSupport.interceptor_Invoke : SmokeSupport.staticInterceptor_Invoke;
             cmp.GetStatements.Add(new CodeMethodReturnStatement(new CodeCastExpression(cmp.Type,
-                new CodeMethodInvokeExpression(interceptorReference, new CodePrimitiveExpression(ByteArrayManager.GetString(data.Smoke->methodNames[attr.GetMethod->name])),
-                    new CodePrimitiveExpression(data.Smoke->GetMethodSignature(attr.GetMethod)), new CodeTypeOfExpression(cmp.Type)
+                new CodeMethodInvokeExpression(interceptorReference, new CodePrimitiveExpression(ByteArrayManager.GetString(attr.Smoke->methodNames[attr.GetMethod->name])),
+                    new CodePrimitiveExpression(attr.Smoke->GetMethodSignature(attr.GetMethod)), new CodeTypeOfExpression(cmp.Type)
                 )
             )));
 
             if (cmp.HasSet) {
                 cmp.SetStatements.Add(new CodeMethodInvokeExpression(interceptorReference,
-                        new CodePrimitiveExpression(ByteArrayManager.GetString(data.Smoke->methodNames[data.Smoke->FindMungedName(attr.SetMethod)])),
-                        new CodePrimitiveExpression(data.Smoke->GetMethodSignature(attr.SetMethod)), new CodeTypeOfExpression(typeof(void)),
+                        new CodePrimitiveExpression(ByteArrayManager.GetString(attr.Smoke->methodNames[attr.Smoke->FindMungedName(attr.SetMethod)])),
+                        new CodePrimitiveExpression(attr.Smoke->GetMethodSignature(attr.SetMethod)), new CodeTypeOfExpression(typeof(void)),
                         new CodeTypeOfExpression(cmp.Type), new CodeArgumentReferenceExpression("value")
                 ));
             }
