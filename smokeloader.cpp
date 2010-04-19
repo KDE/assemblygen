@@ -119,7 +119,7 @@ Q_DECL_EXPORT void GetSignals(Smoke *smoke, const Smoke::Class *klass, AddSignal
     const QMetaObject *mo = GetMetaObject(smoke, classId);
 
     if (!mo) {
-        qWarning("GetSignals: not a QObject derived class: %s", smoke->className(classId));
+        qWarning("GetSignals: invalid meta-object for class %s", smoke->className(classId));
         return;
     }
 
