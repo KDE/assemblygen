@@ -141,6 +141,11 @@ public class QyotoTranslator : ICustomTranslator {
                      }},
     };
 
+    List<string> interfaceClasses = new List<string>()
+    {
+        "QSharedData",
+    };
+
     List<Regex> excludedMethods = new List<Regex>()
     {
         new Regex(@".*::qt_.*\("),
@@ -156,6 +161,8 @@ public class QyotoTranslator : ICustomTranslator {
     public IDictionary<string, Type> TypeMap { get { return typeMap; } }
     public IDictionary<string, string> TypeStringMap { get { return typeStringMap; } }
     public IDictionary<string, Translator.TranslateFunc> TypeCodeMap { get { return typeCodeMap; } }
+
+    public IList<string> InterfaceClasses { get { return interfaceClasses; } }
 
     public IList<Regex> ExcludedMethods { get { return excludedMethods; } }
     public IList<string> NamespacesAsClasses { get { return namespacesAsClasses; } }

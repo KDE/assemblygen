@@ -33,6 +33,8 @@ public interface ICustomTranslator {
     IDictionary<string, string> TypeStringMap { get; }
     IDictionary<string, Translator.TranslateFunc> TypeCodeMap { get; }
 
+    IList<string> InterfaceClasses { get; }
+
     IList<Regex> ExcludedMethods { get; }
     IList<string> NamespacesAsClasses { get; }
 }

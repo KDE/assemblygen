@@ -44,12 +44,18 @@ public unsafe class ClassInterfacesGenerator {
 
     /*
      * Returns a list of classes for which we need to generate interfaces.
-     * IntPtr is not type-safe, but we can't have pointers as generic parameters. :(
      */
     HashSet<short> GetClassList() {
         HashSet<short> set = new HashSet<short>();
         for (short i = 1; i <= data.Smoke->numClasses; i++) {
             Smoke.Class *klass = data.Smoke->classes + i;
+
+            if (!klass->external && translator.InterfaceClasses.Contains(ByteArrayManager.GetString(klass->className))) {
+                set.Add(i);
+                // also generate interfaces for the base classes of the base classes
+                AddBaseClassesToHashSet(klass, set);
+            }
+
             bool firstParent = true;
             for (short *parent = data.Smoke->inheritanceList + klass->parents; *parent > 0; parent++) {
                 if (firstParent) {
@@ -63,7 +69,6 @@ public unsafe class ClassInterfacesGenerator {
                     continue;
                 }
                 set.Add(*parent);
-                // also generate interfaces for the base classes of the base classes
                 AddBaseClassesToHashSet(baseClass, set);
             }
         }
