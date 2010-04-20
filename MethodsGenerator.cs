@@ -84,6 +84,7 @@ public unsafe class MethodsGenerator {
 
             foreach (Smoke.ModuleIndex mi in inheritedVirtuals) {
                 Smoke.Method* meth = mi.smoke->methods + mi.index;
+
                 if (SmokeMethodEqualityComparer.DefaultEqualityComparer.Equals(methodModuleIndex, mi))
                 {
                     if ((meth->flags & (uint) Smoke.MethodFlags.mf_protected) > 0) {
@@ -290,12 +291,10 @@ public unsafe class MethodsGenerator {
             } else if (cmm.Name == "ToString" && args.Count == 0) {
                 cmm.Attributes = MemberAttributes.Public | MemberAttributes.Override;
             } else {
-                // virtual/final
-                if ((method->flags & (uint) Smoke.MethodFlags.mf_virtual) == 0 &&
-                    (method->flags & (uint) Smoke.MethodFlags.mf_purevirtual) == 0)
-                {
-                    cmm.Attributes |= MemberAttributes.Final | MemberAttributes.New;
+                if ((method->flags & (uint) Smoke.MethodFlags.mf_static) > 0) {
+                    cmm.Attributes |= MemberAttributes.Static;
                 } else {
+                    // virtual/final
                     MemberAttributes access;
                     bool isOverride; bool foundInInterface;
                     if (isOverride = MethodOverrides(method, out access, out foundInInterface)) {
@@ -312,10 +311,13 @@ public unsafe class MethodsGenerator {
                             cmm.ReturnType.BaseType = "override " + cmm.ReturnType.BaseType;
                         }
                     }
-                }
 
-                if ((method->flags & (uint) Smoke.MethodFlags.mf_static) > 0) {
-                    cmm.Attributes |= MemberAttributes.Static;
+                    if ((method->flags & (uint) Smoke.MethodFlags.mf_virtual) == 0 &&
+                        (method->flags & (uint) Smoke.MethodFlags.mf_purevirtual) == 0 &&
+                        !isOverride)
+                    {
+                        cmm.Attributes |= MemberAttributes.Final | MemberAttributes.New;
+                    }
                 }
             }
         } else {

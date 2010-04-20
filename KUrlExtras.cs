@@ -5,7 +5,7 @@ namespace Kimono {
 	using System.Runtime.InteropServices;
 	using Qyoto;
 	
-	public partial class KUrl : QUrl, IDisposable {
+	public partial class KUrl : QUrl {
 		public static implicit operator KUrl(string other) {
 			return new KUrl(other);
 		}
