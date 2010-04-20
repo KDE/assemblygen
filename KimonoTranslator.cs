@@ -26,14 +26,31 @@ public class KimonoTranslator : ICustomTranslator {
 
     Dictionary<string, Type> typeMap = new Dictionary<string, Type>()
     {
+        { "qlonglong", typeof(long) },
+        { "qulonglong", typeof(ulong) },
     };
 
     Dictionary<string, string> typeStringMap = new Dictionary<string, string>()
     {
+        { "QVariantMap", "System.Collections.Generic.Dictionary<string, QVariant>" },
     };
 
     Dictionary<string, Translator.TranslateFunc> typeCodeMap = new Dictionary<string, Translator.TranslateFunc>()
     {
+        { "KCalendarSystemPrivate", delegate { throw new NotSupportedException(); } },
+        { "KJobPrivate", delegate { throw new NotSupportedException(); } },
+        { "KCompositeJobPrivate", delegate { throw new NotSupportedException(); } },
+        { "KConfigPrivate", delegate { throw new NotSupportedException(); } },
+        { "KCatalogName", delegate { throw new NotSupportedException(); } },
+        { "KSycocaEntryPrivate", delegate { throw new NotSupportedException(); } },
+        { "KServiceTypePrivate", delegate { throw new NotSupportedException(); } },
+        { "KMimeTypePrivate", delegate { throw new NotSupportedException(); } },
+        { "KPluginFactoryPrivate", delegate { throw new NotSupportedException(); } },
+        { "KProcessPrivate", delegate { throw new NotSupportedException(); } },
+
+        { "passwd", delegate { throw new NotSupportedException(); } },
+        { "group", delegate { throw new NotSupportedException(); } },
+
         { "KSharedPtr", delegate(Translator.TypeInfo type) {
                             type.Name = type.TemplateParameters;
                             type.TemplateParameters = string.Empty;
@@ -48,6 +65,7 @@ public class KimonoTranslator : ICustomTranslator {
     List<Regex> excludedMethods = new List<Regex>()
     {
         new Regex(@"KCmdLineArgs::init\(int.*"),
+        new Regex(@"KPluginFactory::createPartObject\(.*"),
     };
 
     List<string> namespacesAsClasses = new List<string>()
