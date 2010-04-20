@@ -28,11 +28,17 @@ public class KimonoTranslator : ICustomTranslator {
     {
         { "qlonglong", typeof(long) },
         { "qulonglong", typeof(ulong) },
+
+        { "KUrl.DirectoryOptions", typeof(uint) },
+        { "KUrl.EncodedPathAndQueryOptions", typeof(uint) },
+        { "KUrl.EqualsOptions", typeof(uint) },
+        { "KUrl.QueryItemsOptions", typeof(uint) },
     };
 
     Dictionary<string, string> typeStringMap = new Dictionary<string, string>()
     {
         { "QVariantMap", "System.Collections.Generic.Dictionary<string, QVariant>" },
+        { "EncryptionMode", "KTcpSocket.EncryptionMode" },
     };
 
     Dictionary<string, Translator.TranslateFunc> typeCodeMap = new Dictionary<string, Translator.TranslateFunc>()
@@ -43,7 +49,10 @@ public class KimonoTranslator : ICustomTranslator {
         { "KConfigPrivate", delegate { throw new NotSupportedException(); } },
         { "KCatalogName", delegate { throw new NotSupportedException(); } },
         { "KSycocaEntryPrivate", delegate { throw new NotSupportedException(); } },
+        { "KService::ServiceTypeAndPreference", delegate { throw new NotSupportedException(); } },
         { "KServiceTypePrivate", delegate { throw new NotSupportedException(); } },
+        { "KSycocaFactory", delegate { throw new NotSupportedException(); } },
+        { "KSycocaFactoryList", delegate { throw new NotSupportedException(); } },
         { "KMimeTypePrivate", delegate { throw new NotSupportedException(); } },
         { "KPluginFactoryPrivate", delegate { throw new NotSupportedException(); } },
         { "KProcessPrivate", delegate { throw new NotSupportedException(); } },
