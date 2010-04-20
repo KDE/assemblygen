@@ -71,6 +71,6 @@ qtwebkit: main.exe QyotoGenerator.dll
 
 kdecore: main.exe QyotoGenerator.dll KimonoGenerator.dll
 	mono --debug main.exe -unsafe -out:kimono-kdecore.dll -plugins:QyotoGenerator.dll,KimonoGenerator.dll -code-file:kimono-kdecore.cs -keyfile:$(KEYFILE) libsmokekdecore.so \
-		KUrlExtras.cs -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:qyoto-qtnetwork.dll -r:qyoto-qtdbus.dll
+		-namespace:Kimono -import:Qyoto KUrlExtras.cs -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:qyoto-qtnetwork.dll -r:qyoto-qtdbus.dll
 
 # kate: space-indent off; mixed-indent off

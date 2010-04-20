@@ -52,6 +52,7 @@ class MainClass {
         string assemblyFile = "out.dll";
         int warnLevel = 0;
         string smokeLib = null;
+        string defaultNamespace = "Qyoto";
 
         List<Assembly> plugins = new List<Assembly>();
         List<ICustomTranslator> customTranslators = new List<ICustomTranslator>();
@@ -77,6 +78,9 @@ class MainClass {
                 continue;
             } else if (arg.StartsWith("-reference:")) {
                 references.Add(Assembly.LoadFrom(arg.Substring(11)));
+                continue;
+            } else if (arg.StartsWith("-namespace:")) {
+                defaultNamespace = arg.Substring(11);
                 continue;
             } else if (arg.StartsWith("-import:")) {
                 imports.AddRange(arg.Substring(8).Split(','));
@@ -120,7 +124,7 @@ class MainClass {
             }
         }
 
-        GeneratorData data = new GeneratorData(smoke, "Qyoto", imports, references);
+        GeneratorData data = new GeneratorData(smoke, defaultNamespace, imports, references);
         Translator translator = new Translator(data, customTranslators);
 
         foreach (Assembly plugin in plugins) {

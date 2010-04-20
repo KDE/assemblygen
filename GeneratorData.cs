@@ -139,7 +139,7 @@ public unsafe class GeneratorData {
         nspace.Imports.Add(new CodeNamespaceImport("System.Runtime.InteropServices"));
         nspace.Imports.Add(new CodeNamespaceImport(DefaultNamespace.Name));
         foreach (string import in Imports) {
-            DefaultNamespace.Imports.Add(new CodeNamespaceImport(import));
+            nspace.Imports.Add(new CodeNamespaceImport(import));
         }
 
         parentCollection.Add(nspace);
