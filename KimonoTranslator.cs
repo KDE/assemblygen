@@ -34,6 +34,11 @@ public class KimonoTranslator : ICustomTranslator {
 
     Dictionary<string, Translator.TranslateFunc> typeCodeMap = new Dictionary<string, Translator.TranslateFunc>()
     {
+        { "KSharedPtr", delegate(Translator.TypeInfo type) {
+                            type.Name = type.TemplateParameters;
+                            type.TemplateParameters = string.Empty;
+                            return null;
+                        }},
     };
 
     List<Regex> excludedMethods = new List<Regex>()

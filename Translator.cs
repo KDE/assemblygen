@@ -202,6 +202,13 @@ public unsafe class Translator {
             TypeInfo typeInfo = new TypeInfo(name, pointerDepth, isCppRef, isConst, isUnsigned, templateArgument, data);
             object obj = typeFunc(typeInfo);
             isRef = typeInfo.IsRef;
+            name = typeInfo.Name;
+            pointerDepth = typeInfo.PointerDepth;
+            isCppRef = typeInfo.IsCppRef;
+            isConst = typeInfo.IsConst;
+            isUnsigned = typeInfo.IsUnsigned;
+            templateArgument = typeInfo.TemplateParameters;
+
             if (obj is string) {
                 name = (string) obj;
             } else if (obj is CodeTypeReference) {
