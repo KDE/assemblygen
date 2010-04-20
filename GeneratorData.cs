@@ -177,7 +177,8 @@ public unsafe class GeneratorData {
 
         CodeTypeDeclaration typeDecl = null;
         if (!SmokeTypeMap.TryGetValue((IntPtr) klass, out typeDecl)) {
-            Console.Error.WriteLine("*** ERROR: klass not mapped: {0} ***", ByteArrayManager.GetString(klass->className));
+            AddReferencedMembers(klass, list);
+            return;
         } else {
             foreach (CodeTypeMember member in typeDecl.Members) {
                 if (member is CodeMemberProperty) {
