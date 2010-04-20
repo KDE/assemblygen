@@ -236,7 +236,7 @@ public unsafe class MethodsGenerator {
             cmm.Attributes = (MemberAttributes) 0; // initialize to 0 so we can do |=
 
             string csName = methName;
-            if (!isOperator) {
+            if (!isOperator && methName != "finalize") {
                 // capitalize the first letter
                 StringBuilder builder = new StringBuilder(csName);
                 builder[0] = char.ToUpper(builder[0]);
