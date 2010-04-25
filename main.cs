@@ -53,6 +53,7 @@ class MainClass {
         int warnLevel = 0;
         string smokeLib = null;
         string defaultNamespace = "Qyoto";
+        string globalClass = "Global";
 
         List<Assembly> plugins = new List<Assembly>();
         List<ICustomTranslator> customTranslators = new List<ICustomTranslator>();
@@ -78,6 +79,9 @@ class MainClass {
                 continue;
             } else if (arg.StartsWith("-reference:")) {
                 references.Add(Assembly.LoadFrom(arg.Substring(11)));
+                continue;
+            } else if (arg.StartsWith("-global-class:")) {
+                globalClass = arg.Substring(14);
                 continue;
             } else if (arg.StartsWith("-namespace:")) {
                 defaultNamespace = arg.Substring(11);
@@ -125,6 +129,7 @@ class MainClass {
         }
 
         GeneratorData data = new GeneratorData(smoke, defaultNamespace, imports, references);
+        data.GlobalSpaceClassName = globalClass;
         Translator translator = new Translator(data, customTranslators);
 
         foreach (Assembly plugin in plugins) {

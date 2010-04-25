@@ -67,6 +67,7 @@ public unsafe class ClassesGenerator {
         if (smokeClass->size == 0 && !translator.NamespacesAsClasses.Contains(smokeName)) {
             if (smokeName == "QGlobalSpace") {  // global space
                 name = data.GlobalSpaceClassName;
+                mapName = name;
             } else {
                 // namespace
                 prefix = smokeName;
@@ -80,11 +81,33 @@ public unsafe class ClassesGenerator {
         }
 
         // define the .NET class
-        CodeAttributeDeclaration attr = new CodeAttributeDeclaration("SmokeClass",
-            new CodeAttributeArgument(new CodePrimitiveExpression(smokeName)));
-        CodeTypeDeclaration type = new CodeTypeDeclaration(name);
-        type.CustomAttributes.Add(attr);
-        type.IsPartial = true;
+        CodeTypeDeclaration type;
+        bool alreadyDefined = false;
+        if (!(alreadyDefined = data.CSharpTypeMap.TryGetValue(mapName, out type))) {
+            type = new CodeTypeDeclaration(name);
+            CodeAttributeDeclaration attr = new CodeAttributeDeclaration("SmokeClass",
+                new CodeAttributeArgument(new CodePrimitiveExpression(smokeName)));
+            type.CustomAttributes.Add(attr);
+            type.IsPartial = true;
+        } else {
+            int toBeRemoved = -1;
+
+            for (int i = 0; i < type.CustomAttributes.Count; i++) {
+                CodeAttributeDeclaration attr = type.CustomAttributes[i];
+                if (attr.Name == "SmokeClass" && attr.Arguments.Count == 1 &&
+                    ((string) ((CodePrimitiveExpression) attr.Arguments[0].Value).Value) == "QGlobalSpace") {
+                    toBeRemoved = i;
+                    break;
+                }
+            }
+
+            if (toBeRemoved > -1) {
+                type.CustomAttributes.RemoveAt(toBeRemoved);
+                CodeAttributeDeclaration attr = new CodeAttributeDeclaration("SmokeClass",
+                    new CodeAttributeArgument(new CodePrimitiveExpression(smokeName)));
+                type.CustomAttributes.Add(attr);
+            }
+        }
 
         if (smokeClass->parents != 0) {
             short *parent = data.Smoke->inheritanceList + smokeClass->parents;
@@ -101,11 +124,13 @@ public unsafe class ClassesGenerator {
             PreMembersHooks(data.Smoke, smokeClass, type);
         }
 
-        DefineWrapperClassFieldsAndMethods(smokeClass, type);
+        if (!alreadyDefined) {
+            DefineWrapperClassFieldsAndMethods(smokeClass, type);
+            data.CSharpTypeMap[mapName] = type;
+            data.GetTypeCollection(prefix).Add(type);
+        }
 
-        data.CSharpTypeMap[mapName] = type;
         data.SmokeTypeMap[(IntPtr) smokeClass] = type;
-        data.GetTypeCollection(prefix).Add(type);
         return type;
     }
 
