@@ -35,6 +35,8 @@ public unsafe class MethodsGenerator {
     CodeTypeDeclaration type;
     Smoke.Class *smokeClass;
 
+    static Regex qMethodExp = new Regex("^[a-z][A-Z]");
+
     static List<string> binaryOperators = new List<string>() {
         "!=", "==", "%", "&", "*", "+", "-", "/", "<", "<=", ">", ">=", "^", "|"
     };
@@ -237,7 +239,7 @@ public unsafe class MethodsGenerator {
             cmm.Attributes = (MemberAttributes) 0; // initialize to 0 so we can do |=
 
             string csName = methName;
-            if (!isOperator && methName != "finalize") {
+            if (!isOperator && methName != "finalize" && !qMethodExp.IsMatch(methName)) {
                 // capitalize the first letter
                 StringBuilder builder = new StringBuilder(csName);
                 builder[0] = char.ToUpper(builder[0]);
