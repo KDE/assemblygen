@@ -550,6 +550,15 @@ public unsafe class MethodsGenerator {
         }
 
         containingType.Members.Add(cmm);
+
+        if ((method->flags & (uint) Smoke.MethodFlags.mf_dtor) != 0) {
+            containingType.BaseTypes.Add(new CodeTypeReference(typeof(IDisposable)));
+            CodeMemberMethod dispose = new CodeMemberMethod();
+            dispose.Name = "Dispose";
+            dispose.Attributes = MemberAttributes.Public | MemberAttributes.New | MemberAttributes.Final;
+            dispose.Statements.AddRange(cmm.Statements);
+            containingType.Members.Add(dispose);
+        }
         return cmm;
     }
 }
