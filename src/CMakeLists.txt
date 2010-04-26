@@ -2,9 +2,6 @@ project(assemblygen)
 
 find_package(Qt4 REQUIRED)
 
-set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
-set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
-
 set(assemblygen_native_SRC
     assemblygen-native.cpp
 )

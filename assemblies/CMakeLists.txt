@@ -1,3 +1,15 @@
 set(KEYFILE ${CMAKE_CURRENT_SOURCE_DIR}/key.snk)
 
 add_subdirectory(qyoto-qtcore)
+add_subdirectory(qyoto-qtdbus)
+add_subdirectory(qyoto-qtgui)
+add_subdirectory(qyoto-qtnetwork)
+add_subdirectory(qyoto-qtopengl)
+add_subdirectory(qyoto-qtscript)
+add_subdirectory(qyoto-qtsql)
+add_subdirectory(qyoto-qtsvg)
+add_subdirectory(qyoto-qtwebkit)
+add_subdirectory(qyoto-qtxml)
+add_subdirectory(qyoto-qtxmlpatterns)
+
+add_subdirectory(kimono-kdecore)

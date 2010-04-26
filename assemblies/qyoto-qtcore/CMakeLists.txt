@@ -10,12 +10,14 @@ set (qyoto_qtcore_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/SmokeMarshallers.cs
 )
 
-add_custom_command(OUTPUT qyoto-qtcore.dll
-                   COMMAND ${MONO_EXECUTABLE} ${CMAKE_BINARY_DIR}/src/bin/assemblygen.exe
-                            -unsafe -out:qyoto-qtcore.dll -global-class:Qt "-plugins:${CMAKE_BINARY_DIR}/src/bin/QyotoGenerator.dll"
+add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtcore.dll
+                   COMMAND ${MONO_EXECUTABLE} ${LIBRARY_OUTPUT_PATH}/assemblygen.exe
+                            -unsafe -out:qyoto-qtcore.dll -global-class:Qt
+                            -plugins:QyotoGenerator.dll
                             -code-file:qyoto-qtcore.cs "-keyfile:${KEYFILE}"
                             libsmokeqtcore.so
                             ${qyoto_qtcore_SRC}
-                   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/src/bin)
+                   WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH})
 
-add_custom_target(qyoto-qtcore ALL DEPENDS qyoto-qtcore.dll)
+add_custom_target(qyoto-qtcore ALL DEPENDS ${LIBRARY_OUTPUT_PATH}/qyoto-qtcore.dll)
+add_dependencies(qyoto-qtcore assemblygen QyotoGenerator)
