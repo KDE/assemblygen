@@ -30,13 +30,13 @@ public unsafe class QyotoHooks : IHookProvider {
     [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet=CharSet.Ansi)]
     delegate void AddSignal(string signature, string name, string returnType, IntPtr metaMethod);
 
-    [DllImport("smokeloader", CallingConvention=CallingConvention.Cdecl)]
+    [DllImport("assemblygen-native", CallingConvention=CallingConvention.Cdecl)]
     static extern void GetSignals(Smoke* smoke, void *klass, AddSignal addSignalFn);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet=CharSet.Ansi)]
     delegate void AddParameter(string type, string name);
 
-    [DllImport("smokeloader", CallingConvention=CallingConvention.Cdecl)]
+    [DllImport("assemblygen-native", CallingConvention=CallingConvention.Cdecl)]
     static extern void GetMetaMethodParameters(IntPtr metaMethod, AddParameter addParamFn);
 
     static string qObjectDummyCtorCode =

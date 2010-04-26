@@ -46,7 +46,7 @@ public unsafe class PropertyGenerator {
     [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet=CharSet.Ansi)]
     delegate void AddProperty(string name, string type, [MarshalAs(UnmanagedType.U1)] bool writable, [MarshalAs(UnmanagedType.U1)] bool isEnum);
 
-    [DllImport("smokeloader", CallingConvention=CallingConvention.Cdecl)]
+    [DllImport("assemblygen-native", CallingConvention=CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.U1)]
     static extern bool GetProperties(Smoke* smoke, short classId, AddProperty addProp);
 

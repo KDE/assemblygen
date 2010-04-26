@@ -26,7 +26,7 @@ using System.CodeDom;
 // Generates C# enums from enums found in the smoke lib.
 public unsafe class EnumGenerator {
 
-    [DllImport("smokeloader", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
+    [DllImport("assemblygen-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
     static extern unsafe long GetEnumValue(Smoke* smoke, Smoke.Method* meth);
 
     readonly GeneratorData data;

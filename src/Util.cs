@@ -23,15 +23,15 @@ using System.Collections.Generic;
 using System.Text;
 
 public static class Util {
-    [DllImport("smokeloader", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
+    [DllImport("assemblygen-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.U1)]
     public static extern unsafe bool GetModuleIndexFromClassName(byte* name, ref Smoke* smoke, ref short index);
 
-    [DllImport("smokeloader", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
+    [DllImport("assemblygen-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.U1)]
     public static extern unsafe bool IsDerivedFrom(string className, string baseClassName);
 
-    [DllImport("smokeloader", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
+    [DllImport("assemblygen-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.U1)]
     public static extern unsafe bool IsDerivedFrom(byte* className, byte* baseClassName);
 

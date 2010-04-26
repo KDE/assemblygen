@@ -31,10 +31,10 @@ class MainClass {
     // We could marshall this as a .NET object (i.e. define 'Smoke' as class instead of struct). But then the runtime takes ownership of
     // that pointer and tries to free it when it's garbage collected. That's fine on Linux, but on Windows we get an error because the
     // memory wasn't allocated with GlobalAlloc(). So just use unsafe code and Smoke* everywhere.
-    [DllImport("smokeloader", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
+    [DllImport("assemblygen-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
     static extern unsafe Smoke* InitSmoke(string module);
 
-    [DllImport("smokeloader", CallingConvention=CallingConvention.Cdecl)]
+    [DllImport("assemblygen-native", CallingConvention=CallingConvention.Cdecl)]
     static extern unsafe void DestroySmoke(IntPtr smoke);
 
     const int NoError = 0;
