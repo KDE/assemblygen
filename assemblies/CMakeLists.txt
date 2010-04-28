@@ -13,3 +13,4 @@ add_subdirectory(qyoto-qtxml)
 add_subdirectory(qyoto-qtxmlpatterns)
 
 add_subdirectory(kimono-kdecore)
+add_subdirectory(kimono-kdeui)
