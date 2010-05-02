@@ -26,6 +26,8 @@ public class KimonoTranslator : ICustomTranslator {
 
     Dictionary<string, Type> typeMap = new Dictionary<string, Type>()
     {
+        { "KConfigGroup.WriteConfigFlags", typeof(uint) },
+        { "ShortcutTypes", typeof(uint) },
     };
 
     Dictionary<string, string> typeStringMap = new Dictionary<string, string>()
@@ -36,23 +38,33 @@ public class KimonoTranslator : ICustomTranslator {
 
     Dictionary<string, Translator.TranslateFunc> typeCodeMap = new Dictionary<string, Translator.TranslateFunc>()
     {
+        { "_IceConn", delegate { throw new NotSupportedException(); } },
+        { "K3Icon", delegate { throw new NotSupportedException(); } },
         { "KCalendarSystemPrivate", delegate { throw new NotSupportedException(); } },
-        { "KJobPrivate", delegate { throw new NotSupportedException(); } },
+        { "KCatalogName", delegate { throw new NotSupportedException(); } },
+        { "KCompletionMatchesWrapper", delegate { throw new NotSupportedException(); } },
         { "KCompositeJobPrivate", delegate { throw new NotSupportedException(); } },
         { "KConfigPrivate", delegate { throw new NotSupportedException(); } },
-        { "KCatalogName", delegate { throw new NotSupportedException(); } },
-        { "KSycocaEntryPrivate", delegate { throw new NotSupportedException(); } },
-        { "KService::ServiceTypeAndPreference", delegate { throw new NotSupportedException(); } },
-        { "KServiceTypePrivate", delegate { throw new NotSupportedException(); } },
-        { "KSycocaFactory", delegate { throw new NotSupportedException(); } },
-        { "KSycocaFactoryList", delegate { throw new NotSupportedException(); } },
+        { "KDialogPrivate", delegate { throw new NotSupportedException(); } },
+        { "KJobPrivate", delegate { throw new NotSupportedException(); } },
+        { "KMainWindowPrivate", delegate { throw new NotSupportedException(); } },
         { "KMimeTypePrivate", delegate { throw new NotSupportedException(); } },
+        { "KPageDialogPrivate", delegate { throw new NotSupportedException(); } },
+        { "KPageModelPrivate", delegate { throw new NotSupportedException(); } },
+        { "KPageViewPrivate", delegate { throw new NotSupportedException(); } },
+        { "KPageWidgetPrivate", delegate { throw new NotSupportedException(); } },
         { "KPluginFactoryPrivate", delegate { throw new NotSupportedException(); } },
         { "KProcessPrivate", delegate { throw new NotSupportedException(); } },
+        { "KSelectActionPrivate", delegate { throw new NotSupportedException(); } },
+        { "KService::ServiceTypeAndPreference", delegate { throw new NotSupportedException(); } },
+        { "KServiceTypePrivate", delegate { throw new NotSupportedException(); } },
+        { "KSycocaEntryPrivate", delegate { throw new NotSupportedException(); } },
+        { "KSycocaFactory", delegate { throw new NotSupportedException(); } },
+        { "KSycocaFactoryList", delegate { throw new NotSupportedException(); } },
+        { "XEvent", delegate { throw new NotSupportedException(); } },
 
         { "passwd", delegate { throw new NotSupportedException(); } },
         { "group", delegate { throw new NotSupportedException(); } },
-        { "XEvent", delegate { throw new NotSupportedException(); } },
 
         { "KSharedPtr", delegate(Translator.TypeInfo type) {
                             type.Name = type.TemplateParameters;
