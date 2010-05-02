@@ -146,7 +146,14 @@ public unsafe class QyotoHooks : IHookProvider {
 
                     CodeParameterDeclarationExpression param;
                     try {
-                        param = new CodeParameterDeclarationExpression(Translator.CppToCSharp(paramType, out isRef), paramName);
+                        short id = smoke->idType(paramType);
+                        CodeTypeReference paramTypeRef;
+                        if (id > 0) {
+                            paramTypeRef = Translator.CppToCSharp(smoke->types + id, out isRef);
+                        } else {
+                            paramTypeRef = Translator.CppToCSharp(paramType, out isRef);
+                        }
+                        param = new CodeParameterDeclarationExpression(paramTypeRef, paramName);
                     } catch (NotSupportedException) {
                         Debug.Print("  |--Won't wrap signal {0}::{1}", className, signature);
                         return;

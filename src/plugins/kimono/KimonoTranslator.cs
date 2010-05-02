@@ -59,6 +59,7 @@ public class KimonoTranslator : ICustomTranslator {
 
         { "passwd", delegate { throw new NotSupportedException(); } },
         { "group", delegate { throw new NotSupportedException(); } },
+        { "XEvent", delegate { throw new NotSupportedException(); } },
 
         { "KSharedPtr", delegate(Translator.TypeInfo type) {
                             type.Name = type.TemplateParameters;

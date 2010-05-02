@@ -25,6 +25,33 @@ using System.Runtime.InteropServices;
 // Extension methods would be nice, but 'Smoke' is a struct and would be
 // copied every time we use an extension method.
 public unsafe partial struct Smoke {
+
+    public short idType(string type) {
+        byte[] bytes = ByteArrayManager.GetCString(type);
+        fixed (byte *t = bytes) {
+            short imax = numTypes;
+            short imin = 1;
+            short icur = -1;
+            long icmp = -1;
+
+            while (imax >= imin) {
+                icur = (short) ((imin + imax) / 2);
+                icmp = ByteArrayManager.strcmp(types[icur].name, t);
+                if (icmp == 0) {
+                    return icur;
+                }
+
+                if (icmp > 0) {
+                    imax = (short) (icur - 1);
+                } else {
+                    imin = (short) (icur + 1);
+                }
+            }
+
+            return 0;
+        }
+    }
+
     public short idClass(string name) {
         byte[] bytes = ByteArrayManager.GetCString(name);
         fixed (byte* c = bytes) {
