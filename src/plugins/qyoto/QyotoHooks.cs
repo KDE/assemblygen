@@ -151,6 +151,14 @@ public unsafe class QyotoHooks : IHookProvider {
                         if (id > 0) {
                             paramTypeRef = Translator.CppToCSharp(smoke->types + id, out isRef);
                         } else {
+                            if (!paramType.Contains("::")) {
+                                id = smoke->idType(className + "::" + paramType);
+                                if (id > 0) {
+                                    paramTypeRef = Translator.CppToCSharp(smoke->types + id, out isRef);
+                                } else {
+                                    paramTypeRef = Translator.CppToCSharp(paramType, out isRef);
+                                }
+                            }
                             paramTypeRef = Translator.CppToCSharp(paramType, out isRef);
                         }
                         param = new CodeParameterDeclarationExpression(paramTypeRef, paramName);

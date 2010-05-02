@@ -26,13 +26,6 @@ public class KimonoTranslator : ICustomTranslator {
 
     Dictionary<string, Type> typeMap = new Dictionary<string, Type>()
     {
-        { "qlonglong", typeof(long) },
-        { "qulonglong", typeof(ulong) },
-
-        { "KUrl.DirectoryOptions", typeof(uint) },
-        { "KUrl.EncodedPathAndQueryOptions", typeof(uint) },
-        { "KUrl.EqualsOptions", typeof(uint) },
-        { "KUrl.QueryItemsOptions", typeof(uint) },
     };
 
     Dictionary<string, string> typeStringMap = new Dictionary<string, string>()

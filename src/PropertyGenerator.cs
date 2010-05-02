@@ -77,7 +77,20 @@ public unsafe class PropertyGenerator {
 
                 try {
                     bool isRef;
-                    cmp.Type = translator.CppToCSharp(prop.Type, out isRef);
+                    short id = data.Smoke->idType(prop.Type);
+                    if (id > 0) {
+                        cmp.Type = translator.CppToCSharp(data.Smoke->types + id, out isRef);
+                    } else {
+                        if (!prop.Type.Contains("::")) {
+                            id = data.Smoke->idType(className + "::" + prop.Type);
+                            if (id > 0) {
+                                cmp.Type = translator.CppToCSharp(data.Smoke->types + id, out isRef);
+                            } else {
+                                cmp.Type = translator.CppToCSharp(prop.Type, out isRef);
+                            }
+                        }
+                        cmp.Type = translator.CppToCSharp(prop.Type, out isRef);
+                    }
                 } catch (NotSupportedException) {
                     Debug.Print("  |--Won't wrap Property {0}::{1}", className, prop.Name);
                     continue;
