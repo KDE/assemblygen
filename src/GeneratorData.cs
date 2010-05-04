@@ -124,17 +124,8 @@ public unsafe class GeneratorData {
             throw new Exception("Found class instead of namespace - this should not happen!");
         }
 
-        // Get the collection of the parent namespace
-        IList parentCollection = CompileUnit.Namespaces;
-        string name = prefix;
-        int colon = name.LastIndexOf("::");
-        if (colon != -1) {
-            parentCollection = GetTypeCollection(name.Substring(0, colon));
-            name = prefix.Substring(colon + 2);
-        }
-
         // Define a new namespace.
-        nspace = new CodeNamespace(name);
+        nspace = new CodeNamespace(prefix.Replace("::", "."));
         nspace.Imports.Add(new CodeNamespaceImport("System"));
         nspace.Imports.Add(new CodeNamespaceImport("System.Runtime.InteropServices"));
         nspace.Imports.Add(new CodeNamespaceImport(DefaultNamespace.Name));
@@ -142,7 +133,7 @@ public unsafe class GeneratorData {
             nspace.Imports.Add(new CodeNamespaceImport(import));
         }
 
-        parentCollection.Add(nspace);
+        CompileUnit.Namespaces.Add(nspace);
         NamespaceMap[prefix] = nspace;
         return nspace.Types;
     }
