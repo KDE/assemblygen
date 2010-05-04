@@ -22,7 +22,7 @@ using System.Collections.Generic;
 using System.CodeDom;
 using System.Text.RegularExpressions;
 
-public class KimonoTranslator : ICustomTranslator {
+public unsafe class KimonoTranslator : ICustomTranslator {
 
     Dictionary<string, Type> typeMap = new Dictionary<string, Type>()
     {
@@ -34,9 +34,11 @@ public class KimonoTranslator : ICustomTranslator {
 
     Dictionary<string, string> typeStringMap = new Dictionary<string, string>()
     {
-        { "QVariantMap", "System.Collections.Generic.Dictionary<string, QVariant>" },
+        { "CommandType", "FileUndoManager.CommandType" },
         { "EncryptionMode", "KTcpSocket.EncryptionMode" },
+        { "InformationList", "System.Collections.Generic.List<Information>" },
         { "KIO::UDSEntryList", "System.Collections.Generic.List<KIO.UDSEntry>" },
+        { "QVariantMap", "System.Collections.Generic.Dictionary<string, QVariant>" },
     };
 
     Dictionary<string, Translator.TranslateFunc> typeCodeMap = new Dictionary<string, Translator.TranslateFunc>()
@@ -50,6 +52,24 @@ public class KimonoTranslator : ICustomTranslator {
         { "KCompositeJobPrivate", delegate { throw new NotSupportedException(); } },
         { "KConfigPrivate", delegate { throw new NotSupportedException(); } },
         { "KDialogPrivate", delegate { throw new NotSupportedException(); } },
+
+        { "KIO::ChmodJobPrivate", delegate { throw new NotSupportedException(); } },
+        { "KIO::CopyJobPrivate", delegate { throw new NotSupportedException(); } },
+        { "KIO::DavJobPrivate", delegate { throw new NotSupportedException(); } },
+        { "KIO::DeleteJobPrivate", delegate { throw new NotSupportedException(); } },
+        { "KIO::DirectorySizeJobPrivate", delegate { throw new NotSupportedException(); } },
+        { "KIO::FileCopyJobPrivate", delegate { throw new NotSupportedException(); } },
+        { "KIO::FileJobPrivate", delegate { throw new NotSupportedException(); } },
+        { "KIO::JobPrivate", delegate { throw new NotSupportedException(); } },
+        { "KIO::ListJobPrivate", delegate { throw new NotSupportedException(); } },
+        { "KIO::MimetypeJobPrivate", delegate { throw new NotSupportedException(); } },
+        { "KIO::MultiGetJobPrivate", delegate { throw new NotSupportedException(); } },
+        { "KIO::SimpleJobPrivate", delegate { throw new NotSupportedException(); } },
+        { "KIO::SlaveInterfacePrivate", delegate { throw new NotSupportedException(); } },
+        { "KIO::StatJobPrivate", delegate { throw new NotSupportedException(); } },
+        { "KIO::StoredTransferJobPrivate", delegate { throw new NotSupportedException(); } },
+        { "KIO::TransferJobPrivate", delegate { throw new NotSupportedException(); } },
+
         { "KJobPrivate", delegate { throw new NotSupportedException(); } },
         { "KMainWindowPrivate", delegate { throw new NotSupportedException(); } },
         { "KMimeTypePrivate", delegate { throw new NotSupportedException(); } },
@@ -82,6 +102,15 @@ public class KimonoTranslator : ICustomTranslator {
                             type.Name = type.TemplateParameters;
                             type.TemplateParameters = string.Empty;
                             return null;
+                        }},
+        { "KFileFilterCombo", delegate(Translator.TypeInfo type) {
+                            if (type.GeneratorData.Smoke->ToString() == "kio") {
+                                // we can't reference kimono-kfile, because that itself depends on kio again
+                                return "KComboBox";
+                            } else {
+                                // default behaviour
+                                return null;
+                            }
                         }},
     };
 
