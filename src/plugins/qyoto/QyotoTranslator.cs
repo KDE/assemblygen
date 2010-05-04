@@ -108,6 +108,19 @@ public class QyotoTranslator : ICustomTranslator {
         { "QScopedPointer", delegate { throw new NotSupportedException(); } },
         { "QExplicitlySharedDataPointer", delegate { throw new NotSupportedException(); } },
 
+        // phonon stuff
+        { "AudioOutputDevice", delegate { throw new NotSupportedException(); } },
+        { "Phonon::AudioOutputDevice", delegate { throw new NotSupportedException(); } },
+        { "Phonon::AbstractAudioOutputPrivate", delegate { throw new NotSupportedException(); } },
+        { "Phonon::AbstractMediaStreamPrivate", delegate { throw new NotSupportedException(); } },
+        { "Phonon::AbstractVideoOutputPrivate", delegate { throw new NotSupportedException(); } },
+        { "Phonon::EffectPrivate", delegate { throw new NotSupportedException(); } },
+        { "Phonon::MediaNodePrivate", delegate { throw new NotSupportedException(); } },
+        { "Phonon::MediaSourcePrivate", delegate { throw new NotSupportedException(); } },
+        { "Phonon::ObjectDescription", delegate { throw new NotSupportedException(); } },
+        { "Phonon::ObjectDescriptionPrivate", delegate { throw new NotSupportedException(); } },
+        { "Phonon::VideoWidgetPrivate", delegate { throw new NotSupportedException(); } },
+
         { "void", type => (type.PointerDepth == 0) ? new CodeTypeReference(typeof(void)) : new CodeTypeReference(typeof(IntPtr)) },
         { "char", delegate(Translator.TypeInfo type) {
                     if (type.PointerDepth == 1) {
