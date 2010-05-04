@@ -7,4 +7,4 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/kimono-kdeui.dll
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH})
 
 add_custom_target(kimono-kdeui ALL DEPENDS ${LIBRARY_OUTPUT_PATH}/kimono-kdeui.dll)
-add_dependencies(kimono-kdeui assemblygen QyotoGenerator KimonoGenerator qyoto-qtcore qyoto-qtgui qyoto-qtsvg kimono-kdecore)
+add_dependencies(kimono-kdeui assemblygen QyotoGenerator KimonoGenerator qyoto-qtcore qyoto-qtgui qyoto-qtsvg qyoto-qtxml kimono-kdecore)

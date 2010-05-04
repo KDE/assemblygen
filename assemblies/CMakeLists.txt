@@ -16,3 +16,4 @@ add_subdirectory(qyoto-phonon)
 
 add_subdirectory(kimono-kdecore)
 add_subdirectory(kimono-kdeui)
+add_subdirectory(kimono-solid)

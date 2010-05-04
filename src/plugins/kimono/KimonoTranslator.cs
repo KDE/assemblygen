@@ -26,6 +26,8 @@ public class KimonoTranslator : ICustomTranslator {
 
     Dictionary<string, Type> typeMap = new Dictionary<string, Type>()
     {
+        { "qulonglong", typeof(ulong) },
+
         { "KConfigGroup.WriteConfigFlags", typeof(uint) },
         { "ShortcutTypes", typeof(uint) },
     };
@@ -34,12 +36,14 @@ public class KimonoTranslator : ICustomTranslator {
     {
         { "QVariantMap", "System.Collections.Generic.Dictionary<string, QVariant>" },
         { "EncryptionMode", "KTcpSocket.EncryptionMode" },
+        { "KIO::UDSEntryList", "System.Collections.Generic.List<KIO.UDSEntry>" },
     };
 
     Dictionary<string, Translator.TranslateFunc> typeCodeMap = new Dictionary<string, Translator.TranslateFunc>()
     {
         { "_IceConn", delegate { throw new NotSupportedException(); } },
         { "K3Icon", delegate { throw new NotSupportedException(); } },
+        { "KAbstractViewAdapter", delegate { throw new NotSupportedException(); } },
         { "KCalendarSystemPrivate", delegate { throw new NotSupportedException(); } },
         { "KCatalogName", delegate { throw new NotSupportedException(); } },
         { "KCompletionMatchesWrapper", delegate { throw new NotSupportedException(); } },
@@ -61,6 +65,14 @@ public class KimonoTranslator : ICustomTranslator {
         { "KSycocaEntryPrivate", delegate { throw new NotSupportedException(); } },
         { "KSycocaFactory", delegate { throw new NotSupportedException(); } },
         { "KSycocaFactoryList", delegate { throw new NotSupportedException(); } },
+
+        { "Solid::DeviceInterfacePrivate", delegate { throw new NotSupportedException(); } },
+        { "Solid::Networking::Notifier", delegate { throw new NotSupportedException(); } },
+        { "Solid::PowerManagement::Notifier", delegate { throw new NotSupportedException(); } },
+        { "Solid::StorageAccessPrivate", delegate { throw new NotSupportedException(); } },
+        { "Solid::StorageDrivePrivate", delegate { throw new NotSupportedException(); } },
+        { "Solid::StorageVolumePrivate", delegate { throw new NotSupportedException(); } },
+
         { "XEvent", delegate { throw new NotSupportedException(); } },
 
         { "passwd", delegate { throw new NotSupportedException(); } },
