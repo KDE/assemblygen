@@ -298,8 +298,11 @@ public unsafe class MethodsGenerator {
                 } else {
                     // virtual/final
                     MemberAttributes access;
-                    bool isOverride; bool foundInInterface;
-                    if (isOverride = MethodOverrides(method, out access, out foundInInterface)) {
+                    bool isOverride;
+                    bool foundInInterface = false;
+
+                    // methods that have to be implemented from interfaces can't override anything
+                    if (iface == null && (isOverride = MethodOverrides(method, out access, out foundInInterface))) {
                         cmm.Attributes = access | MemberAttributes.Override;
                     } else if (foundInInterface) {
                         cmm.Attributes = access;
