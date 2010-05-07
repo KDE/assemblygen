@@ -57,9 +57,8 @@ public unsafe class Translator {
 
     public class TypeInfo {
         public TypeInfo() {}
-        public TypeInfo(string name, int pDepth, bool isRef, bool isConst, bool isUnsigned, string templateParams, GeneratorData data) {
+        public TypeInfo(string name, int pDepth, bool isRef, bool isConst, bool isUnsigned, string templateParams) {
             Name = name; PointerDepth = pDepth; IsCppRef = isRef; IsConst = isConst; IsUnsigned = isUnsigned; TemplateParameters = templateParams;
-            GeneratorData = data;
         }
         public string Name = string.Empty;
         public int PointerDepth = 0;
@@ -68,10 +67,9 @@ public unsafe class Translator {
         public bool IsUnsigned = false;
         public bool IsRef = false;
         public string TemplateParameters = string.Empty;
-        public readonly GeneratorData GeneratorData;
     }
 
-    public delegate object TranslateFunc(TypeInfo type);
+    public delegate object TranslateFunc(TypeInfo type, GeneratorData data, Translator translator);
 
     // map a C++ type string to a .NET type
     Dictionary<string, Type> typeMap = new Dictionary<string, Type>()
@@ -204,8 +202,8 @@ public unsafe class Translator {
             name = partialTypeStr;
         } else if (typeCodeMap.TryGetValue(name, out typeFunc)) {
             // try to look up custom translation code
-            TypeInfo typeInfo = new TypeInfo(name, pointerDepth, isCppRef, isConst, isUnsigned, templateArgument, data);
-            object obj = typeFunc(typeInfo);
+            TypeInfo typeInfo = new TypeInfo(name, pointerDepth, isCppRef, isConst, isUnsigned, templateArgument);
+            object obj = typeFunc(typeInfo, data, this);
             isRef = typeInfo.IsRef;
             name = typeInfo.Name;
             pointerDepth = typeInfo.PointerDepth;
