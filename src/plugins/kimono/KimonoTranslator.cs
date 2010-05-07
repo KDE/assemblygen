@@ -29,6 +29,7 @@ public unsafe class KimonoTranslator : ICustomTranslator {
         { "mode_t", typeof(uint) },
         { "qulonglong", typeof(ulong) },
 
+        { "Controls", typeof(uint) },
         { "KConfigGroup.WriteConfigFlags", typeof(uint) },
         { "KParts.BrowserExtension.PopupFlags", typeof(uint) },
         { "ShortcutTypes", typeof(uint) },
@@ -42,7 +43,9 @@ public unsafe class KimonoTranslator : ICustomTranslator {
         { "KIO::UDSEntryList", "System.Collections.Generic.List<KIO.UDSEntry>" },
         { "KParts::BrowserExtension::ActionGroupMap", "System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<QAction>>" },
         { "KParts::LiveConnectExtension::ArgList", "System.Collections.Generic.List<QPair<Type, string>>" },
+        { "QVariantList", "System.Collections.Generic.List<QVariant>" },
         { "QVariantMap", "System.Collections.Generic.Dictionary<string, QVariant>" },
+        { "Plasma::DataEngine::Data", "System.Collections.Generic.Dictionary<string, QVariant>" },
     };
 
     Dictionary<string, Translator.TranslateFunc> typeCodeMap = new Dictionary<string, Translator.TranslateFunc>()
@@ -107,13 +110,9 @@ public unsafe class KimonoTranslator : ICustomTranslator {
         { "passwd", delegate { throw new NotSupportedException(); } },
         { "group", delegate { throw new NotSupportedException(); } },
 
-        { "KSharedPtr", delegate(Translator.TypeInfo type) {
-                            type.Name = type.TemplateParameters;
-                            type.TemplateParameters = string.Empty;
-                            return null;
-                        }},
-        { "KFileFilterCombo", delegate(Translator.TypeInfo type) {
-                            if (type.GeneratorData.Smoke->ToString() == "kio") {
+        { "KSharedPtr", (type, data, translator) => translator.CppToCSharp(type.TemplateParameters) },
+        { "KFileFilterCombo", delegate(Translator.TypeInfo type, GeneratorData data, Translator translator) {
+                            if (data.Smoke->ToString() == "kio") {
                                 // we can't reference kimono-kfile, because that itself depends on kio again
                                 return "KComboBox";
                             } else {

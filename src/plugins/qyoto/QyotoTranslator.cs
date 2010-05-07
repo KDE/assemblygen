@@ -121,8 +121,8 @@ public class QyotoTranslator : ICustomTranslator {
         { "Phonon::ObjectDescriptionPrivate", delegate { throw new NotSupportedException(); } },
         { "Phonon::VideoWidgetPrivate", delegate { throw new NotSupportedException(); } },
 
-        { "void", type => (type.PointerDepth == 0) ? new CodeTypeReference(typeof(void)) : new CodeTypeReference(typeof(IntPtr)) },
-        { "char", delegate(Translator.TypeInfo type) {
+        { "void", (type, data, translator) => (type.PointerDepth == 0) ? new CodeTypeReference(typeof(void)) : new CodeTypeReference(typeof(IntPtr)) },
+        { "char", delegate(Translator.TypeInfo type, GeneratorData data, Translator translator) {
                     if (type.PointerDepth == 1) {
                         if (type.IsUnsigned)
                             return new CodeTypeReference("Pointer<byte>");
@@ -132,11 +132,11 @@ public class QyotoTranslator : ICustomTranslator {
                     }
                     return null;
                   }},
-        { "QString", type => (type.PointerDepth > 0) ? "System.Text.StringBuilder" : "String" },
+        { "QString", (type, data, translator) => (type.PointerDepth > 0) ? "System.Text.StringBuilder" : "String" },
 
-        { "QWidget", delegate(Translator.TypeInfo type) {
+        { "QWidget", delegate(Translator.TypeInfo type, GeneratorData data, Translator translator) {
                         unsafe {
-                            if (type.GeneratorData.Smoke->ToString() == "qtcore") {
+                            if (data.Smoke->ToString() == "qtcore") {
                                 throw new NotSupportedException();
                             }
                             return null;
