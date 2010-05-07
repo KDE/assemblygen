@@ -253,6 +253,11 @@ public unsafe class MethodsGenerator {
                                         select member;
                 data.Debug = false;
                 if (iface != null && typesWithSameName.Count() == 1) {
+                    if ((method->flags & (uint) Smoke.MethodFlags.mf_protected) != 0) {
+                        // protected methods are not available in interfaces
+                        return null;
+                    }
+
                     foreach (var member in typesWithSameName) {
                         if (member.Type == MemberTypes.Property) {
                             cmm.PrivateImplementationType = iface;
@@ -384,7 +389,8 @@ public unsafe class MethodsGenerator {
 
         // already implemented?
         if (containingType.HasMethod(cmm)) {
-            if (iface == null) {
+            if (iface == null || (method->flags & (uint) Smoke.MethodFlags.mf_protected) > 0) {
+                // protected methods are not available in interfaces
                 Debug.Print("  |--Skipping already implemented method {0}", cppSignature);
                 return null;
             } else {
