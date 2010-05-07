@@ -26,9 +26,11 @@ public unsafe class KimonoTranslator : ICustomTranslator {
 
     Dictionary<string, Type> typeMap = new Dictionary<string, Type>()
     {
+        { "mode_t", typeof(uint) },
         { "qulonglong", typeof(ulong) },
 
         { "KConfigGroup.WriteConfigFlags", typeof(uint) },
+        { "KParts.BrowserExtension.PopupFlags", typeof(uint) },
         { "ShortcutTypes", typeof(uint) },
     };
 
@@ -38,6 +40,8 @@ public unsafe class KimonoTranslator : ICustomTranslator {
         { "EncryptionMode", "KTcpSocket.EncryptionMode" },
         { "InformationList", "System.Collections.Generic.List<Information>" },
         { "KIO::UDSEntryList", "System.Collections.Generic.List<KIO.UDSEntry>" },
+        { "KParts::BrowserExtension::ActionGroupMap", "System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<QAction>>" },
+        { "KParts::LiveConnectExtension::ArgList", "System.Collections.Generic.List<QPair<Type, string>>" },
         { "QVariantMap", "System.Collections.Generic.Dictionary<string, QVariant>" },
     };
 
@@ -77,6 +81,11 @@ public unsafe class KimonoTranslator : ICustomTranslator {
         { "KPageModelPrivate", delegate { throw new NotSupportedException(); } },
         { "KPageViewPrivate", delegate { throw new NotSupportedException(); } },
         { "KPageWidgetPrivate", delegate { throw new NotSupportedException(); } },
+
+        { "KParts::PartBasePrivate", delegate { throw new NotSupportedException(); } },
+        { "KParts::PartPrivate", delegate { throw new NotSupportedException(); } },
+        { "KParts::ReadOnlyPartPrivate", delegate { throw new NotSupportedException(); } },
+
         { "KPluginFactoryPrivate", delegate { throw new NotSupportedException(); } },
         { "KProcessPrivate", delegate { throw new NotSupportedException(); } },
         { "KSelectActionPrivate", delegate { throw new NotSupportedException(); } },
@@ -122,6 +131,7 @@ public unsafe class KimonoTranslator : ICustomTranslator {
     {
         new Regex(@"KCmdLineArgs::init\(int.*"),
         new Regex(@"KPluginFactory::createPartObject\(.*"),
+        new Regex(@"KParts::Factory::createPartObject\(.*"),
     };
 
     List<string> namespacesAsClasses = new List<string>()
