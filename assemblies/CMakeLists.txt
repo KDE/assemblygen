@@ -14,6 +14,7 @@ add_subdirectory(qyoto-qtxmlpatterns)
 
 add_subdirectory(qyoto-phonon)
 
+add_subdirectory(kimono-attica)
 add_subdirectory(kimono-kdecore)
 add_subdirectory(kimono-kdeui)
 add_subdirectory(kimono-kfile)
