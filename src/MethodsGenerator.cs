@@ -568,6 +568,9 @@ public unsafe class MethodsGenerator {
             dispose.Name = "Dispose";
             dispose.Attributes = MemberAttributes.Public | MemberAttributes.New | MemberAttributes.Final;
             dispose.Statements.AddRange(cmm.Statements);
+            dispose.Statements.Add(new CodeExpressionStatement(new CodeMethodInvokeExpression(
+                new CodeTypeReferenceExpression("GC"), "SuppressFinalize", new CodeThisReferenceExpression()
+            )));
             containingType.Members.Add(dispose);
         }
         return cmm;
