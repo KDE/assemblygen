@@ -20,7 +20,7 @@
 using System;
 using System.CodeDom;
 
-static class SmokeSupport {
+public static class SmokeSupport {
     public static CodeMethodReferenceExpression interceptor_Invoke =
         new CodeMethodReferenceExpression(new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "interceptor"), "Invoke");
     public static CodeMethodReferenceExpression staticInterceptor_Invoke =

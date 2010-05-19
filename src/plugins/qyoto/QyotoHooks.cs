@@ -30,13 +30,13 @@ public unsafe class QyotoHooks : IHookProvider {
     [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet=CharSet.Ansi)]
     delegate void AddSignal(string signature, string name, string returnType, IntPtr metaMethod);
 
-    [DllImport("assemblygen-native", CallingConvention=CallingConvention.Cdecl)]
+    [DllImport("qyotogenerator-native", CallingConvention=CallingConvention.Cdecl)]
     static extern void GetSignals(Smoke* smoke, void *klass, AddSignal addSignalFn);
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet=CharSet.Ansi)]
     delegate void AddParameter(string type, string name);
 
-    [DllImport("assemblygen-native", CallingConvention=CallingConvention.Cdecl)]
+    [DllImport("qyotogenerator-native", CallingConvention=CallingConvention.Cdecl)]
     static extern void GetMetaMethodParameters(IntPtr metaMethod, AddParameter addParamFn);
 
     static string qObjectDummyCtorCode =
@@ -53,6 +53,7 @@ public unsafe class QyotoHooks : IHookProvider {
         ClassesGenerator.PreMembersHooks += PreMembersHook;
         ClassesGenerator.PostMembersHooks += PostMembersHook;
         ClassesGenerator.SupportingMethodsHooks += SupportingMethodsHook;
+        ClassesGenerator.PreClassesHook += PreClassesHook;
         Console.WriteLine("Registered Qyoto hooks.");
     }
 
@@ -184,6 +185,11 @@ public unsafe class QyotoHooks : IHookProvider {
         if (type.Name == "QObject" && cmm is CodeConstructor) {
             cmm.Statements.Add(new CodeSnippetStatement(qObjectDummyCtorCode));
         }
+    }
+
+    public void PreClassesHook() {
+        PropertyGenerator pg = new PropertyGenerator(Data, Translator);
+        pg.Run();
     }
 
 }

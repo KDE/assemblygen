@@ -78,68 +78,6 @@ Q_DECL_EXPORT qint64 GetEnumValue(Smoke* smoke, Smoke::Method* meth)
     return ret.s_enum;
 }
 
-const QMetaObject *GetMetaObject(Smoke *smoke, Smoke::Index classId) {
-    const Smoke::Class& klass = smoke->classes[classId];
-
-    Smoke::Index methodNameId = smoke->idMethodName("staticMetaObject").index;
-    if (!methodNameId) {
-        return false;
-    }
-    Smoke::Index methodMapId = smoke->idMethod(classId, methodNameId).index;
-    if (!methodMapId) {
-        return false;
-    }
-
-    const Smoke::Method& meth = smoke->methods[smoke->methodMaps[methodMapId].method];
-    Smoke::ClassFn fn = klass.classFn;
-    Smoke::StackItem ret;
-    (*fn)(meth.method, 0, &ret);
-
-    return (QMetaObject*) ret.s_class;
-}
-
-Q_DECL_EXPORT bool GetProperties(Smoke* smoke, Smoke::Index classId, void (*addProp)(const char*, const char*, bool, bool))
-{
-    const QMetaObject *mo = GetMetaObject(smoke, classId);
-    if (!mo) {
-        return false;
-    }
-
-    for (int i = mo->propertyOffset(); i < mo->propertyCount(); ++i) {
-        const QMetaProperty& prop = mo->property(i);
-        (*addProp)(prop.name(), prop.isFlagType() ? "uint" : prop.typeName(), prop.isWritable(), prop.isEnumType());
-    }
-    return true;
-}
-
-typedef void (*AddSignal)(const char *signature, const char *name, const char *returnType, const QMetaMethod *method);
-
-Q_DECL_EXPORT void GetSignals(Smoke *smoke, const Smoke::Class *klass, AddSignal addSignalFn) {
-    Smoke::Index classId = klass - smoke->classes;
-    const QMetaObject *mo = GetMetaObject(smoke, classId);
-
-    if (!mo) {
-        qWarning("GetSignals: invalid meta-object for class %s", smoke->className(classId));
-        return;
-    }
-
-    for (int i = mo->methodOffset(); i < mo->methodCount(); ++i) {
-        const QMetaMethod &method = mo->method(i);
-        if (method.methodType() == QMetaMethod::Signal) {
-            QByteArray methodSig(method.signature());
-            (*addSignalFn)(methodSig, methodSig.left(methodSig.indexOf('(')), method.typeName(), &method);
-        }
-    }
-}
-
-typedef void (*AddParameter)(const char *type, const char *name);
-
-Q_DECL_EXPORT void GetMetaMethodParameters(const QMetaMethod *method, AddParameter addParamFn) {
-    for (int i = 0; i < method->parameterTypes().length(); i++) {
-        (*addParamFn)(method->parameterTypes().at(i), method->parameterNames().at(i));
-    }
-}
-
 Q_DECL_EXPORT bool IsDerivedFrom(const char *className, const char *baseClassName)
 {
     return Smoke::isDerivedFrom(className, baseClassName);

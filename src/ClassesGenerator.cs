@@ -25,6 +25,7 @@ using System.Collections.Generic;
 using System.CodeDom;
 
 public unsafe delegate void ClassHook(Smoke *smoke, Smoke.Class *klass, CodeTypeDeclaration typeDecl);
+public delegate void PreClassesHook();
 
 public unsafe class ClassesGenerator {
 
@@ -52,6 +53,7 @@ public unsafe class ClassesGenerator {
     public static event ClassHook PreMembersHooks;
     public static event ClassHook PostMembersHooks;
     public static event MethodHook SupportingMethodsHooks;
+    public static event PreClassesHook PreClassesHook;
 
     /*
      * Create a .NET class from a smoke class.
@@ -226,8 +228,9 @@ public unsafe class ClassesGenerator {
             }
         }
 
-        PropertyGenerator pg = new PropertyGenerator(data, translator);
-        pg.Run();
+        if (PreClassesHook != null) {
+            PreClassesHook();
+        }
 
         GenerateMethods();
     }

@@ -65,6 +65,9 @@ public unsafe class MethodsGenerator {
             return false;
         }
 
+        string methodName = ByteArrayManager.GetString(data.Smoke->methodNames[method->name]);
+        string className = ByteArrayManager.GetString(data.Smoke->classes[method->classId].className);
+
         long id = method - data.Smoke->methods;
         Smoke.ModuleIndex methodModuleIndex = new Smoke.ModuleIndex(data.Smoke, (short) id);
 
@@ -94,6 +97,7 @@ public unsafe class MethodsGenerator {
                     } else {
                         access = MemberAttributes.Public;
                     }
+
                     // don't return here - we need the access of the method in the topmost superclass
                     firstMethod = meth;
                     if (parent != firstParent) {
@@ -105,6 +109,10 @@ public unsafe class MethodsGenerator {
 
         // we need to have a method that's not in a interface to mark it as overriden
         bool ret = firstMethod != (Smoke.Method*) IntPtr.Zero && !foundInInterface;
+
+        if (className == "QGraphicsTextItem" && methodName == "extension") {
+            Console.WriteLine("{0}::{1}: found in interface: {2},\treturn: {3}", className, methodName, foundInInterface, ret);
+        }
 
         // we need to have a public method in one of the interfaces for this to be set
         foundInInterface = firstMethod != (Smoke.Method*) IntPtr.Zero && foundInInterface && access == MemberAttributes.Public;

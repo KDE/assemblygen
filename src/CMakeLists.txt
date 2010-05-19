@@ -20,7 +20,6 @@ set(assemblygen_SRC
     main.cs
     MethodsGenerator.cs
     PluginInterfaces.cs
-    PropertyGenerator.cs
     Smoke.cs
     SmokeMethodEqualityComparer.cs
     SmokeMethods.cs
