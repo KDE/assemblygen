@@ -1,6 +1,5 @@
-project(assemblygen)
-
 find_package(Qt4 REQUIRED)
+find_package(Smoke REQUIRED)
 
 set(assemblygen_native_SRC
     assemblygen-native.cpp
@@ -8,7 +7,7 @@ set(assemblygen_native_SRC
 
 include_directories(${QT_INCLUDES})
 add_library(assemblygen-native SHARED ${assemblygen_native_SRC})
-target_link_libraries(assemblygen-native ${QT_QTCORE_LIBRARY} smokeqtcore)
+target_link_libraries(assemblygen-native ${QT_QTCORE_LIBRARY} ${SMOKE_BASE_LIBRARY})
 
 set(assemblygen_SRC
     AttributeGenerator.cs

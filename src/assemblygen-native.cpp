@@ -23,7 +23,6 @@
 #include <QRegExp>
 #include <QtDebug>
 
-#include <smoke/qtcore_smoke.h>
 #include <smoke.h>
 
 typedef void (*InitSmokeFn)();
