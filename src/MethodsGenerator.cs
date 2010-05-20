@@ -253,12 +253,7 @@ public unsafe class MethodsGenerator {
                                                && member.Name == tmp
                                         select member;
                 data.Debug = false;
-                if (iface != null && typesWithSameName.Count() == 1) {
-                    if ((method->flags & (uint) Smoke.MethodFlags.mf_protected) != 0) {
-                        // protected methods are not available in interfaces
-                        return null;
-                    }
-
+                if (iface != null && typesWithSameName.Count() == 1 && (method->flags & (uint) Smoke.MethodFlags.mf_protected) == 0) {
                     foreach (var member in typesWithSameName) {
                         if (member.Type == MemberTypes.Property) {
                             cmm.PrivateImplementationType = iface;
@@ -374,8 +369,9 @@ public unsafe class MethodsGenerator {
     public CodeMemberMethod GenerateMethod(Smoke *smoke, Smoke.Method *method, string mungedName, CodeTypeReference iface) {
         string cppSignature = smoke->GetMethodSignature(method);
         CodeMemberMethod cmm = GenerateBasicMethodDefinition(smoke, method, cppSignature, iface);
-        if (cmm == null)
+        if (cmm == null) {
             return null;
+        }
 
         // put the method into the correct type
         CodeTypeDeclaration containingType = type;
