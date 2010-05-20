@@ -252,7 +252,7 @@ public unsafe class MethodsGenerator {
                                                || member.Type == MemberTypes.Property)
                                                && member.Name == tmp
                                         select member;
-                data.Debug = false;
+
                 if (iface != null && typesWithSameName.Count() == 1 && (method->flags & (uint) Smoke.MethodFlags.mf_protected) == 0) {
                     foreach (var member in typesWithSameName) {
                         if (member.Type == MemberTypes.Property) {
