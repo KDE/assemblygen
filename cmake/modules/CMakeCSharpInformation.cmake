@@ -15,7 +15,7 @@
 #                     [COMPILE_FLAGS <flags to be passed to the compiler>]
 #                     [COMPILE_DEFINITIONS <additional definitions>] )
 #
-# install_assembly (<target name> DESTINATION <assembly destination directory>
+# install_assembly (<target name> [NO_GAC] DESTINATION <assembly destination directory>
 #                   [PACKAGE <package name>] )
 # The assembly destination directory is only used if we compile with Visual C# and thus can't use gacutil.
 # If a package is specified and a file called <target>.pc.cmake exists in the current source directory,
@@ -171,6 +171,7 @@ function(csharp_add_executable target)
                        COMMENT "Building ${relative_path}" VERBATIM) # nice comment
     add_custom_target(${target} ALL DEPENDS "${outdir}/${target}.stubexe" SOURCES ${cmake_file_list}) # create the actual target
     set_property(TARGET ${target} PROPERTY _assembly "${native_target}.exe")
+    set_property(TARGET ${target} PROPERTY _assembly_type "exe")
     if (deps)
         add_dependencies(${target} ${deps})
     endif(deps)
@@ -271,46 +272,89 @@ function(csharp_add_library target)
                        COMMENT "Building ${relative_path}" VERBATIM) # nice comment
     add_custom_target(${target} ALL DEPENDS "${outdir}/${target}.dll" SOURCES ${cmake_file_list}) # create the actual target
     set_property(TARGET ${target} PROPERTY _assembly "${native_target}.dll")
+    set_property(TARGET ${target} PROPERTY _assembly_type "dll")
     if (deps)
         add_dependencies(${target} ${deps})
     endif(deps)
 endfunction(csharp_add_library)
 
-# ----- install a library assembly -----
-function(install_assembly target DESTINATION destination_dir)
+# ----- install an assembly -----
+function(install_assembly)
+    set (current "t")
+
+    foreach (arg ${ARGN})
+        # flag handling
+        if (arg STREQUAL "NO_GAC")
+            set(no_gac TRUE)
+        # option handling
+        elseif (arg STREQUAL DESTINATION)
+            set (current "d")
+        elseif (arg STREQUAL "PACKAGE")
+            set (current "p")
+        # value handling
+        elseif (current STREQUAL "t")
+            set (target ${arg})
+        elseif (current STREQUAL "d")
+            if (IS_ABSOLUTE "${arg}")
+                set (destination_dir "${arg}")
+            else (IS_ABSOLUTE "${arg}")
+                set (destination_dir "${CMAKE_INSTALL_PREFIX}/${arg}")
+            endif (IS_ABSOLUTE "${arg}")
+        elseif (current STREQUAL "p")
+            set (package ${arg})
+        endif (arg STREQUAL "NO_GAC")
+    endforeach (arg)
+
+    if (NOT destination_dir)
+        message(FATAL_ERROR "The destination directory is mandatory, even if the assembly is installed into the GAC.")
+    elseif (NOT target)
+        message(FATAL_ERROR "No target given.")
+    endif (NOT destination_dir)
+
     # retrieve the absolute path of the generated assembly
     get_property(filename TARGET ${target} PROPERTY _assembly)
+    get_property(type TARGET ${target} PROPERTY _assembly_type)
     get_property(pc_file TARGET ${target} PROPERTY pkg-config_template_basename)
+
     if (NOT pc_file)
         set (pc_file ${target})
     endif (NOT pc_file)
+
+    # default assembly location (for pkg-config)
+    set(assembly "${GAC_DIR}/${package}/${target}.dll")
 
     if (NOT filename)
         message(FATAL_ERROR "Couldn't retrieve the assembly filename for target ${target}! Are you sure the target is a .NET library assembly?")
     endif (NOT filename)
 
-    if (NOT MONO_FOUND)
+    if (package)
+        set (package_option "-package ${package}")
+    endif (package)
+
+    if (NOT MONO_FOUND OR no_gac OR type STREQUAL "exe")
         install(FILES "${filename}" DESTINATION ${destination_dir})
         if (EXISTS "${filename}.config")
             install(FILES "${filename}.config" DESTINATION ${destination_dir})
         endif (EXISTS "${filename}.config")
+
+        # don't install anything into the GAC
+        set (no_gac TRUE)
+        # set new assembly location for pkg-config
+        set(assembly "${destination_dir}/${target}.${type}")
+    endif (NOT MONO_FOUND OR no_gac OR type STREQUAL "exe")
+
+    if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${pc_file}.pc.cmake")
+        configure_file ("${CMAKE_CURRENT_SOURCE_DIR}/${pc_file}.pc.cmake" "${CMAKE_CURRENT_BINARY_DIR}/${pc_file}.pc" @ONLY)
+
+        if (NOT LIB_INSTALL_DIR)
+            set (LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib)
+        endif (NOT LIB_INSTALL_DIR)
+        install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${pc_file}.pc" DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
+    endif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${pc_file}.pc.cmake")
+
+    if (no_gac)
         return()
-    endif (NOT MONO_FOUND)
-
-    if (ARGV3 STREQUAL "PACKAGE" AND ARGV4)
-        set (package_option "-package ${ARGV4}")
-
-        if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${pc_file}.pc.cmake")
-            set(assembly "${GAC_DIR}/${ARGV4}/${target}.dll")
-            configure_file ("${CMAKE_CURRENT_SOURCE_DIR}/${pc_file}.pc.cmake" "${CMAKE_CURRENT_BINARY_DIR}/${pc_file}.pc")
-
-            if (NOT LIB_INSTALL_DIR)
-                set (LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib)
-            endif (NOT LIB_INSTALL_DIR)
-            install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${pc_file}.pc" DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
-        endif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${pc_file}.pc.cmake")
-
-    endif (ARGV3 STREQUAL "PACKAGE" AND ARGV4)
+    endif (no_gac)
 
     # So we have the mono runtime and we can use gacutil (it has the -root option, which the MS version doesn't have).
     install(CODE "execute_process(COMMAND ${GACUTIL_EXECUTABLE} -i ${filename} ${package_option} -root ${CMAKE_CURRENT_BINARY_DIR}/tmp_gac)")

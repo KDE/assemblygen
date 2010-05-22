@@ -30,4 +30,15 @@ set(assemblygen_SRC
 
 csharp_add_executable(assemblygen ${assemblygen_SRC} UNSAFE COMPILE_DEFINITIONS DEBUG)
 
+if (MONO_EXECUTABLE)
+    configure_file(assemblygen.cmake assemblygen @ONLY)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/assemblygen DESTINATION bin
+            PERMISSIONS OWNER_WRITE OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+    install_assembly(NO_GAC assemblygen DESTINATION lib${LIB_SUFFIX}/assemblygen)
+else (MONO_EXECUTABLE)
+    install_assembly(NO_GAC assemblygen DESTINATION bin)
+endif (MONO_EXECUTABLE)
+
+install(TARGETS assemblygen-native DESTINATION lib${LIB_SUFFIX}/assemblygen)
+
 add_subdirectory(plugins)
