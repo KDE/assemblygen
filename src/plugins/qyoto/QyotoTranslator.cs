@@ -121,7 +121,13 @@ public class QyotoTranslator : ICustomTranslator {
         { "Phonon::ObjectDescriptionPrivate", delegate { throw new NotSupportedException(); } },
         { "Phonon::VideoWidgetPrivate", delegate { throw new NotSupportedException(); } },
 
-        { "void", (type, data, translator) => (type.PointerDepth == 0) ? new CodeTypeReference(typeof(void)) : new CodeTypeReference(typeof(IntPtr)) },
+        { "void", delegate(Translator.TypeInfo type, GeneratorData data, Translator translator) {
+                    if (type.PointerDepth == 0) {
+                        return new CodeTypeReference(typeof(void));
+                    } else {
+                        throw new NotSupportedException();
+                    }
+                  }},
         { "char", delegate(Translator.TypeInfo type, GeneratorData data, Translator translator) {
                     if (type.PointerDepth == 1) {
                         if (type.IsUnsigned)
