@@ -42,7 +42,38 @@ class MainClass {
     const int CompilationError = 2;
     const int MissingOptionError = 254;
 
+    static void PrintHelp() {
+        Console.Write(
+@"Usage: {0} [options] <smoke library>
+
+Possible options:
+    -code-only               Produces only code. Requires the -code-file option to be set.
+    -code-file:<file>        Writes the resulting code into <file>
+    -out:<filename>          The name of the resulting assembly. Defaults to 'out.dll'.
+    -warn:0-4                Sets the warning level, default is 4.
+    -reference:<assembly>    References <assembly> (short: -r:).
+    -global-class:<name>     Name of the class in which to put methods from namespaces. Defaults to 'Global'.
+    -namespace:<name>        Name of the default namespace. Defaults to 'Qyoto'.
+    -import:<name>[,n2,...]  Adds additional 'using <name>' statements to each namespace.
+    -plugins:P1[,Pn]         Loads additional plugins. Absolute path or relative path to the 'plugins' directory.
+    -verbose                 Be verbose (VERY verbose!).
+    -help                    Shows this message.
+
+Any options not listed here are directly passed to the compiler (leading dashes are replaces with slashes).
+", Assembly.GetExecutingAssembly().Location);
+    }
+
     public unsafe static int Main(string[] args) {
+        string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+        string pluginDirectory;
+        if (baseDirectory.EndsWith("bin")) {
+            // Windows
+            pluginDirectory = Path.GetFullPath(Path.Combine(baseDirectory, "..\\lib\\plugins"));
+        } else {
+            // *nix
+            pluginDirectory = Path.Combine(baseDirectory, "plugins");
+        }
+
         List<CodeCompileUnit> codeSnippets = new List<CodeCompileUnit>();
         List<Assembly> references = new List<Assembly>();
         List<string> imports = new List<string>();
@@ -59,7 +90,10 @@ class MainClass {
         List<ICustomTranslator> customTranslators = new List<ICustomTranslator>();
 
         foreach (string arg in args) {
-            if (arg == "-verbose") {
+            if (arg == "-help" || arg == "--help" || arg == "-h") {
+                PrintHelp();
+                return 0;
+            } else if (arg == "-verbose") {
                 Debug.Listeners.Add(new ConsoleTraceListener(true));
                 continue;
             } else if (arg == "-code-only") {
@@ -91,7 +125,13 @@ class MainClass {
                 continue;
             } else if (arg.StartsWith("-plugins:")) {
                 foreach (string str in arg.Substring(9).Split(',')) {
-                    plugins.Add(Assembly.LoadFrom(str));
+                    Assembly a;
+                    try {
+                        a = Assembly.LoadFrom(str);
+                    } catch (FileNotFoundException) {
+                        a = Assembly.LoadFrom(Path.Combine(pluginDirectory, str));
+                    }
+                    plugins.Add(a);
                 }
                 continue;
             } else if (arg.StartsWith("-")) {
@@ -110,6 +150,11 @@ class MainClass {
             codeSnippets.Add(new CodeSnippetCompileUnit(sr.ReadToEnd()));
             sr.Close();
             fs.Close();
+        }
+
+        if (smokeLib == null) {
+            PrintHelp();
+            return 1;
         }
 
         Smoke *smoke = InitSmoke(smokeLib);
