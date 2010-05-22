@@ -51,13 +51,13 @@ namespace Qyoto {
 	}
 	
 	public class SmokeInvocation {
-		[DllImport("qyoto", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
+		[DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
 		static extern ModuleIndex FindMethodId(string className, string mungedName, string signature);
 		
-		[DllImport("qyoto", CharSet=CharSet.Ansi, EntryPoint="CallSmokeMethod", CallingConvention=CallingConvention.Cdecl)]
+		[DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi, EntryPoint="CallSmokeMethod", CallingConvention=CallingConvention.Cdecl)]
 		static extern void CallSmokeMethod(IntPtr smoke, int methodId, IntPtr target, IntPtr sp, int items);
 
-		[DllImport("qyoto", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
+		[DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
 		static extern int QyotoHash(IntPtr obj);
 
 		// The key is a type name of a class which has overriden one or more
@@ -438,7 +438,7 @@ namespace Qyoto {
 		public static void InitRuntime() {
 			if (runtimeInitialized)
 				return;
-			Qyoto.Init_qyoto();
+			Qyoto.Init_qyoto_qtcore();
 			SmokeMarshallers.SetUp();
 			// not set when mono is embedded
 			if (AppDomain.CurrentDomain.SetupInformation.ConfigurationFile == null) {
@@ -689,7 +689,7 @@ namespace Qyoto {
 	}
 
 	public class SignalInvocation : RealProxy {
-		[DllImport("qyoto", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
+		[DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
 		static extern bool SignalEmit(string signature, string type, IntPtr target, IntPtr sp, int items);
 
 		private Type	signalsInterface;

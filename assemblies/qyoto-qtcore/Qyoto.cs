@@ -45,10 +45,10 @@ namespace Qyoto
 	}
 
 	public class QDebug {
-		[DllImport("qyoto", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
+		[DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
 		public static extern void SetDebug(QtDebugChannel debugChannel);
 
-		[DllImport("qyoto", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
+		[DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
 		public static extern QtDebugChannel DebugChannel();
 
 		public static DebugLevel debugLevel = DebugLevel.Off;
@@ -250,13 +250,13 @@ namespace Qyoto
 
 	public class Qyoto : System.Object
 	{
-		[DllImport("qyoto", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
-		public static extern void Init_qyoto();
+		[DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
+		public static extern void Init_qyoto_qtcore();
     
-		[DllImport("qyoto", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
+		[DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
 		public static extern void SetApplicationTerminated();
 
-		[DllImport("qyoto", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
+		[DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
 		static extern IntPtr qyoto_make_metaObject(	string parentClassName, IntPtr parentMeta,
 												IntPtr stringdata, int stringdataCount, 
 											 	IntPtr data, int dataCount );
