@@ -33,7 +33,8 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtcore.dll
                             -code-file:qyoto-qtcore.cs "-keyfile:${KEYFILE}"
                             libsmokeqtcore.so
                             ${qyoto_qtcore_SRC}
-                   WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH})
+                   WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
+                   DEPENDS ${qyoto_qtcore_SRC})
 
 add_custom_target(qyoto-qtcore ALL DEPENDS ${LIBRARY_OUTPUT_PATH}/qyoto-qtcore.dll)
 add_dependencies(qyoto-qtcore assemblygen QyotoGenerator)
