@@ -682,6 +682,9 @@ namespace Qyoto {
 			SmokeClassData data = null;
 			foreach(Assembly a in AppDomain.CurrentDomain.GetAssemblies()) {
 				Type t = a.GetType(className);
+				if (t.IsAbstract) {
+					return CreateInstance(className + "Internal", smokeObjectPtr);
+				}
 				if (t != null)
 					data = GetSmokeClassData(t);
 			}
