@@ -7,6 +7,12 @@ namespace Qyoto {
 	using System.Reflection;
 
 	public partial class Qt : Object {
+
+		public enum HitTestAccuracy {
+			ExactHit = 0,
+			FuzzyHit = 1,
+		}
+
 		[DllImport("qyoto", CharSet=CharSet.Ansi)]
 		private static extern IntPtr qyoto_qt_metacast(IntPtr obj, string target);
 
