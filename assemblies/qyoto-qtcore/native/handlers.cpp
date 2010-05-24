@@ -148,6 +148,240 @@ IsContainedInstanceQtCore(smokeqyoto_object *o)
 const char *
 qyoto_resolve_classname_qtcore(smokeqyoto_object * o)
 {
+#define SET_SMOKEQYOTO_OBJECT(className) \
+    { \
+        Smoke::ModuleIndex mi = Smoke::findClass(className); \
+        o->classId = mi.index; \
+        o->smoke = mi.smoke; \
+    }
+
+	if (o->smoke->isDerivedFrom(o->smoke->classes[o->classId].className, "QEvent")) {
+		QEvent * qevent = (QEvent *) o->smoke->cast(o->ptr, o->classId, o->smoke->idClass("QEvent", true).index);
+		switch (qevent->type()) {
+		case QEvent::Timer:
+   			SET_SMOKEQYOTO_OBJECT("QTimerEvent")
+			break;
+		case QEvent::MouseButtonPress:
+		case QEvent::MouseButtonRelease:
+		case QEvent::MouseButtonDblClick:
+		case QEvent::MouseMove:
+			SET_SMOKEQYOTO_OBJECT("QMouseEvent")
+			break;
+		case QEvent::KeyPress:
+		case QEvent::KeyRelease:
+		case QEvent::ShortcutOverride:
+   			SET_SMOKEQYOTO_OBJECT("QKeyEvent")
+			break;
+		case QEvent::FocusIn:
+		case QEvent::FocusOut:
+   			SET_SMOKEQYOTO_OBJECT("QFocusEvent")
+			break;
+		case QEvent::Enter:
+		case QEvent::Leave:
+			SET_SMOKEQYOTO_OBJECT("QEvent")
+			break;
+		case QEvent::Paint:
+			SET_SMOKEQYOTO_OBJECT("QPaintEvent")
+			break;
+		case QEvent::Move:
+			SET_SMOKEQYOTO_OBJECT("QMoveEvent")
+			break;
+		case QEvent::Resize:
+			SET_SMOKEQYOTO_OBJECT("QResizeEvent")
+			break;
+		case QEvent::Create:
+		case QEvent::Destroy:
+			SET_SMOKEQYOTO_OBJECT("QEvent")
+			break;
+		case QEvent::Show:
+			SET_SMOKEQYOTO_OBJECT("QShowEvent")
+			break;
+		case QEvent::Hide:
+			SET_SMOKEQYOTO_OBJECT("QHideEvent")
+		case QEvent::Close:
+			SET_SMOKEQYOTO_OBJECT("QCloseEvent")
+			break;
+		case QEvent::Quit:
+		case QEvent::ParentChange:
+		case QEvent::ParentAboutToChange:
+		case QEvent::ThreadChange:
+		case QEvent::WindowActivate:
+		case QEvent::WindowDeactivate:
+		case QEvent::ShowToParent:
+		case QEvent::HideToParent:
+			SET_SMOKEQYOTO_OBJECT("QEvent")
+			break;
+		case QEvent::Wheel:
+			SET_SMOKEQYOTO_OBJECT("QWheelEvent")
+			break;
+		case QEvent::WindowTitleChange:
+		case QEvent::WindowIconChange:
+		case QEvent::ApplicationWindowIconChange:
+		case QEvent::ApplicationFontChange:
+		case QEvent::ApplicationLayoutDirectionChange:
+		case QEvent::ApplicationPaletteChange:
+		case QEvent::PaletteChange:
+			SET_SMOKEQYOTO_OBJECT("QEvent")
+			break;
+		case QEvent::Clipboard:
+			SET_SMOKEQYOTO_OBJECT("QClipboardEvent")
+			break;
+		case QEvent::Speech:
+		case QEvent::MetaCall:
+		case QEvent::SockAct:
+		case QEvent::WinEventAct:
+		case QEvent::DeferredDelete:
+			SET_SMOKEQYOTO_OBJECT("QEvent")
+			break;
+		case QEvent::DragEnter:
+			SET_SMOKEQYOTO_OBJECT("QDragEnterEvent")
+			break;
+		case QEvent::DragLeave:
+			SET_SMOKEQYOTO_OBJECT("QDragLeaveEvent")
+			break;
+		case QEvent::DragMove:
+			SET_SMOKEQYOTO_OBJECT("QDragMoveEvent")
+		case QEvent::Drop:
+			SET_SMOKEQYOTO_OBJECT("QDropEvent")
+			break;
+		case QEvent::DragResponse:
+			SET_SMOKEQYOTO_OBJECT("QDragResponseEvent")
+			break;
+		case QEvent::ChildAdded:
+		case QEvent::ChildRemoved:
+		case QEvent::ChildPolished:
+			SET_SMOKEQYOTO_OBJECT("QChildEvent")
+			break;
+		case QEvent::ShowWindowRequest:
+		case QEvent::PolishRequest:
+		case QEvent::Polish:
+		case QEvent::LayoutRequest:
+		case QEvent::UpdateRequest:
+		case QEvent::EmbeddingControl:
+		case QEvent::ActivateControl:
+		case QEvent::DeactivateControl:
+			SET_SMOKEQYOTO_OBJECT("QEvent")
+			break;
+        case QEvent::ContextMenu:
+			SET_SMOKEQYOTO_OBJECT("QContextMenuEvent")
+			break;
+  case QEvent::DynamicPropertyChange:
+			SET_SMOKEQYOTO_OBJECT("QDynamicPropertyChangeEvent")
+			break;
+		case QEvent::InputMethod:
+			SET_SMOKEQYOTO_OBJECT("QInputMethodEvent")
+			break;
+		case QEvent::AccessibilityPrepare:
+			SET_SMOKEQYOTO_OBJECT("QEvent")
+			break;
+		case QEvent::TabletMove:
+		case QEvent::TabletPress:
+		case QEvent::TabletRelease:
+			SET_SMOKEQYOTO_OBJECT("QTabletEvent")
+			break;
+		case QEvent::LocaleChange:
+		case QEvent::LanguageChange:
+		case QEvent::LayoutDirectionChange:
+		case QEvent::Style:
+		case QEvent::OkRequest:
+		case QEvent::HelpRequest:
+			SET_SMOKEQYOTO_OBJECT("QEvent")
+			break;
+		case QEvent::IconDrag:
+			SET_SMOKEQYOTO_OBJECT("QIconDragEvent")
+			break;
+		case QEvent::FontChange:
+		case QEvent::EnabledChange:
+		case QEvent::ActivationChange:
+		case QEvent::StyleChange:
+		case QEvent::IconTextChange:
+		case QEvent::ModifiedChange:
+		case QEvent::MouseTrackingChange:
+			SET_SMOKEQYOTO_OBJECT("QEvent")
+			break;
+		case QEvent::WindowBlocked:
+		case QEvent::WindowUnblocked:
+		case QEvent::WindowStateChange:
+			SET_SMOKEQYOTO_OBJECT("QWindowStateChangeEvent")
+			break;
+		case QEvent::ToolTip:
+		case QEvent::WhatsThis:
+			SET_SMOKEQYOTO_OBJECT("QHelpEvent")
+			break;
+		case QEvent::StatusTip:
+			SET_SMOKEQYOTO_OBJECT("QEvent")
+			break;
+		case QEvent::ActionChanged:
+		case QEvent::ActionAdded:
+		case QEvent::ActionRemoved:
+			SET_SMOKEQYOTO_OBJECT("QActionEvent")
+			break;
+		case QEvent::FileOpen:
+			SET_SMOKEQYOTO_OBJECT("QFileOpenEvent")
+			break;
+		case QEvent::Shortcut:
+			SET_SMOKEQYOTO_OBJECT("QShortcutEvent")
+			break;
+		case QEvent::WhatsThisClicked:
+			SET_SMOKEQYOTO_OBJECT("QWhatsThisClickedEvent")
+			break;
+		case QEvent::ToolBarChange:
+			SET_SMOKEQYOTO_OBJECT("QToolBarChangeEvent")
+			break;
+		case QEvent::ApplicationActivated:
+		case QEvent::ApplicationDeactivated:
+		case QEvent::QueryWhatsThis:
+		case QEvent::EnterWhatsThisMode:
+		case QEvent::LeaveWhatsThisMode:
+		case QEvent::ZOrderChange:
+			SET_SMOKEQYOTO_OBJECT("QEvent")
+			break;
+		case QEvent::HoverEnter:
+		case QEvent::HoverLeave:
+		case QEvent::HoverMove:
+			SET_SMOKEQYOTO_OBJECT("QHoverEvent")
+			break;
+		case QEvent::AccessibilityHelp:
+		case QEvent::AccessibilityDescription:
+			SET_SMOKEQYOTO_OBJECT("QEvent")
+#if QT_VERSION >= 0x40200
+		case QEvent::GraphicsSceneMouseMove:
+		case QEvent::GraphicsSceneMousePress:
+		case QEvent::GraphicsSceneMouseRelease:
+		case QEvent::GraphicsSceneMouseDoubleClick:
+			SET_SMOKEQYOTO_OBJECT("QGraphicsSceneMouseEvent")
+			break;
+		case QEvent::GraphicsSceneContextMenu:
+			SET_SMOKEQYOTO_OBJECT("QGraphicsSceneContextMenuEvent")
+			break;
+		case QEvent::GraphicsSceneHoverEnter:
+		case QEvent::GraphicsSceneHoverMove:
+		case QEvent::GraphicsSceneHoverLeave:
+			SET_SMOKEQYOTO_OBJECT("QGraphicsSceneHoverEvent")
+			break;
+		case QEvent::GraphicsSceneHelp:
+			SET_SMOKEQYOTO_OBJECT("QGraphicsSceneHelpEvent")
+			break;
+		case QEvent::GraphicsSceneDragEnter:
+		case QEvent::GraphicsSceneDragMove:
+		case QEvent::GraphicsSceneDragLeave:
+		case QEvent::GraphicsSceneDrop:
+			SET_SMOKEQYOTO_OBJECT("QGraphicsSceneDragDropEvent")
+			break;
+		case QEvent::GraphicsSceneWheel:
+			SET_SMOKEQYOTO_OBJECT("QGraphicsSceneWheelEvent")
+			break;
+		case QEvent::KeyboardLayoutChange:
+			SET_SMOKEQYOTO_OBJECT("QEvent")
+			break;
+#endif
+		default:
+			break;
+		}
+	}
+
+#undef SET_SMOKEQYOTO_OBJECT
+
 	return qyoto_modules[o->smoke].binding->className(o->classId);
 }
 

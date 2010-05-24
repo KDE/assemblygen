@@ -1,5 +1,3 @@
-PROJECT (qyoto-native)
-
 find_package(Qt4 REQUIRED COMPONENTS QtCore)
 find_package(Smoke REQUIRED COMPONENTS QtCore)
 

@@ -73,5 +73,11 @@ namespace Qyoto {
 								typeof(void), typeof(int), args.Length, typeof(string[]), args );
 			SetupEventReceiver();
 		}
+
+		public static int Exec() {
+			int result = (int) staticInterceptor.Invoke("exec", "exec()", typeof(int));
+			Qyoto.Cleanup();
+			return result;
+		}
 	}
 }
