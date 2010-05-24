@@ -54,6 +54,17 @@ public unsafe class MethodsGenerator {
         this.smokeClass = klass;
     }
 
+    bool m_internalImplementation = false;
+
+    public bool InternalImplementation {
+        get {
+            return m_internalImplementation;
+        }
+        set {
+            m_internalImplementation = value;
+        }
+    }
+
     public static event MethodHook PreMethodBodyHooks;
     public static event MethodHook PostMethodBodyHooks;
 
@@ -310,11 +321,15 @@ public unsafe class MethodsGenerator {
                     }
 
                     if ((method->flags & (uint) Smoke.MethodFlags.mf_purevirtual) > 0) {
-                        cmm.Attributes = (cmm.Attributes & ~MemberAttributes.ScopeMask) | MemberAttributes.Abstract;
+                        if (!m_internalImplementation) {
+                            cmm.Attributes = (cmm.Attributes & ~MemberAttributes.ScopeMask) | MemberAttributes.Abstract;
 
-                        // The code generator doesn't like MemberAttributes.Abstract | MemberAttributes.Override being set.
-                        if (isOverride && !type.IsInterface) {
-                            cmm.ReturnType.BaseType = "override " + cmm.ReturnType.BaseType;
+                            // The code generator doesn't like MemberAttributes.Abstract | MemberAttributes.Override being set.
+                            if (isOverride && !type.IsInterface) {
+                                cmm.ReturnType.BaseType = "override " + cmm.ReturnType.BaseType;
+                            }
+                        } else {
+                            cmm.Attributes |= MemberAttributes.Override;
                         }
                     }
 

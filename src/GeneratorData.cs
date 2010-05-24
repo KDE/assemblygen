@@ -95,6 +95,8 @@ public unsafe class GeneratorData {
     public readonly Dictionary<string, CodeTypeDeclaration> CSharpTypeMap = new Dictionary<string, CodeTypeDeclaration>();
     // maps a smoke enum type to a .NET enum
     public readonly Dictionary<string, CodeTypeDeclaration> EnumTypeMap = new Dictionary<string, CodeTypeDeclaration>();
+    // maps public abstract classes to their internal implemented types
+    public readonly Dictionary<CodeTypeDeclaration, CodeTypeDeclaration> InternalTypeMap = new Dictionary<CodeTypeDeclaration, CodeTypeDeclaration>();
 
     public bool Debug = false;
 
