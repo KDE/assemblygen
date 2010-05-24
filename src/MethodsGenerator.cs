@@ -68,19 +68,19 @@ public unsafe class MethodsGenerator {
     public static event MethodHook PreMethodBodyHooks;
     public static event MethodHook PostMethodBodyHooks;
 
-    bool MethodOverrides(Smoke.Method* method, out MemberAttributes access, out bool foundInInterface) {
+    bool MethodOverrides(Smoke *smoke, Smoke.Method* method, out MemberAttributes access, out bool foundInInterface) {
         access = MemberAttributes.Public;
         foundInInterface = false;
 
-        if (data.Smoke->inheritanceList[data.Smoke->classes[method->classId].parents] == 0) {
+        if (smoke->inheritanceList[smoke->classes[method->classId].parents] == 0) {
             return false;
         }
 
-        long id = method - data.Smoke->methods;
-        Smoke.ModuleIndex methodModuleIndex = new Smoke.ModuleIndex(data.Smoke, (short) id);
+        long id = method - smoke->methods;
+        Smoke.ModuleIndex methodModuleIndex = new Smoke.ModuleIndex(smoke, (short) id);
 
         Smoke.Method *firstMethod = (Smoke.Method*) IntPtr.Zero;
-        short *firstParent = data.Smoke->inheritanceList + data.Smoke->classes[method->classId].parents;
+        short *firstParent = smoke->inheritanceList + smoke->classes[method->classId].parents;
 
         for (short *parent = firstParent; *parent > 0; parent++) {
             if (firstMethod != (Smoke.Method*) IntPtr.Zero && !foundInInterface) {
@@ -90,7 +90,7 @@ public unsafe class MethodsGenerator {
 
             // Do this with linq... there's probably room for optimization here.
             // Select virtual and pure virtual methods from superclasses.
-            var inheritedVirtuals = from key in data.Smoke->FindAllMethods(*parent, true).Keys
+            var inheritedVirtuals = from key in smoke->FindAllMethods(*parent, true).Keys
                                     where ((key.smoke->methods[key.index].flags & (ushort) Smoke.MethodFlags.mf_virtual) > 0
                                         || (key.smoke->methods[key.index].flags & (ushort) Smoke.MethodFlags.mf_purevirtual) > 0)
                                     select key;
@@ -314,7 +314,7 @@ public unsafe class MethodsGenerator {
                     bool foundInInterface = false;
 
                     // methods that have to be implemented from interfaces can't override anything
-                    if (iface == null && (isOverride = MethodOverrides(method, out access, out foundInInterface))) {
+                    if (iface == null && (isOverride = MethodOverrides(smoke, method, out access, out foundInInterface))) {
                         cmm.Attributes = access | MemberAttributes.Override;
                     } else if (foundInInterface) {
                         cmm.Attributes = access;
