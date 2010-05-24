@@ -118,7 +118,7 @@ public unsafe class ClassesGenerator {
             }
         }
 
-        if (data.Smoke->IsClassAbstract(classId)) {
+        if (Util.IsClassAbstract(data.Smoke, classId)) {
             type.TypeAttributes |= TypeAttributes.Abstract;
         }
 
@@ -129,7 +129,27 @@ public unsafe class ClassesGenerator {
         if (!alreadyDefined) {
             DefineWrapperClassFieldsAndMethods(smokeClass, type);
             data.CSharpTypeMap[mapName] = type;
-            data.GetTypeCollection(prefix).Add(type);
+            IList collection = data.GetTypeCollection(prefix);
+            collection.Add(type);
+
+            // add the internal implementation type for abstract classes
+            if ((type.TypeAttributes & TypeAttributes.Abstract) == TypeAttributes.Abstract) {
+                CodeTypeDeclaration implType = new CodeTypeDeclaration();
+                implType.Name = type.Name + "Internal";
+                implType.BaseTypes.Add(new CodeTypeReference(type.Name));
+                implType.IsPartial = true;
+                implType.TypeAttributes = TypeAttributes.NotPublic;
+
+                CodeConstructor dummyCtor = new CodeConstructor();
+                dummyCtor.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(Type)), "dummy"));
+                dummyCtor.BaseConstructorArgs.Add(new CodeSnippetExpression("(System.Type) null"));
+                dummyCtor.Attributes = MemberAttributes.Family;
+                implType.Members.Add(dummyCtor);
+
+                data.InternalTypeMap[type] = implType;
+
+                collection.Add(implType);
+            }
         }
 
         data.SmokeTypeMap[(IntPtr) smokeClass] = type;
@@ -233,6 +253,7 @@ public unsafe class ClassesGenerator {
         }
 
         GenerateMethods();
+        GenerateInternalImplementationMethods();
     }
 
     void GenerateInheritedMethods(Smoke.Class *klass, MethodsGenerator methgen, AttributeGenerator attrgen, List<Smoke.ModuleIndex> alreadyImplemented) {
@@ -273,6 +294,28 @@ public unsafe class ClassesGenerator {
             }
 
             methgen.GenerateMethod(pair.Key.smoke, meth, pair.Value, translator.CppToCSharp(ByteArrayManager.GetString(ifaceKlass->className)));
+        }
+    }
+
+    void GenerateInternalImplementationMethods() {
+        for (short i = 1; i <= data.Smoke->numClasses; i++) {
+            Smoke.Class *klass = data.Smoke->classes + i;
+            if (klass->external) {
+                continue;
+            }
+            CodeTypeDeclaration type = data.SmokeTypeMap[(IntPtr) klass];
+
+            CodeTypeDeclaration implType;
+            if (!data.InternalTypeMap.TryGetValue(type, out implType)) {
+                continue;
+            }
+
+            MethodsGenerator methgen = new MethodsGenerator(data, translator, implType, klass);
+            methgen.InternalImplementation = true;
+
+            foreach (KeyValuePair<Smoke.ModuleIndex, string> pair in Util.GetAbstractMethods(data.Smoke, i)) {
+                methgen.GenerateMethod(pair.Key.smoke, pair.Key.index, pair.Value);
+            }
         }
     }
 

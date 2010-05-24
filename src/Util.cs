@@ -99,4 +99,49 @@ public static class Util {
         ret.Add(input.Substring(lastDelimeter + 1));
         return ret;
     }
+
+    public static unsafe Stack<KeyValuePair<Smoke.ModuleIndex, string>> GetAbstractMethods(Smoke *smoke, short classId) {
+        Dictionary<Smoke.ModuleIndex, string> methods =
+            new Dictionary<Smoke.ModuleIndex, string>(SmokeMethodEqualityComparer.AbstractRespectingComparer);
+        SmokeMethodEqualityComparer defaultComparer = SmokeMethodEqualityComparer.DefaultEqualityComparer;
+
+        smoke->FindAllMethods(classId, methods, true);
+        var abstractMethods = new Stack<KeyValuePair<Smoke.ModuleIndex, string>>();
+
+        foreach (KeyValuePair<Smoke.ModuleIndex, string> pair in methods) {
+            Smoke.Method *meth = pair.Key.smoke->methods + pair.Key.index;
+            if ((meth->flags & (ushort) Smoke.MethodFlags.mf_purevirtual) == 0) {
+                // only compare pure-virtuals
+                continue;
+            }
+            abstractMethods.Push(pair);
+
+            foreach (KeyValuePair<Smoke.ModuleIndex, string> other in methods) {
+                // Break if we encounter our original Index. Anything after this one will be further up in the
+                // hierarchy and thus can't override anything.
+                if (pair.Key == other.Key)
+                    break;
+
+                Smoke.Method *otherMeth = other.Key.smoke->methods + other.Key.index;
+                if (defaultComparer.Equals(pair.Key, other.Key)) {
+                    if ((otherMeth->flags & (ushort) Smoke.MethodFlags.mf_purevirtual) == 0) {
+                        // overriden with implementation
+                        abstractMethods.Pop();
+                    }
+                    break;
+                }
+            }
+        }
+
+        return abstractMethods;
+    }
+
+    public unsafe static bool IsClassAbstract(Smoke *smoke, short classId) {
+        if (GetAbstractMethods(smoke, classId).Count > 0) {
+            return true;
+        }
+
+        return false;
+    }
+
 }
