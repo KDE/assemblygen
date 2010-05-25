@@ -24,6 +24,7 @@ set (qyoto_qtcore_SRC
 
     ${CMAKE_CURRENT_SOURCE_DIR}/StreamWrapper.cs
     ${CMAKE_CURRENT_SOURCE_DIR}/QIODeviceWrapper.cs
+    ${CMAKE_CURRENT_SOURCE_DIR}/NativeLong.cs
 )
 
 add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtcore.dll
