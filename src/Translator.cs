@@ -80,9 +80,7 @@ public unsafe class Translator {
         { "ushort", typeof(ushort) },
         { "int", typeof(int) },
         { "uint", typeof(uint) },
-        { "long", typeof(long) },
         { "long long", typeof(long) },
-        { "ulong", typeof(ulong) },
         { "ulong long", typeof(ulong) },
         { "float", typeof(float) },
         { "double", typeof(double) },
@@ -98,6 +96,15 @@ public unsafe class Translator {
     // custom translation code
     Dictionary<string, TranslateFunc> typeCodeMap = new Dictionary<string, TranslateFunc>()
     {
+        { "long", delegate(TypeInfo type, GeneratorData data, Translator translator) {
+                       if (!type.IsUnsigned) {
+                           return "NativeLong";
+                       } else {
+                           type.IsUnsigned = false;
+                           return "NativeULong";
+                       }
+                   }},
+
         { "size_t", delegate { throw new NotSupportedException(); } },
         { "sockaddr", delegate { throw new NotSupportedException(); } },
         { "_IO_FILE", delegate { throw new NotSupportedException(); } },
