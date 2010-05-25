@@ -28,6 +28,10 @@ public class QyotoTranslator : ICustomTranslator {
     {
         // used in properties, signals and slots
         { "qreal", typeof(double) },
+        { "qint64", typeof(long) },
+        { "quint64", typeof(ulong) },
+        { "qlonglong", typeof(long) },
+        { "qulonglong", typeof(ulong) },
 
         // flag types that are not recognised as such
         { "BlurHints", typeof(uint) },
