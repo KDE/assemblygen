@@ -27,7 +27,8 @@ public unsafe class KimonoTranslator : ICustomTranslator {
     Dictionary<string, Type> typeMap = new Dictionary<string, Type>()
     {
         { "mode_t", typeof(uint) },
-        { "qulonglong", typeof(ulong) },
+
+        { "KIO.filesize_t", typeof(ulong) },
 
         { "Controls", typeof(uint) },
         { "KConfigGroup.WriteConfigFlags", typeof(uint) },
