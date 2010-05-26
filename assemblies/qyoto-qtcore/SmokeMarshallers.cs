@@ -1038,7 +1038,10 @@ namespace Qyoto {
 		}
 
 		public static unsafe object BoxFromStackItem(Type t, StackItem *item) {
-			t = t.GetElementType();
+			if (t.IsByRef) {
+				t = t.GetElementType();
+			}
+
 			if (t == typeof(int)) {
 				return item->s_int;
 			} else if (t == typeof(bool)) {
