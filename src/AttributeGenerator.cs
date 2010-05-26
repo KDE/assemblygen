@@ -126,14 +126,14 @@ unsafe class AttributeGenerator {
                 ((attr.GetMethod->flags & (uint) Smoke.MethodFlags.mf_static) == 0) ? SmokeSupport.interceptor_Invoke : SmokeSupport.staticInterceptor_Invoke;
             cmp.GetStatements.Add(new CodeMethodReturnStatement(new CodeCastExpression(cmp.Type,
                 new CodeMethodInvokeExpression(interceptorReference, new CodePrimitiveExpression(ByteArrayManager.GetString(attr.Smoke->methodNames[attr.GetMethod->name])),
-                    new CodePrimitiveExpression(attr.Smoke->GetMethodSignature(attr.GetMethod)), new CodeTypeOfExpression(cmp.Type)
+                    new CodePrimitiveExpression(attr.Smoke->GetMethodSignature(attr.GetMethod)), new CodeTypeOfExpression(cmp.Type), new CodePrimitiveExpression(false)
                 )
             )));
 
             if (cmp.HasSet) {
                 cmp.SetStatements.Add(new CodeMethodInvokeExpression(interceptorReference,
                         new CodePrimitiveExpression(ByteArrayManager.GetString(attr.Smoke->methodNames[attr.Smoke->FindMungedName(attr.SetMethod)])),
-                        new CodePrimitiveExpression(attr.Smoke->GetMethodSignature(attr.SetMethod)), new CodeTypeOfExpression(typeof(void)),
+                        new CodePrimitiveExpression(attr.Smoke->GetMethodSignature(attr.SetMethod)), new CodeTypeOfExpression(typeof(void)), new CodePrimitiveExpression(false),
                         new CodeTypeOfExpression(cmp.Type), new CodeArgumentReferenceExpression("value")
                 ));
             }

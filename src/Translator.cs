@@ -161,9 +161,9 @@ public unsafe class Translator {
         } else if (typeId == Smoke.TypeId.t_uint) {
             typeRef = new CodeTypeReference(typeof(uint));
         } else if (typeId == Smoke.TypeId.t_long) {
-            typeRef = new CodeTypeReference(typeof(long));
+            typeRef = new CodeTypeReference("NativeLong");
         } else if (typeId == Smoke.TypeId.t_ulong) {
-            typeRef = new CodeTypeReference(typeof(ulong));
+            typeRef = new CodeTypeReference("NativeULong");
         } else if (typeId == Smoke.TypeId.t_float) {
             typeRef = new CodeTypeReference(typeof(float));
         } else if (typeId == Smoke.TypeId.t_double) {

@@ -152,7 +152,7 @@ public unsafe class PropertyGenerator {
                             new CodeMethodInvokeExpression(SmokeSupport.interceptor_Invoke,
                                 new CodePrimitiveExpression(ByteArrayManager.GetString(data.Smoke->methodNames[getter->name])),
                                 new CodePrimitiveExpression(data.Smoke->GetMethodSignature(getter)),
-                                new CodeTypeOfExpression(cmp.Type)
+                                new CodeTypeOfExpression(cmp.Type), new CodePrimitiveExpression(false)
                             )
                         )));
                     } else {
@@ -200,7 +200,7 @@ public unsafe class PropertyGenerator {
                         cmp.SetStatements.Add(new CodeExpressionStatement(
                             new CodeMethodInvokeExpression(SmokeSupport.interceptor_Invoke, new CodePrimitiveExpression(setterName + mungedSuffix),
                                 new CodePrimitiveExpression(data.Smoke->GetMethodSignature(setterMethId)),
-                                new CodeTypeOfExpression(typeof(void)), new CodeTypeOfExpression(cmp.Type), new CodeArgumentReferenceExpression("value")
+                                new CodeTypeOfExpression(typeof(void)), new CodePrimitiveExpression(false), new CodeTypeOfExpression(cmp.Type), new CodeArgumentReferenceExpression("value")
                             )
                         ));
                     }
