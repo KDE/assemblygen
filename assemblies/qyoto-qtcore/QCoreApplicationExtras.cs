@@ -70,12 +70,12 @@ namespace Qyoto {
 			
 			interceptor.Invoke(	"QCoreApplication$?", 
 								"QCoreApplication(int&, char**)", 
-								typeof(void), typeof(int), args.Length, typeof(string[]), args );
+								typeof(void), false, typeof(int), args.Length, typeof(string[]), args );
 			SetupEventReceiver();
 		}
 
 		public static int Exec() {
-			int result = (int) staticInterceptor.Invoke("exec", "exec()", typeof(int));
+			int result = (int) staticInterceptor.Invoke("exec", "exec()", typeof(int), false);
 			Qyoto.Cleanup();
 			return result;
 		}

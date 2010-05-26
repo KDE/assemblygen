@@ -981,11 +981,14 @@ namespace Qyoto {
 			object pair = Activator.CreateInstance(t, new object[] { firstObject, secondObject });
 			return (IntPtr) GCHandle.Alloc(pair);
 		}
-		
-		public static unsafe void UnboxToStackItem(IntPtr obj, IntPtr st) {
-			StackItem *item = (StackItem*) st;
-			object o = ((GCHandle) obj).Target;
+
+		public static unsafe void UnboxToStackItem(object o, StackItem *item) {
+			if (o == null) {
+				item->s_class = IntPtr.Zero;
+				return;
+			}
 			Type t = o.GetType();
+
 			if (t == typeof(int) || t.IsEnum) {
 				item->s_int = (int) o;
 			} else if (t == typeof(bool)) {
@@ -996,14 +999,22 @@ namespace Qyoto {
 				item->s_float = (float) o;
 			} else if (t == typeof(double)) {
 				item->s_double = (double) o;
-			} else if (t == typeof(long)) {
-				item->s_long = (long) o;
+			} else if (t == typeof(NativeLong)) {
+				if (SizeOfNativeLong < sizeof(long)) {
+					item->s_int = (int) (NativeLong) o;
+				} else {
+					item->s_long = (NativeLong) o;
+				}
 			} else if (t == typeof(ushort)) {
 				item->s_ushort = (ushort) o;
 			} else if (t == typeof(uint)) {
 				item->s_uint = (uint) o;
-			} else if (t == typeof(ulong)) {
-				item->s_ulong = (ulong) o;
+			} else if (t == typeof(NativeULong)) {
+				if (SizeOfNativeLong < sizeof(long)) {
+					item->s_uint = (uint) (NativeULong) o;
+				} else {
+					item->s_ulong = (NativeULong) o;
+				}
 			} else if (t == typeof(sbyte)) {
 				item->s_char = (sbyte) o;
 			} else if (t == typeof(byte)) {
@@ -1011,42 +1022,69 @@ namespace Qyoto {
 			} else if (t == typeof(char)) {
 				item->s_char = (sbyte) (char) o;
 			} else {
-				item->s_class = IntPtr.Zero;
+#if DEBUG
+					item->s_class = (IntPtr) DebugGCHandle.Alloc(o);
+#else
+					item->s_class = (IntPtr) GCHandle.Alloc(o);
+#endif
 			}
 		}
-		
+
+		public static unsafe void UnboxToStackItem(IntPtr obj, IntPtr st) {
+			StackItem *item = (StackItem*) st;
+			object o = ((GCHandle) obj).Target;
+
+			UnboxToStackItem(o, item);
+		}
+
+		public static unsafe object BoxFromStackItem(Type t, StackItem *item) {
+			t = t.GetElementType();
+			if (t == typeof(int)) {
+				return item->s_int;
+			} else if (t == typeof(bool)) {
+				return item->s_bool;
+			} else if (t == typeof(short)) {
+				return item->s_short;
+			} else if (t == typeof(float)) {
+				return item->s_float;
+			} else if (t == typeof(double)) {
+				return item->s_double;
+			} else if (t == typeof(NativeLong)) {
+				return new NativeLong((SizeOfNativeLong < sizeof(long))? item->s_int : item->s_long);
+			} else if (t == typeof(ushort)) {
+				return item->s_ushort;
+			} else if (t == typeof(uint)) {
+				return item->s_uint;
+			} else if (t == typeof(NativeULong)) {
+				return new NativeULong((SizeOfNativeLong < sizeof(long))? item->s_uint : item->s_ulong);
+			} else if (t == typeof(sbyte)) {
+				return item->s_char;
+			} else if (t == typeof(byte)) {
+				return item->s_uchar;
+			} else if (t == typeof(char)) {
+				return (char) item->s_char;
+			} else if (item->s_class != IntPtr.Zero) {
+				// the StackItem contains a GCHandle to an object
+				GCHandle handle = (GCHandle) item->s_class;
+				object ret = handle.Target;
+#if DEBUG
+				DebugGCHandle.Free(handle);
+#else
+				handle.Free();
+#endif
+				return ret;
+			}
+
+			return null;
+		}
+
 		public static unsafe IntPtr BoxFromStackItem(string type, IntPtr st) {
 			Type t = Type.GetType(type);
 			if (t == null) return IntPtr.Zero;
 			StackItem *item = (StackItem*) st;
-			object box = null;
-			
-			if (t == typeof(int)) {
-				box = item->s_int;
-			} else if (t == typeof(bool)) {
-				box = item->s_bool;
-			} else if (t == typeof(short)) {
-				box = item->s_short;
-			} else if (t == typeof(float)) {
-				box = item->s_float;
-			} else if (t == typeof(double)) {
-				box = item->s_double;
-			} else if (t == typeof(long)) {
-				box = (SizeOfNativeLong < sizeof(long))? item->s_int : item->s_long;
-			} else if (t == typeof(ushort)) {
-				box = item->s_ushort;
-			} else if (t == typeof(uint)) {
-				box = item->s_uint;
-			} else if (t == typeof(ulong)) {
-				box = (SizeOfNativeLong < sizeof(long))? item->s_uint : item->s_ulong;
-			} else if (t == typeof(sbyte)) {
-				box = item->s_char;
-			} else if (t == typeof(byte)) {
-				box = item->s_uchar;
-			} else if (t == typeof(char)) {
-				box = (char) item->s_char;
-			}
-			
+
+			object box = BoxFromStackItem(t, item);
+
 			if (box == null) return IntPtr.Zero;
 			return (IntPtr) GCHandle.Alloc(box);
 		}

@@ -34,7 +34,7 @@ namespace Qyoto {
 			string[] args = GenerateArgs(argv);
 
 			interceptor.Invoke(	"QApplication$?", "QApplication(int&, char**)", 
-								typeof(void), typeof(int), args.Length, typeof(string[]), args );
+								typeof(void), false, typeof(int), args.Length, typeof(string[]), args );
 			SetupEventReceiver();
 		}
 
@@ -45,7 +45,7 @@ namespace Qyoto {
 			string[] args = GenerateArgs(argv);
 
 			interceptor.Invoke(	"QApplication$?$", "QApplication(int&, char**, bool)", 
-								typeof(void), typeof(int), args.Length, typeof(string[]), args, typeof(bool), GUIenabled );
+								typeof(void), false, typeof(int), args.Length, typeof(string[]), args, typeof(bool), GUIenabled );
 			SetupEventReceiver();
 		}
 	
@@ -56,12 +56,12 @@ namespace Qyoto {
 			string[] args = GenerateArgs(argv);
 
 			interceptor.Invoke(	"QApplication$?$", "QApplication(int&, char**, QApplication::Type)",
-								typeof(void), typeof(int), args.Length, typeof(string[]), args, typeof(QApplication.Type), arg3 );
+								typeof(void), false, typeof(int), args.Length, typeof(string[]), args, typeof(QApplication.Type), arg3 );
 			SetupEventReceiver();
 		}
 
 		public static new int Exec() {
-			int result = (int) staticInterceptor.Invoke("exec", "exec()", typeof(int));
+			int result = (int) staticInterceptor.Invoke("exec", "exec()", typeof(int), false);
 			Qyoto.Cleanup();
 			return result;
 		}
