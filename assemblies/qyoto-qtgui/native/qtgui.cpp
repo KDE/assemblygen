@@ -18,6 +18,10 @@
 #include <QByteArray>
 #include <QHash>
 
+#include <QGraphicsItem>
+#include <QGraphicsScene>
+
+#include <callbacks.h>
 #include <qyoto.h>
 #include <qyotosmokebinding.h>
 
@@ -26,6 +30,39 @@
 extern TypeHandler qtgui_handlers[];
 extern bool IsContainedInstanceQtGui(smokeqyoto_object *o);
 extern const char * qyoto_resolve_classname_qtgui(smokeqyoto_object * o);
+
+namespace Qyoto {
+
+class QtGuiBinding : public Qyoto::Binding
+{
+public:
+    QtGuiBinding(Smoke *s, const QHash<int, char*>& classname) : Qyoto::Binding(s, classname) {}
+
+    virtual bool callMethod(void *obj, smokeqyoto_object *sqo, const QByteArray& signature, Smoke::Stack args, bool isAbstract) {
+#if QT_VERSION >= 0x40200
+        static Smoke::Index qgraphicsitem_class = Smoke::classMap["QGraphicsItem"].index;
+
+        if (strcmp(signature, "itemChange(QGraphicsItem::GraphicsItemChange, const QVariant&)") == 0
+            && smoke->isDerivedFrom(smoke, sqo->classId, qtgui_Smoke, qgraphicsitem_class))
+        {
+            int change = args[1].s_int;
+            if (change == QGraphicsItem::ItemSceneChange) {
+                QGraphicsScene *scene = ((QVariant*) args[2].s_voidp)->value<QGraphicsScene*>();
+                if (scene) {
+                    (*AddGlobalRef)(obj, sqo->ptr);
+                } else {
+                    QGraphicsItem *item = (QGraphicsItem*) sqo->smoke->cast(sqo->ptr, sqo->classId, qgraphicsitem_class);
+                    if (!item->group()) {  // only remove the global ref if the item doesn't belong to a group
+                        (*RemoveGlobalRef)(obj, sqo->ptr);
+                    }
+                }
+            }
+        }
+#endif
+    }
+};
+
+}
 
 extern "C" Q_DECL_EXPORT void
 Init_qyoto_qtgui()
@@ -44,7 +81,7 @@ Init_qyoto_qtgui()
         }
         qtgui_classname.insert(i, strdup(name.constData()));
     }
-    static Qyoto::Binding binding = Qyoto::Binding(qtgui_Smoke, qtgui_classname);
+    static Qyoto::QtGuiBinding binding = Qyoto::QtGuiBinding(qtgui_Smoke, qtgui_classname);
     QyotoModule module = { "qyoto_qtgui", qyoto_resolve_classname_qtgui, IsContainedInstanceQtGui, &binding };
     qyoto_modules[qtgui_Smoke] = module;
 }

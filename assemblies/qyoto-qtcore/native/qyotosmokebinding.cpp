@@ -105,6 +105,11 @@ Binding::callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool isAb
 		(*FreeGCHandle)(obj);
 		return true;
 	}
+
+	if (callMethod(obj, sqo, signature, args, isAbstract)) {
+		return true;
+	}
+
 	void * overridenMethod = (*OverridenMethod)(obj, (const char *) signature);
 	if (overridenMethod == 0) {
 		(*FreeGCHandle)(obj);
