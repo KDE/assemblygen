@@ -685,6 +685,60 @@ static void marshall_unknown(Marshall *m) {
     m->unsupported();
 }
 
+// In C#, we store the 'long long' directly in the Smoke::StackItem. Therefore, treat
+// the Smoke::StackItem as the value itself, even though there's no 'long long' field
+// defined in Smoke::StackItem. The union is 64 bits on most platforms anyway, because
+// of the s_double field.
+static void marshall_int64(Marshall *m) {
+	switch(m->action()) {
+	case Marshall::FromObject:
+	{
+		m->item().s_voidp = reinterpret_cast<qint64*>(&m->var());
+	}
+	break;
+
+	case Marshall::ToObject:
+	{
+		qint64 *ptr = static_cast<qint64*>(m->item().s_voidp);
+		*reinterpret_cast<qint64*>(&m->var()) = *ptr;
+
+		if (m->type().isStack()) {
+			delete ptr;
+		}
+	}
+	break;
+
+	default:
+		m->unsupported();
+		break;
+	}
+}
+
+static void marshall_uint64(Marshall *m) {
+	switch(m->action()) {
+	case Marshall::FromObject:
+	{
+		m->item().s_voidp = reinterpret_cast<quint64*>(&m->var());
+	}
+	break;
+
+	case Marshall::ToObject:
+	{
+		quint64 *ptr = static_cast<quint64*>(m->item().s_voidp);
+		*reinterpret_cast<quint64*>(&m->var()) = *ptr;
+
+		if (m->type().isStack()) {
+			delete ptr;
+		}
+	}
+	break;
+
+	default:
+		m->unsupported();
+		break;
+	}
+}
+
 static void marshall_charP(Marshall *m) {
 	switch(m->action()) {
 	case Marshall::FromObject:
@@ -1308,6 +1362,24 @@ Q_DECL_EXPORT TypeHandler Qyoto_handlers[] = {
     { "int&", marshall_intR },
     { "long*", marshall_longR },
     { "long&", marshall_longR },
+    { "long long", marshall_int64 },
+    { "long long&", marshall_int64 },
+    { "long long*", marshall_int64 },
+    { "long long int", marshall_int64 },
+    { "long long int&", marshall_int64 },
+    { "long long int*", marshall_int64 },
+    { "qint64", marshall_int64 },
+    { "qint64&", marshall_int64 },
+    { "qint64*", marshall_int64 },
+    { "qlonglong", marshall_int64 },
+    { "qlonglong&", marshall_int64 },
+    { "qlonglong*", marshall_int64 },
+    { "quint64", marshall_uint64 },
+    { "quint64&", marshall_uint64 },
+    { "quint64*", marshall_uint64 },
+    { "qulonglong", marshall_uint64 },
+    { "qulonglong&", marshall_uint64 },
+    { "qulonglong*", marshall_uint64 },
     { "QFileInfoList", marshall_QFileInfoList },
     { "QList<const char*>", marshall_QListConstCharP },
     { "QList<const char*>&", marshall_QListConstCharP },
@@ -1370,6 +1442,12 @@ Q_DECL_EXPORT TypeHandler Qyoto_handlers[] = {
     { "unsigned int&", marshall_uintR },
     { "unsigned long*", marshall_ulongR },
     { "unsigned long&", marshall_ulongR },
+    { "unsigned long long", marshall_uint64 },
+    { "unsigned long long&", marshall_uint64 },
+    { "unsigned long long*", marshall_uint64 },
+    { "unsigned long long int", marshall_uint64 },
+    { "unsigned long long int&", marshall_uint64 },
+    { "unsigned long long int*", marshall_uint64 },
     { "unsigned short*", marshall_ushortR },
     { "unsigned short&", marshall_ushortR },
     { 0, 0 }

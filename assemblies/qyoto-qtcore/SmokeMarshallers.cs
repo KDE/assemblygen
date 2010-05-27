@@ -1015,6 +1015,10 @@ namespace Qyoto {
 				} else {
 					item->s_ulong = (NativeULong) o;
 				}
+			} else if (t == typeof(long)) {
+				item->s_long = (long) o;
+			} else if (t == typeof(ulong)) {
+				item->s_ulong = (ulong) o;
 			} else if (t == typeof(sbyte)) {
 				item->s_char = (sbyte) o;
 			} else if (t == typeof(byte)) {
@@ -1060,6 +1064,10 @@ namespace Qyoto {
 				return item->s_uint;
 			} else if (t == typeof(NativeULong)) {
 				return new NativeULong((SizeOfNativeLong < sizeof(long))? item->s_uint : item->s_ulong);
+			} else if (t == typeof(long)) {
+				return item->s_long;
+			} else if (t == typeof(ulong)) {
+				return item->s_ulong;
 			} else if (t == typeof(sbyte)) {
 				return item->s_char;
 			} else if (t == typeof(byte)) {
