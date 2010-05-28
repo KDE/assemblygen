@@ -124,7 +124,6 @@ Binding::callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool isAb
 char*
 Binding::className(Smoke::Index classId)
 {
-    printf("classname: %s", _classname.value(classId));
 	return _classname.value((int) classId);
 }
 
