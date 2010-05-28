@@ -26,6 +26,15 @@ namespace Qyoto {
 		
 		[DllImport("qyoto", CharSet=CharSet.Ansi)]
 		private static extern bool DisconnectDelegate(IntPtr obj, string signal, Delegate d);
+
+		[SmokeMethod("metaObject()")]
+		public virtual QMetaObject MetaObject() {
+			if (SmokeMarshallers.IsSmokeClass(GetType())) {
+				return (QMetaObject) interceptor.Invoke("metaObject", "metaObject()", typeof(QMetaObject), false);
+			} else {
+				return Qyoto.GetMetaObject(this);
+			}
+		}
 		
 		public static bool Connect(QObject obj, string signal, SlotFunc d) {
 			// allocate a gchandle so the delegate won't be collected

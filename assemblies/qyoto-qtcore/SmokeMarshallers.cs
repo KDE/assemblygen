@@ -682,11 +682,12 @@ namespace Qyoto {
 			SmokeClassData data = null;
 			foreach(Assembly a in AppDomain.CurrentDomain.GetAssemblies()) {
 				Type t = a.GetType(className);
-				if (t.IsAbstract) {
-					return CreateInstance(className + "Internal", smokeObjectPtr);
-				}
-				if (t != null)
+				if (t != null) {
+					if (t.IsAbstract) {
+						return CreateInstance(className + "Internal", smokeObjectPtr);
+					}
 					data = GetSmokeClassData(t);
+				}
 			}
 
 			if (data == null) {
@@ -991,9 +992,11 @@ namespace Qyoto {
 
 			if (t.IsEnum) {
 				if (SizeOfNativeLong < sizeof(long)) {
-					item->s_int = (int) o;
+					int value = Enum.GetUnderlyingType(t) == typeof(long) ? (int) (long) o : (int) o;
+					item->s_int = value;
 				} else {
-					item->s_long = (long) o;
+					long value = Enum.GetUnderlyingType(t) == typeof(long) ? (long) o : (int) o;
+					item->s_long = value;
 				}
 			} else if (t == typeof(int)) {
 				item->s_int = (int) o;
