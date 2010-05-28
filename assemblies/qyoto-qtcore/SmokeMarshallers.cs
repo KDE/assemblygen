@@ -989,7 +989,13 @@ namespace Qyoto {
 			}
 			Type t = o.GetType();
 
-			if (t == typeof(int) || t.IsEnum) {
+			if (t.IsEnum) {
+				if (SizeOfNativeLong < sizeof(long)) {
+					item->s_int = (int) o;
+				} else {
+					item->s_long = (long) o;
+				}
+			} else if (t == typeof(int)) {
 				item->s_int = (int) o;
 			} else if (t == typeof(bool)) {
 				item->s_bool = (bool) o;
@@ -1046,7 +1052,13 @@ namespace Qyoto {
 				t = t.GetElementType();
 			}
 
-			if (t == typeof(int)) {
+			if (t.IsEnum) {
+				if (SizeOfNativeLong < sizeof(long)) {
+					return Enum.ToObject(t, item->s_int);
+				} else {
+					return Enum.ToObject(t, item->s_long);
+				}
+			} else if (t == typeof(int)) {
 				return item->s_int;
 			} else if (t == typeof(bool)) {
 				return item->s_bool;
