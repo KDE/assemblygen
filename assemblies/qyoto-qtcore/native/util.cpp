@@ -206,6 +206,31 @@ GetMocArguments(Smoke* smoke, const char * typeName, QList<QByteArray> methodTyp
                         typeId = smoke->idType(targetType.constData());
                     }
                 }
+
+                if (typeId == 0) {
+                    QHash<Smoke*, QyotoModule>::const_iterator it;
+                    for (it = qyoto_modules.constBegin(); it != qyoto_modules.constEnd(); ++it) {
+                        smoke = it.key();
+                        targetType = name;
+                        typeId = smoke->idType(targetType.constData());
+
+                        if (typeId == 0 && !name.contains('*')) {
+                            if (!name.contains("&")) {
+                                targetType += "&";
+                            }
+                            typeId = smoke->idType(targetType.constData());
+
+                            if (typeId == 0) {
+                                targetType.prepend("const ");
+                                typeId = smoke->idType(targetType.constData());
+                            }
+                        }
+
+                        if (typeId != 0) {
+                            break;
+                        }
+                    }
+                }
             } else if (staticType == "bool") {
                 arg->argType = xmoc_bool;
                 typeId = smoke->idType(name.constData());
