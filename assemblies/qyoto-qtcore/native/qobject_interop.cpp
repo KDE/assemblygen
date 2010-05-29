@@ -31,7 +31,7 @@
 #include <QObject>
 #include <QRegExp>
 
-typedef QHash<QObject*, QHash<QByteArray, QHash<void*, DelegateInvocation*> > > QObjectDelegateMap;
+typedef QHash<QObject*, QHash<QByteArray, QHash<void*, Qyoto::DelegateInvocation*> > > QObjectDelegateMap;
 Q_GLOBAL_STATIC(QObjectDelegateMap, delegateConnections)
 
 extern "C" {
@@ -42,7 +42,7 @@ ConnectDelegate(void* obj, const char* signal, void* delegate, void* handle)
     smokeqyoto_object *o = (smokeqyoto_object*) (*GetSmokeObject)(obj);
     QObject *qobject = (QObject*) o->smoke->cast(o->ptr, o->classId, o->smoke->idClass("QObject").index);
     (*FreeGCHandle)(obj);
-    DelegateInvocation *invocation = new DelegateInvocation(qobject, signal, delegate, handle, o);
+    Qyoto::DelegateInvocation *invocation = new Qyoto::DelegateInvocation(qobject, signal, delegate, handle, o);
     if (invocation->isValid()) {
         (*delegateConnections())[qobject][signal][delegate] = invocation;
         return true;
@@ -56,13 +56,13 @@ DisconnectDelegate(void* obj, const char* signal, void* delegate)
     smokeqyoto_object *o = (smokeqyoto_object*) (*GetSmokeObject)(obj);
     QObject *qobject = (QObject*) o->smoke->cast(o->ptr, o->classId, o->smoke->idClass("QObject").index);
     (*FreeGCHandle)(obj);
-    QHash<void*, DelegateInvocation*> &connections = (*delegateConnections())[qobject][signal];
+    QHash<void*, Qyoto::DelegateInvocation*> &connections = (*delegateConnections())[qobject][signal];
     if (connections.contains(delegate)) {
         delete connections[delegate];
         connections.remove(delegate);
         return true;
     }
-    printf("DisconnectDelegate: %s::%s is not connected to delegate %p\n",
+    qWarning("DisconnectDelegate: %s::%s is not connected to delegate %p\n",
            qobject->metaObject()->className(), signal, delegate);
     return false;
 }

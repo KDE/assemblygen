@@ -10,6 +10,8 @@
 #include "marshall.h"
 #include "qyoto.h"
 
+namespace Qyoto {
+
 /* adapted from QSignalSpy in testlib/qsignalspy.h */
 class DelegateInvocation : public QObject, public Marshall
 {
@@ -117,5 +119,7 @@ private:
     Smoke::Stack _stack;
     smokeqyoto_object * _o;
 };
+
+}
 
 #endif
