@@ -12,7 +12,6 @@ set (qyoto_qtgui_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/QPolygonExtras.cs
     ${CMAKE_CURRENT_SOURCE_DIR}/QPolygonFExtras.cs
     ${CMAKE_CURRENT_SOURCE_DIR}/QRegionExtras.cs
-    ${CMAKE_CURRENT_SOURCE_DIR}/QStringListModelExtras.cs
     ${CMAKE_CURRENT_SOURCE_DIR}/QTransformExtras.cs
 )
 
