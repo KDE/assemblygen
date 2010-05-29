@@ -81,17 +81,6 @@
 
 extern "C" {
 
-Q_DECL_EXPORT void* ConstructQListQRgb()
-{
-	return (void*) new QList<QRgb>;
-}
-
-Q_DECL_EXPORT void AddUIntToQListQRgb(void* ptr, uint i)
-{
-	QList<QRgb>* list = (QList<QRgb>*) ptr;
-	list->append(i);
-}
-
 #if QT_VERSION >= 0x40300
 Q_DECL_EXPORT void* ConstructQListWizardButton()
 {
@@ -278,57 +267,6 @@ DEF_LIST_MARSHALLER( QUndoStackList, QList<QUndoStack*>, QUndoStack )
 DEF_LIST_MARSHALLER( QMdiSubWindowList, QList<QMdiSubWindow*>, QMdiSubWindow )
 #endif
 
-void marshall_QRgbVector(Marshall *m)
-{
-	switch(m->action()) {
-		case Marshall::FromObject:
-		{
-			if (m->var().s_class == 0) {
-				m->item().s_class = 0;
-				return;
-			}
-			QList<QRgb>* cpplist = (QList<QRgb>*) (*ListUIntToQListQRgb)(m->var().s_voidp);
-			m->item().s_voidp = cpplist;
-			m->next();
-			
-			(*FreeGCHandle)(m->var().s_voidp);
-
-			if (m->cleanup()) {
-				delete cpplist;
-			}
-		}
-		break;
-      
-		case Marshall::ToObject:
-		{
-			QList<QRgb> *valuelist = (QList<QRgb>*) m->item().s_voidp;
-			if (valuelist == 0) {
-				break;
-			}
-
-			void * al = (*ConstructList)("System.UInt32");
-
-			for (int i=0; i < valuelist->size() ; ++i) {
-				(*AddUIntToListUInt)(al, valuelist->at(i));
-			}
-
-			m->var().s_voidp = al;
-			m->next();
-
-			if (m->type().isStack()) {
-				delete valuelist;
-			}
-			
-
-		}
-		break;
-      
-		default:
-			m->unsupported();
-		break;
-	}
-}
-
 DEF_VALUELIST_MARSHALLER( QColorVector, QVector<QColor>, QColor )
 DEF_VALUELIST_MARSHALLER( QImageTextKeyLangList, QList<QImageTextKeyLang>, QImageTextKeyLang )
 DEF_VALUELIST_MARSHALLER( QKeySequenceList, QList<QKeySequence>, QKeySequence )
@@ -379,8 +317,6 @@ TypeHandler qtgui_handlers[] = {
     { "QModelIndexList&", marshall_QModelIndexList },
     { "QVector<QColor>", marshall_QColorVector },
     { "QVector<QColor>&", marshall_QColorVector },
-    { "QVector<QRgb>", marshall_QRgbVector },
-    { "QVector<QRgb>&", marshall_QRgbVector },
     { "QVector<QTextFormat>", marshall_QTextFormatVector },
     { "QVector<QTextFormat>&", marshall_QTextFormatVector },
     { "QVector<QTextLength>", marshall_QTextLengthVector },

@@ -1,4 +1,6 @@
 using Qyoto;
+using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -17,7 +19,29 @@ internal class InitQtGui {
     [DllImport("qyoto-qtgui-native", CharSet=CharSet.Ansi)]
     static extern void Init_qyoto_qtgui();
 
+    [DllImport("qyoto-qtgui-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
+    public static extern IntPtr ConstructQListWizardButton();
+
+    [DllImport("qyoto-qtgui-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void AddWizardButtonToQList(IntPtr ptr, int i);
+
+    [DllImport("qyoto-qtgui-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void InstallListWizardButtonToQListWizardButton(SmokeMarshallers.GetIntPtr callback);
+
+    private static SmokeMarshallers.GetIntPtr dListWizardButtonToQListWizardButton = ListWizardButtonToQListWizardButton;
+
+    public static IntPtr ListWizardButtonToQListWizardButton(IntPtr ptr) {
+        List<QWizard.WizardButton> list = (List<QWizard.WizardButton>) ((GCHandle) ptr).Target;
+        IntPtr QList = ConstructQListWizardButton();
+        foreach (QWizard.WizardButton wb in list) {
+            AddWizardButtonToQList(QList, (int) wb);
+        }
+        return QList;
+    }
+
     public static void InitSmoke() {
         Init_qyoto_qtgui();
+
+        InstallListWizardButtonToQListWizardButton(dListWizardButtonToQListWizardButton);
     }
 }
