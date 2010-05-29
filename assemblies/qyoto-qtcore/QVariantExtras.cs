@@ -8,10 +8,10 @@ namespace Qyoto {
 
     public partial class QVariant : Object, IDisposable {
 
-        [DllImport("qyoto", CharSet=CharSet.Ansi)]
+        [DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi)]
         static extern IntPtr QVariantValue(string typeName, IntPtr variant);
 
-        [DllImport("qyoto", CharSet=CharSet.Ansi)]
+        [DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi)]
         static extern IntPtr QVariantFromValue(int type, IntPtr value);
 
         public T Value<T>() {

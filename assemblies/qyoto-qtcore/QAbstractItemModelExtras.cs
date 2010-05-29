@@ -5,7 +5,7 @@ namespace Qyoto {
 	using System.Runtime.InteropServices;
 
 	public abstract partial class QAbstractItemModel : QObject {
-		[DllImport("qyoto", CharSet=CharSet.Ansi)]
+		[DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi)]
 		public static extern IntPtr AbstractItemModelCreateIndex(IntPtr obj, int row, int column, IntPtr ptr);
 		
 		private class HandleRef {
