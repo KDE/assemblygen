@@ -12,9 +12,8 @@ namespace Qyoto {
 			return new QDBusVariant(QVariant.FromValue(value, typeof(T)));
 		}
 
-		public void SetVariant(QVariant variant) {
+		public QVariant Variant {
+			get { return this; }
 		}
-
-		public QVariant Variant() { return this; }
 	}
 }
