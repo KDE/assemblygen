@@ -34,7 +34,11 @@ macro (find_smoke_component name)
     string(TOUPPER ${name} uppercase)
     string(TOLOWER ${name} lowercase)
 
-    set (SMOKE_${uppercase}_FOUND FALSE)
+    if (SMOKE_${uppercase}_FOUND)
+        return()
+    endif (SMOKE_${uppercase}_FOUND)
+
+    set (SMOKE_${uppercase}_FOUND FALSE CACHE INTERNAL "")
 
     find_path(SMOKE_${uppercase}_INCLUDE_DIR smoke/${lowercase}_smoke.h)
     find_library(SMOKE_${uppercase}_LIBRARY smoke${lowercase})
@@ -46,7 +50,7 @@ macro (find_smoke_component name)
             _print(STATUS "Could not find Smoke${name}")
         endif (Smoke_FIND_REQUIRED)
     else (NOT SMOKE_${uppercase}_INCLUDE_DIR OR NOT SMOKE_${uppercase}_LIBRARY)
-        set (SMOKE_${uppercase}_FOUND TRUE)
+        set (SMOKE_${uppercase}_FOUND TRUE CACHE INTERNAL "")
         _print(STATUS "Found Smoke${name}: ${SMOKE_${uppercase}_LIBRARY}")
     endif (NOT SMOKE_${uppercase}_INCLUDE_DIR OR NOT SMOKE_${uppercase}_LIBRARY)
 
