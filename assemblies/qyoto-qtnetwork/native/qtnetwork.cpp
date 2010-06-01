@@ -44,14 +44,14 @@ Init_qyoto_qtnetwork()
     qyoto_install_handlers(Qyoto_qtnetwork_handlers);
     QByteArray prefix("Qyoto.");
 
-    QHash<int,char *> qtnetwork_classname;
+    QHash<int, QByteArray> qtnetwork_classname;
     for (int i = 1; i <= qtnetwork_Smoke->numClasses; i++) {
         QByteArray name(qtnetwork_Smoke->classes[i].className);
         name.replace("::", ".");
         if (name != "QSsl") {
             name.prepend(prefix);
         }
-        qtnetwork_classname.insert(i, strdup(name.constData()));
+        qtnetwork_classname.insert(i, name);
     }
     static Qyoto::Binding binding = Qyoto::Binding(qtnetwork_Smoke, qtnetwork_classname);
     QyotoModule module = { "qyoto_qtnetwork", qyoto_resolve_classname_qtnetwork, IsContainedInstanceQtNetwork, &binding };

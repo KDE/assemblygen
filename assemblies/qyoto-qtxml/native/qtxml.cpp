@@ -41,12 +41,12 @@ Init_qyoto_qtxml()
 
     QByteArray prefix("Qyoto.");
 
-    QHash<int,char *> qtxml_classname;
+    QHash<int, QByteArray> qtxml_classname;
     for (int i = 1; i <= qtxml_Smoke->numClasses; i++) {
         QByteArray name(qtxml_Smoke->classes[i].className);
         name.replace("::", ".");
         name.prepend(prefix);
-        qtxml_classname.insert(i, strdup(name.constData()));
+        qtxml_classname.insert(i, name);
     }
     static Qyoto::Binding binding = Qyoto::Binding(qtxml_Smoke, qtxml_classname);
     QyotoModule module = { "qyoto_qtxml", qyoto_resolve_classname_qtxml, IsContainedInstanceQtXml, &binding };

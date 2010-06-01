@@ -352,12 +352,12 @@ Init_qyoto_qtcore()
     qyoto_install_handlers(Qyoto_handlers);
     QByteArray prefix("Qyoto.");
 
-    QHash<int,char *> qtcore_classname;
+    QHash<int, QByteArray> qtcore_classname;
     for (int i = 1; i <= qtcore_Smoke->numClasses; i++) {
         QByteArray name(qtcore_Smoke->classes[i].className);
         name.replace("::", ".");
         name.prepend(prefix);
-        qtcore_classname.insert(i, strdup(name.constData()));
+        qtcore_classname.insert(i, name);
     }
     static Qyoto::Binding binding = Qyoto::Binding(qtcore_Smoke, qtcore_classname);
     QyotoModule module = { "qyoto_qtcore", qyoto_resolve_classname_qtcore, IsContainedInstanceQtCore, &binding };

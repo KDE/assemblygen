@@ -41,12 +41,12 @@ Init_qyoto_qtxmlpatterns()
 
     QByteArray prefix("Qyoto.");
 
-    QHash<int,char *> qtxmlpatterns_classname;
+    QHash<int, QByteArray> qtxmlpatterns_classname;
     for (int i = 1; i <= qtxmlpatterns_Smoke->numClasses; i++) {
         QByteArray name(qtxmlpatterns_Smoke->classes[i].className);
         name.replace("::", ".");
         name.prepend(prefix);
-        qtxmlpatterns_classname.insert(i, strdup(name.constData()));
+        qtxmlpatterns_classname.insert(i, name);
     }
     static Qyoto::Binding binding = Qyoto::Binding(qtxmlpatterns_Smoke, qtxmlpatterns_classname);
     QyotoModule module = { "qyoto_qtxmlpatterns", qyoto_resolve_classname_qtxmlpatterns, IsContainedInstanceQtXmlPatterns, &binding };

@@ -36,7 +36,7 @@ namespace Qyoto {
 class QtGuiBinding : public Qyoto::Binding
 {
 public:
-    QtGuiBinding(Smoke *s, const QHash<int, char*>& classname) : Qyoto::Binding(s, classname) {}
+    QtGuiBinding(Smoke *s, const QHash<int, QByteArray>& classname) : Qyoto::Binding(s, classname) {}
 
     virtual bool callMethod(void *obj, smokeqyoto_object *sqo, const QByteArray& signature, Smoke::Stack args, bool isAbstract) {
 #if QT_VERSION >= 0x40200
@@ -72,14 +72,14 @@ Init_qyoto_qtgui()
     qyoto_install_handlers(qtgui_handlers);
     QByteArray prefix("Qyoto.");
 
-    QHash<int,char *> qtgui_classname;
+    QHash<int, QByteArray> qtgui_classname;
     for (int i = 1; i <= qtgui_Smoke->numClasses; i++) {
         QByteArray name(qtgui_Smoke->classes[i].className);
         name.replace("::", ".");
         if (name != "QAccessible2") {
             name.prepend(prefix);
         }
-        qtgui_classname.insert(i, strdup(name.constData()));
+        qtgui_classname.insert(i, name);
     }
     static Qyoto::QtGuiBinding binding = Qyoto::QtGuiBinding(qtgui_Smoke, qtgui_classname);
     QyotoModule module = { "qyoto_qtgui", qyoto_resolve_classname_qtgui, IsContainedInstanceQtGui, &binding };

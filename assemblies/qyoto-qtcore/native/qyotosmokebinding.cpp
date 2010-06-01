@@ -25,7 +25,7 @@
 namespace Qyoto {
 
 Binding::Binding() : SmokeBinding(0) {}
-Binding::Binding(Smoke *s, const QHash<int, char*>& classname) : SmokeBinding(s), _classname(classname) {}
+Binding::Binding(Smoke *s, const QHash<int, QByteArray>& classname) : SmokeBinding(s), _classname(classname) {}
 
 void
 Binding::deleted(Smoke::Index classId, void *ptr)
@@ -124,7 +124,11 @@ Binding::callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool isAb
 char*
 Binding::className(Smoke::Index classId)
 {
-	return _classname.value((int) classId);
+	if (_classname.contains(classId)) {
+		return _classname[classId].data();
+	}
 }
 
 }
+
+// kate: space-indent off;

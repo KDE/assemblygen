@@ -17,6 +17,7 @@
 #define QYOTO_SMOKE_BINDING_H
 
 #include <smoke.h>
+#include <QByteArray>
 #include <QHash>
 
 struct smokeqyoto_object;
@@ -25,10 +26,10 @@ namespace Qyoto {
 
 class Q_DECL_EXPORT Binding : public SmokeBinding {
 protected:
-	QHash<int, char*> _classname;
+	QHash<int, QByteArray> _classname;
 public:
 	Binding();
-	Binding(Smoke *s, const QHash<int, char*>& classname);
+	Binding(Smoke *s, const QHash<int, QByteArray>& classname);
 	void deleted(Smoke::Index classId, void *ptr);
 	bool callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool isAbstract);
 	virtual bool callMethod(void *obj, smokeqyoto_object *sqo, const QByteArray& signature, Smoke::Stack args, bool isAbstract) { return false; }

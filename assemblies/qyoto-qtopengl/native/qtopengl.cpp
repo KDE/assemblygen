@@ -41,14 +41,14 @@ Init_qyoto_qtopengl()
 
     QByteArray prefix("Qyoto.");
 
-    QHash<int,char *> qtopengl_classname;
+    QHash<int, QByteArray> qtopengl_classname;
     for (int i = 1; i <= qtopengl_Smoke->numClasses; i++) {
         QByteArray name(qtopengl_Smoke->classes[i].className);
         name.replace("::", ".");
         if (name != "QGL") {
             name.prepend(prefix);
         }
-        qtopengl_classname.insert(i, strdup(name.constData()));
+        qtopengl_classname.insert(i, name);
     }
     static Qyoto::Binding binding = Qyoto::Binding(qtopengl_Smoke, qtopengl_classname);
     QyotoModule module = { "qyoto_qtopengl", qyoto_resolve_classname_qtopengl, IsContainedInstanceQtOpenGL, &binding };

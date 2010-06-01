@@ -41,14 +41,14 @@ Init_qyoto_qtsql()
 
     QByteArray prefix("Qyoto.");
 
-    QHash<int,char *> qtsql_classname;
+    QHash<int, QByteArray> qtsql_classname;
     for (int i = 1; i <= qtsql_Smoke->numClasses; i++) {
         QByteArray name(qtsql_Smoke->classes[i].className);
         name.replace("::", ".");
         if (name != "QSql") {
             name.prepend(prefix);
         }
-        qtsql_classname.insert(i, strdup(name.constData()));
+        qtsql_classname.insert(i, name);
     }
     static Qyoto::Binding binding = Qyoto::Binding(qtsql_Smoke, qtsql_classname);
     QyotoModule module = { "qyoto_qtsql", qyoto_resolve_classname_qtsql, IsContainedInstanceQtSql, &binding };

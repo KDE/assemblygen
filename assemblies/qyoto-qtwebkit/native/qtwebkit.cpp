@@ -48,12 +48,12 @@ void Init_qtwebkit()
 
 	QByteArray prefix("Qyoto.");
 
-	static QHash<int, char*> classNames;
+	static QHash<int, QByteArray> classNames;
 	for (int i = 1; i <= qtwebkit_Smoke->numClasses; i++) {
 		QByteArray name(qtwebkit_Smoke->classes[i].className);
 		name.replace("::", ".");
 		name.prepend(prefix);
-		classNames.insert(i, strdup(name));
+		classNames.insert(i, name);
 	}
 	
 	static Qyoto::Binding binding = Qyoto::Binding(qtwebkit_Smoke, classNames);

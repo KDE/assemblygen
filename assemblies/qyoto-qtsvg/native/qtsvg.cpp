@@ -41,12 +41,12 @@ Init_qyoto_qtsvg()
 
     QByteArray prefix("Qyoto.");
 
-    QHash<int,char *> qtsvg_classname;
+    QHash<int, QByteArray> qtsvg_classname;
     for (int i = 1; i <= qtsvg_Smoke->numClasses; i++) {
         QByteArray name(qtsvg_Smoke->classes[i].className);
         name.replace("::", ".");
         name.prepend(prefix);
-        qtsvg_classname.insert(i, strdup(name.constData()));
+        qtsvg_classname.insert(i, name);
     }
     static Qyoto::Binding binding = Qyoto::Binding(qtsvg_Smoke, qtsvg_classname);
     QyotoModule module = { "qyoto_qtsvg", qyoto_resolve_classname_qtsvg, IsContainedInstanceQtSvg, &binding };

@@ -44,12 +44,12 @@ Init_qyoto_qtdbus()
     qyoto_install_handlers(Qyoto_qtdbus_handlers);
     QByteArray prefix("Qyoto.");
 
-    QHash<int,char *> qtdbus_classname;
+    QHash<int, QByteArray> qtdbus_classname;
     for (int i = 1; i <= qtdbus_Smoke->numClasses; i++) {
         QByteArray name(qtdbus_Smoke->classes[i].className);
         name.replace("::", ".");
         name.prepend(prefix);
-        qtdbus_classname.insert(i, strdup(name.constData()));
+        qtdbus_classname.insert(i, name);
     }
     static Qyoto::Binding binding = Qyoto::Binding(qtdbus_Smoke, qtdbus_classname);
     QyotoModule module = { "qyoto_qtdbus", qyoto_resolve_classname_qtdbus, IsContainedInstanceQtDBus, &binding };
