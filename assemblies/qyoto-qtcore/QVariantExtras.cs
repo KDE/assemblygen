@@ -14,12 +14,83 @@ namespace Qyoto {
         [DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi)]
         static extern IntPtr QVariantFromValue(int type, IntPtr value);
 
+        static QVariant() {
+            QMetaType.RegisterType<object>();
+        }
+
         public T Value<T>() {
             object value = Value(typeof(T));
             if (value == null) {
                 return default(T);
             }
             return (T) value;
+        }
+
+        public object Value() {
+            Type valueType = type();
+            if (valueType == Type.Invalid) {
+                return null;
+            } else if (valueType == Type.Bool) {
+                return ToBool();
+            } else if (valueType == Type.Double) {
+                return ToDouble();
+            } else if (valueType == Type.BitArray) {
+                return ToBitArray();
+            } else if (valueType == Type.ByteArray) {
+                return ToByteArray();
+            } else if (valueType == Type.Char) {
+                return ToChar();
+            } else if (valueType == Type.Date) {
+                return ToDate();
+            } else if (valueType == Type.DateTime) {
+                return ToDateTime();
+            } else if (valueType == Type.Hash) {
+                return ToHash();
+            } else if (valueType == Type.Int) {
+                return ToInt();
+            } else if (valueType == Type.Line) {
+                return ToLine();
+            } else if (valueType == Type.LineF) {
+                return ToLineF();
+            } else if (valueType == Type.Locale) {
+                return ToLocale();
+            } else if (valueType == Type.LongLong) {
+                return ToLongLong();
+            } else if (valueType == Type.Point) {
+                return ToPoint();
+            } else if (valueType == Type.PointF) {
+                return ToPointF();
+            } else if (valueType == Type.Rect) {
+                return ToRect();
+            } else if (valueType == Type.RectF) {
+                return ToRectF();
+            } else if (valueType == Type.RegExp) {
+                return ToRegExp();
+            } else if (valueType == Type.Size) {
+                return ToSize();
+            } else if (valueType == Type.SizeF) {
+                return ToSizeF();
+            } else if (valueType == Type.String) {
+                return ToString();
+            } else if (valueType == Type.StringList) {
+                return ToStringList();
+            } else if (valueType == Type.List) {
+                return ToList();
+            } else if (valueType == Type.Map) {
+                return ToMap();
+            } else if (valueType == Type.Time) {
+                return ToTime();
+            } else if (valueType == Type.UInt) {
+                return ToUInt();
+            } else if (valueType == Type.ULongLong) {
+                return ToULongLong();
+            } else if (valueType == Type.Url) {
+                return ToUrl();
+            } else {
+                string typeName = TypeName();
+                IntPtr instancePtr = QVariantValue(typeName, (IntPtr) GCHandle.Alloc(this));
+                return ((GCHandle) instancePtr).Target;
+            }
         }
 
         public object Value(System.Type valueType) {
@@ -79,7 +150,7 @@ namespace Qyoto {
             } else if (valueType == typeof(QVariant)) {
                 return this;
             } else if (valueType.IsEnum) {
-                return ToInt();
+                return Enum.ToObject(valueType, ToLongLong());
             } else {
                 string typeName;
                 if (SmokeMarshallers.IsSmokeClass(valueType))
@@ -91,7 +162,7 @@ namespace Qyoto {
                     IntPtr instancePtr = QVariantValue(typeName, (IntPtr) GCHandle.Alloc(this));
                     return ((GCHandle) instancePtr).Target;
                 } else if (type == Type.Invalid) {
-                    Console.WriteLine("QVariant.Value(): invalid type", valueType);
+                    Console.WriteLine("QVariant.Value(): invalid type: {0}", valueType);
                 }
 
                 return null;
@@ -156,7 +227,7 @@ namespace Qyoto {
             } else if (valueType == typeof(QVariant)) {
                 return new QVariant((QVariant) value);
             } else if (valueType.IsEnum) {
-                return new QVariant((int) value);
+                return new QVariant((long) value);
             } else {
                 string typeName;
                 if (SmokeMarshallers.IsSmokeClass(valueType))
@@ -165,7 +236,7 @@ namespace Qyoto {
                     typeName = valueType.ToString();
                 Type type = NameToType(typeName);
                 if (type == Type.Invalid) {
-                    throw new Exception(string.Format("Type {0} not registered!", valueType.ToString()));
+                    return FromValue<object>(value);
                 } else if (type > Type.LastCoreType) {
                     IntPtr valueHandle = IntPtr.Zero;
                     if (value != null) {
