@@ -91,6 +91,7 @@ public unsafe class Translator {
     // map a C++ type string to a .NET type string
     Dictionary<string, string> typeStringMap = new Dictionary<string, string>()
     {
+        { "ulong", "NativeULong" },
     };
 
     // custom translation code

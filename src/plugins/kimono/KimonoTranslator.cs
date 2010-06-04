@@ -129,9 +129,11 @@ public unsafe class KimonoTranslator : ICustomTranslator {
 
     List<Regex> excludedMethods = new List<Regex>()
     {
+        new Regex(@"KApplication::KApplication\(.*"),
         new Regex(@"KCmdLineArgs::init\(int.*"),
         new Regex(@"KPluginFactory::createPartObject\(.*"),
         new Regex(@"KParts::Factory::createPartObject\(.*"),
+        new Regex(@"KUniqueApplication::KUniqueApplication\(.*"),
     };
 
     List<string> namespacesAsClasses = new List<string>()
