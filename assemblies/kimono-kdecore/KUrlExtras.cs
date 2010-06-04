@@ -11,15 +11,16 @@ namespace Kimono {
 		}
 		
 		public class List : List<KUrl> {
-			delegate bool GetNextDictionaryEntryFn(ref IntPtr key, ref IntPtr value);
+			[UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+			delegate bool GetNextDictionaryEntryFn(ref string key, ref string value);
 			
-			[DllImport("kimono", CharSet=CharSet.Ansi)]
+			[DllImport("kimono-kdecore-native", CharSet=CharSet.Unicode)]
 			static extern void KUrlListPopulateMimeData(SmokeMarshallers.NoArgs getNextItem, IntPtr mimeData, GetNextDictionaryEntryFn getNextDictionaryEntry, uint flags);
-			[DllImport("kimono", CharSet=CharSet.Ansi)]
+			[DllImport("kimono-kdecore-native", CharSet=CharSet.Unicode)]
 			static extern void KUrlListMimeDataTypes(SmokeMarshallers.FromIntPtr fn);
-			[DllImport("kimono", CharSet=CharSet.Ansi)]
+			[DllImport("kimono-kdecore-native", CharSet=CharSet.Unicode)]
 			static extern bool KUrlListCanDecode(IntPtr mimeData);
-			[DllImport("kimono", CharSet=CharSet.Ansi)]
+			[DllImport("kimono-kdecore-native", CharSet=CharSet.Unicode)]
 			static extern void KUrlListFromMimeData(SmokeMarshallers.FromIntPtr addfn, IntPtr mimeData, GetNextDictionaryEntryFn getNextDictionaryEntry);
 			
 			public List() {}
@@ -47,10 +48,10 @@ namespace Kimono {
 					return (IntPtr) GCHandle.Alloc(this[i++]);
 				};
 				IDictionaryEnumerator e = metaData.GetEnumerator();
-				GetNextDictionaryEntryFn dictfn = delegate(ref IntPtr key, ref IntPtr value) {
+				GetNextDictionaryEntryFn dictfn = delegate(ref string key, ref string value) {
 					if (!e.MoveNext()) return false;
-					key = (IntPtr) GCHandle.Alloc(e.Key);
-					value = (IntPtr) GCHandle.Alloc(e.Value);
+					key = (string) e.Key;
+					value = (string) e.Value;
 					return true;
 				};
 				KUrlListPopulateMimeData(listfn, (IntPtr) GCHandle.Alloc(mimeData), dictfn, (uint) flags);
@@ -95,11 +96,11 @@ namespace Kimono {
 				};
 				IDictionaryEnumerator e = null;
 				if (metaData != null) e = metaData.GetEnumerator();
-				GetNextDictionaryEntryFn dictfn = delegate(ref IntPtr key, ref IntPtr value) {
+				GetNextDictionaryEntryFn dictfn = delegate(ref string key, ref string value) {
 					if (metaData == null) return false;
 					if (!e.MoveNext()) return false;
-					key = (IntPtr) GCHandle.Alloc(e.Key);
-					value = (IntPtr) GCHandle.Alloc(e.Value);
+					key = (string) e.Key;
+					value = (string) e.Value;
 					return true;
 				};
 				KUrlListFromMimeData(addfn, (IntPtr) GCHandle.Alloc(mimeData), dictfn);
