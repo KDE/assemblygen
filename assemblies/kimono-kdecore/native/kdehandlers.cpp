@@ -20,8 +20,7 @@
 #include <marshall_macros.h>
 
 #include <kaboutdata.h>
-#include <kconfigdialogmanager.h>
-#include <kconfigskeleton.h>
+#include <kautosavefile.h>
 #include <kcoreconfigskeleton.h>
 #include <kdatatool.h>
 #include <kdeversion.h>
@@ -88,6 +87,7 @@ DEF_KSHAREDPTR_MARSHALLER(KSharedConfig, KSharedConfig)
 DEF_KSHAREDPTR_MARSHALLER(KService, KService)
 DEF_KSHAREDPTR_MARSHALLER(KMimeType, KMimeType)
 
+DEF_LIST_MARSHALLER( KAutoSaveFileList, QList<KAutoSaveFile*>, KAutoSaveFile )
 DEF_LIST_MARSHALLER( KJobList, QList<KJob*>, KJob )
 
 DEF_VALUELIST_MARSHALLER( KAboutLicenseList, QList<KAboutLicense>, KAboutLicense )
@@ -126,6 +126,8 @@ TypeHandler Kimono_KDECore_handlers[] = {
     { "KUrlList&", marshall_KUrlList },
     { "QList<KAboutLicense>", marshall_KAboutLicenseList },
     { "QList<KAboutPerson>", marshall_KAboutPersonList },
+    { "QList<KAutoSaveFile*>", marshall_KAutoSaveFileList },
+    { "QList<KAutoSaveFile*>&", marshall_KAutoSaveFileList },
     { "QList<KCoreConfigSkeleton::ItemEnum::Choice>", marshall_KCoreConfigSkeletonItemEnumChoiceList },
     { "QList<KCoreConfigSkeleton::ItemEnum::Choice>&", marshall_KCoreConfigSkeletonItemEnumChoiceList },
     { "QList<KJob*>&", marshall_KJobList },
