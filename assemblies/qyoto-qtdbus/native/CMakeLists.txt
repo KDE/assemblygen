@@ -5,6 +5,7 @@ find_package(Smoke REQUIRED COMPONENTS QtDBus)
 SET(SRC_QYOTO_QTDBUS_NATIVE
     handlers.cpp
     qtdbus.cpp
+    qdbus_interop.cpp
 )
 
 INCLUDE_DIRECTORIES (${QT_INCLUDES} ${SMOKE_INCLUDE_DIR} ${SMOKE_QTDBUS_INCLUDE_DIR}/smoke ../../qyoto-qtcore/native)
