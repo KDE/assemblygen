@@ -32,7 +32,15 @@ public:
 	Binding(Smoke *s, const QHash<int, QByteArray>& classname);
 	void deleted(Smoke::Index classId, void *ptr);
 	bool callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool isAbstract);
-	virtual bool callMethod(void *obj, smokeqyoto_object *sqo, const QByteArray& signature, Smoke::Stack args, bool isAbstract) { return false; }
+	virtual bool callMethod(void *obj, smokeqyoto_object *sqo, const QByteArray& signature, Smoke::Stack args, bool isAbstract) {
+		Q_UNUSED(obj)
+		Q_UNUSED(sqo)
+		Q_UNUSED(signature)
+		Q_UNUSED(args)
+		Q_UNUSED(isAbstract)
+
+		return false;
+    }
 	char *className(Smoke::Index classId);
 };
 
