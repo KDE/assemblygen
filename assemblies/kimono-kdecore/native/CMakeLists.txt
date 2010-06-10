@@ -1,5 +1,4 @@
 find_package(Qt4 REQUIRED COMPONENTS QtCore)
-find_package(KDE4 REQUIRED)
 find_package(Smoke REQUIRED COMPONENTS QtCore KDECore)
 
 # source files

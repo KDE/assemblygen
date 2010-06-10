@@ -15,6 +15,11 @@ add_subdirectory(qyoto-qtxmlpatterns)
 
 add_subdirectory(qyoto-phonon)
 
+find_package(KDE4 REQUIRED)
+
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
+set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
+
 add_subdirectory(kimono-attica)
 add_subdirectory(kimono-kdecore)
 add_subdirectory(kimono-kdeui)

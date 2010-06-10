@@ -4,7 +4,7 @@ set(kimono_attica_SRC
 )
 
 add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/kimono-attica.dll
-                   COMMAND ${MONO_EXECUTABLE} --debug ${LIBRARY_OUTPUT_PATH}/assemblygen.exe
+                   COMMAND ${MONO_EXECUTABLE} ${LIBRARY_OUTPUT_PATH}/assemblygen.exe
                             -unsafe -out:kimono-attica.dll -r:qyoto-qtcore.dll -r:qyoto-qtnetwork.dll
                             -namespace:Kimono -import:Qyoto -plugins:QyotoGenerator.dll,KimonoGenerator.dll
                             -code-file:kimono-attica.cs "-keyfile:${KEYFILE}"
