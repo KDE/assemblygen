@@ -5,7 +5,6 @@ find_package(Smoke REQUIRED COMPONENTS QtCore KDECore)
 SET(SRC_KIMONO_KDECORE_NATIVE
     kimono.cpp
     kdehandlers.cpp
-    kpluginfactory_fix.cpp
     kurl_list.cpp
 )
 
