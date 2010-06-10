@@ -61,42 +61,6 @@ DebugChannel()
 const char *
 qyoto_resolve_classname(smokeqyoto_object * o)
 {
-    if (o->smoke->isDerivedFrom(o->smoke->classes[o->classId].className, "QObject")) {
-        QObject * qobject = (QObject *) o->smoke->cast(o->ptr, o->classId, o->smoke->idClass("QObject").index);
-        const QMetaObject * meta = qobject->metaObject();
-
-        while (meta != 0) {
-            Smoke::ModuleIndex mi = Smoke::classMap[meta->className()];
-            o->smoke = mi.smoke;
-            o->classId = mi.index;
-            if (o->smoke != 0) {
-                if (o->classId != 0) {
-                    if (strcmp(o->smoke->classes[o->classId].className, "QAbstractItemModel") == 0)
-                        return "Qyoto.QItemModel";
-                    if (strcmp(o->smoke->classes[o->classId].className, "QAbstractButton") == 0)
-                        return "Qyoto.QAbstractButtonInternal";
-                    if (strcmp(o->smoke->classes[o->classId].className, "QAbstractProxyModel") == 0)
-                        return "Qyoto.QAbstractProxyModelInternal";
-                    if (strcmp(o->smoke->classes[o->classId].className, "QAbstractItemDelegate") == 0)
-                        return "Qyoto.QAbstractItemDelegateInternal";
-                    if (strcmp(o->smoke->classes[o->classId].className, "QAbstractItemView") == 0)
-                        return "Qyoto.QAbstractItemViewInternal";
-                    if (strcmp(o->smoke->classes[o->classId].className, "QAbstractListModel") == 0)
-                        return "Qyoto.QAbstractListModelInternal";
-                    if (strcmp(o->smoke->classes[o->classId].className, "QAbstractTextDocumentLayout") == 0)
-                        return "Qyoto.QAbstractTextDocumentLayoutInternal";
-                    if (strcmp(o->smoke->classes[o->classId].className, "QLayout") == 0)
-                        return "Qyoto.QLayoutInternal";
-                    if (strcmp(o->smoke->classes[o->classId].className, "QNetworkReply") == 0)
-                        return "Qyoto.QNetworkReplyInternal";
-                    return qyoto_modules[o->smoke].binding->className(o->classId);
-                }
-            }
-
-            meta = meta->superClass();
-        }
-    }
-
     if (o->smoke->classes[o->classId].external) {
         Smoke::ModuleIndex mi = o->smoke->findClass(o->smoke->className(o->classId));
         o->smoke = mi.smoke;
@@ -280,7 +244,7 @@ QMetaObject* get_meta_object(const char* classname) {
     Smoke::ModuleIndex nameId = classId.smoke->idMethodName("staticMetaObject");
     Smoke::ModuleIndex meth = classId.smoke->findMethod(classId, nameId);
     if (meth.index <= 0) {
-        // Should never happen..
+        // FIXME: search in super-classes... this case actually happens for some KDE classes
     }
 
     Smoke::Method &methodId = meth.smoke->methods[meth.smoke->methodMaps[meth.index].method];

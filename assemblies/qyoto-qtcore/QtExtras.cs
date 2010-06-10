@@ -73,13 +73,18 @@ namespace Qyoto {
 
 		public static T qobject_cast<T>(QObject obj) where T : class {
 			if (obj == null) return null;
-			Type t = typeof(T);
+
+			// direct cast possible?
 			try {
 				return (T) (object) obj;
 			} catch {}
+
+			Type t = typeof(T);
 			if (!SmokeMarshallers.IsSmokeClass(t)) return null;
 			string className = SmokeMarshallers.SmokeClassName(t);
+
 			IntPtr ret = qyoto_qt_metacast((IntPtr) GCHandle.Alloc(obj), className);
+
 			if (ret == IntPtr.Zero) {
 				return null;
 			} else {
