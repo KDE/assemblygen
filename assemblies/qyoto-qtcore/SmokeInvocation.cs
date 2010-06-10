@@ -238,6 +238,11 @@ namespace Qyoto {
 				AppDomainSetup setup = (AppDomainSetup) pi.GetValue(AppDomain.CurrentDomain, null);
 				setup.ConfigurationFile = Assembly.GetExecutingAssembly().Location + ".config";
 			}
+
+			foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies()) {
+				TryInitialize(a);
+			}
+
 			runtimeInitialized = true;
 		}
 
@@ -428,3 +433,4 @@ namespace Qyoto {
 	}
 }
 
+// kate: space-indent off;
