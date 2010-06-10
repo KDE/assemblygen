@@ -178,18 +178,25 @@ qyoto_qt_metacast(void* obj, char* target)
     smokeqyoto_object* o = (smokeqyoto_object*) (*GetSmokeObject)(obj);
     (*FreeGCHandle)(obj);
     QObject* qobj = (QObject*) o->smoke->cast(o->ptr, o->classId, o->smoke->idClass("QObject").index);
+
     void* ret = qobj->qt_metacast(target);
+
     if (!ret) return 0;
-    void* instance = (*GetInstance)(ret, true);
-    if (instance) {
-#ifdef DEBUG
-        printf("qyoto_qt_metacast: found instance, returning 0x%8.8x\n", instance);
-#endif
-        return instance;
-    }
+
+    // Don't check for the pointer with GetInstance() - we obviously want a different
+    // type from what we passed in, even if the underlying object (pointer) is the same.
+
     Smoke::ModuleIndex mi = Smoke::classMap[target];
+    if (!mi.smoke || !mi.index) {
+        qWarning("WARNING: target %s was not found in the loaded Smoke libs! Loaded modules are:", target);
+        foreach (const QyotoModule& module, qyoto_modules.values()) {
+            qWarning("  - %s", module.name);
+        }
+        return 0;
+    }
+
     smokeqyoto_object* to = alloc_smokeqyoto_object(false, mi.smoke, mi.index, ret);
-    instance = (*CreateInstance)(qyoto_resolve_classname(to), to);
+    void *instance = (*CreateInstance)(qyoto_resolve_classname(to), to);
     mapPointer(instance, to, to->classId, 0);
 #ifdef DEBUG
     printf("qyoto_qt_metacast: created new instance of type %s (%p)\n", target, to->ptr);
