@@ -166,7 +166,7 @@ public class QyotoTranslator : ICustomTranslator {
         new Regex(@"QCoreApplication::exec.*"),
         new Regex(@"QApplication::QApplication.*"),
         new Regex(@"QApplication::exec.*"),
-        new Regex(@"QObject::metaObject\(\).*"),
+        new Regex(@".*::metaObject\(\).*"),
     };
 
     List<string> namespacesAsClasses = new List<string>()
