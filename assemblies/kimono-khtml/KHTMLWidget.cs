@@ -1,0 +1,3 @@
+namespace khtml {
+    interface KHTMLWidget {}
+}
