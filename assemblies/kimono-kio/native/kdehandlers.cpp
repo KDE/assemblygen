@@ -27,6 +27,8 @@
 DEF_VALUELIST_MARSHALLER( KFileItemList, QList<KFileItem>, KFileItem )
 DEF_VALUELIST_MARSHALLER( KIOCopyInfoList, QList<KIO::CopyInfo>, KIO::CopyInfo )
 
+/// TODO: Add marshallers for KFileItemList and KIO::MetaData
+
 TypeHandler Kimono_KIO_handlers[] = {
     { "QList<KFileItem>", marshall_KFileItemList },
     { "QList<KFileItem>&", marshall_KFileItemList },
