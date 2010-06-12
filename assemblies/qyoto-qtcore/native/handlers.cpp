@@ -693,7 +693,14 @@ static void marshall_int64(Marshall *m) {
 	switch(m->action()) {
 	case Marshall::FromObject:
 	{
-		m->item().s_voidp = reinterpret_cast<qint64*>(&m->var());
+		qint64 *copy = new qint64(*reinterpret_cast<qint64*>(&m->var()));
+		m->item().s_voidp = copy;
+
+		m->next();
+
+		if (m->cleanup()) {
+			delete copy;
+		}
 	}
 	break;
 
@@ -718,7 +725,14 @@ static void marshall_uint64(Marshall *m) {
 	switch(m->action()) {
 	case Marshall::FromObject:
 	{
-		m->item().s_voidp = reinterpret_cast<quint64*>(&m->var());
+		quint64 *copy = new quint64(*reinterpret_cast<quint64*>(&m->var()));
+		m->item().s_voidp = copy;
+
+		m->next();
+
+		if (m->cleanup()) {
+			delete copy;
+		}
 	}
 	break;
 
