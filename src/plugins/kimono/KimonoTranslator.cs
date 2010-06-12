@@ -52,6 +52,10 @@ public unsafe class KimonoTranslator : ICustomTranslator {
     Dictionary<string, Translator.TranslateFunc> typeCodeMap = new Dictionary<string, Translator.TranslateFunc>()
     {
         { "_IceConn", delegate { throw new NotSupportedException(); } },
+
+        { "khtml::ChildFrame", delegate { throw new NotSupportedException(); } },
+        { "DOM::Editor", delegate { throw new NotSupportedException(); } },
+
         { "K3Icon", delegate { throw new NotSupportedException(); } },
         { "KAbstractViewAdapter", delegate { throw new NotSupportedException(); } },
         { "KCalendarSystemPrivate", delegate { throw new NotSupportedException(); } },
@@ -79,6 +83,10 @@ public unsafe class KimonoTranslator : ICustomTranslator {
         { "KIO::TransferJobPrivate", delegate { throw new NotSupportedException(); } },
 
         { "KJobPrivate", delegate { throw new NotSupportedException(); } },
+
+        { "KJS::Interpreter", delegate { throw new NotSupportedException(); } },
+        { "KJSProxy", delegate { throw new NotSupportedException(); } },
+
         { "KMainWindowPrivate", delegate { throw new NotSupportedException(); } },
         { "KMimeTypePrivate", delegate { throw new NotSupportedException(); } },
         { "KPageDialogPrivate", delegate { throw new NotSupportedException(); } },
@@ -90,6 +98,7 @@ public unsafe class KimonoTranslator : ICustomTranslator {
         { "KParts::PartPrivate", delegate { throw new NotSupportedException(); } },
         { "KParts::ReadOnlyPartPrivate", delegate { throw new NotSupportedException(); } },
 
+        { "KPerDomainSettings", delegate { throw new NotSupportedException(); } },
         { "KPluginFactoryPrivate", delegate { throw new NotSupportedException(); } },
         { "KProcessPrivate", delegate { throw new NotSupportedException(); } },
         { "KSelectActionPrivate", delegate { throw new NotSupportedException(); } },
