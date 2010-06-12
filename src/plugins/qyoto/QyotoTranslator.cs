@@ -137,12 +137,12 @@ public class QyotoTranslator : ICustomTranslator {
                         if (type.IsUnsigned)
                             return new CodeTypeReference("Pointer<byte>");
                         if (type.IsConst)
-                            return "String";
+                            return "System.String";
                         return new CodeTypeReference("Pointer<sbyte>");
                     }
                     return null;
                   }},
-        { "QString", (type, data, translator) => (type.PointerDepth > 0) ? "System.Text.StringBuilder" : "String" },
+        { "QString", (type, data, translator) => (type.PointerDepth > 0) ? "System.Text.StringBuilder" : "System.String" },
 
         { "QWidget", delegate(Translator.TypeInfo type, GeneratorData data, Translator translator) {
                         unsafe {

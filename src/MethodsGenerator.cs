@@ -302,7 +302,7 @@ public unsafe class MethodsGenerator {
 
             if (isOperator) {
                 cmm.Attributes |= MemberAttributes.Final | MemberAttributes.Static;
-            } else if (cmm.Name == "ToString" && args.Count == 0) {
+            } else if (cmm.Name == "ToString" && args.Count == 0 && cmm.ReturnType.BaseType == "System.String") {
                 cmm.Attributes = MemberAttributes.Public | MemberAttributes.Override;
             } else {
                 if ((method->flags & (uint) Smoke.MethodFlags.mf_static) > 0) {
