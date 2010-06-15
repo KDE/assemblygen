@@ -44,6 +44,7 @@ public unsafe class KimonoTranslator : ICustomTranslator {
         { "KIO::UDSEntryList", "System.Collections.Generic.List<KIO.UDSEntry>" },
         { "KParts::BrowserExtension::ActionGroupMap", "System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<QAction>>" },
         { "KParts::LiveConnectExtension::ArgList", "System.Collections.Generic.List<QPair<Type, string>>" },
+        { "KTextEditor::Attribute::Ptr", "KTextEditor.Attribute" },
         { "QVariantList", "System.Collections.Generic.List<QVariant>" },
         { "QVariantMap", "System.Collections.Generic.Dictionary<string, QVariant>" },
         { "Plasma::DataEngine::Data", "System.Collections.Generic.Dictionary<string, QVariant>" },
@@ -142,6 +143,7 @@ public unsafe class KimonoTranslator : ICustomTranslator {
         new Regex(@"KCmdLineArgs::init\(int.*"),
         new Regex(@"KPluginFactory::createPartObject\(.*"),
         new Regex(@"KParts::Factory::createPartObject\(.*"),
+        new Regex(@"KTextEditor::Factory::createPartObject\(.*"),
         new Regex(@"KUniqueApplication::KUniqueApplication\(.*"),
     };
 
