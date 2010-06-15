@@ -175,9 +175,6 @@ public unsafe class GeneratorData {
         } else {
             foreach (CodeTypeMember member in typeDecl.Members) {
                 if (member is CodeMemberProperty) {
-                    if (Debug) {
-                        Console.Error.WriteLine("Adding property {0}", member.Name);
-                    }
                     list.Add(new InternalMemberInfo(MemberTypes.Property, member.Name));
                 } else if (member is CodeMemberMethod) {
                     list.Add(new InternalMemberInfo(MemberTypes.Method, member.Name));
@@ -196,6 +193,16 @@ public unsafe class GeneratorData {
     }
 
     void AddReferencedMembers(Smoke.Class *klass, List<InternalMemberInfo> list) {
-//         Console.WriteLine("Add referenced members for class {0}", ByteArrayManager.GetString(klass->className));
+        string smokeClassName = ByteArrayManager.GetString(klass->className);
+        Type type;
+
+        if (!ReferencedTypeMap.TryGetValue(smokeClassName, out type)) {
+            Console.Error.WriteLine("Couldn't find referenced class {0}", smokeClassName);
+            return;
+        }
+
+        foreach (MemberInfo member in type.GetMembers(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)) {
+            list.Add(new InternalMemberInfo(member.MemberType, member.Name));
+        }
     }
 }

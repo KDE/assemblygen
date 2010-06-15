@@ -65,7 +65,9 @@ unsafe class AttributeGenerator {
 
         // If the new name clashes with a name of a type declaration, keep the lower-case name.
         var typesWithSameName = from member in data.GetAccessibleMembers(smoke->classes + meth->classId)
-                                where member.Type == MemberTypes.NestedType
+                                where (   member.Type == MemberTypes.NestedType
+                                       || member.Type == MemberTypes.Method
+                                       || member.Type == MemberTypes.Property)
                                    && member.Name == name
                                 select member;
         if (typesWithSameName.Count() > 0) {
