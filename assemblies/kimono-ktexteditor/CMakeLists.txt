@@ -4,7 +4,8 @@ set(kimono_ktexteditor_SRC
 
 add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/kimono-ktexteditor.dll
                    COMMAND ${MONO_EXECUTABLE} --debug ${LIBRARY_OUTPUT_PATH}/assemblygen.exe
-                            -unsafe -out:kimono-ktexteditor.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:kimono-kdecore.dll -r:kimono-kdeui.dll -r:kimono-kparts.dll
+                            -unsafe -out:kimono-ktexteditor.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:qyoto-qtxml.dll
+                                -r:kimono-kdecore.dll -r:kimono-kdeui.dll -r:kimono-kparts.dll
                             -namespace:Kimono -import:Qyoto -plugins:QyotoGenerator.dll,KimonoGenerator.dll
                             -code-file:kimono-ktexteditor.cs "-keyfile:${KEYFILE}"
                             libsmokektexteditor.so
@@ -13,7 +14,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/kimono-ktexteditor.dll
                    DEPENDS ${kimono_ktexteditor_SRC})
 
 add_custom_target(kimono-ktexteditor ALL DEPENDS ${LIBRARY_OUTPUT_PATH}/kimono-ktexteditor.dll)
-add_dependencies(kimono-ktexteditor assemblygen QyotoGenerator KimonoGenerator qyoto-qtcore qyoto-qtgui kimono-kdecore kimono-kdeui kimono-kparts)
+add_dependencies(kimono-ktexteditor assemblygen QyotoGenerator KimonoGenerator qyoto-qtcore qyoto-qtgui qyoto-qtxml kimono-kdecore kimono-kdeui kimono-kparts)
 set_property(TARGET kimono-ktexteditor PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/kimono-ktexteditor.dll)
 set_property(TARGET kimono-ktexteditor PROPERTY _assembly_type dll)
 
