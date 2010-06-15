@@ -55,6 +55,7 @@ void Init_kimono_kfile()
     for (int i = 1; i <= kfile_Smoke->numClasses; i++) {
         QByteArray name(kfile_Smoke->classes[i].className);
         name.replace("::", ".");
+        name.prepend(prefix);
         kfile_classname.insert(i, strdup(name.constData()));
     }
     static Qyoto::Binding kfile_binding = Qyoto::Binding(kfile_Smoke, kfile_classname);
