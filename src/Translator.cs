@@ -97,6 +97,11 @@ public unsafe class Translator {
     // custom translation code
     Dictionary<string, TranslateFunc> typeCodeMap = new Dictionary<string, TranslateFunc>()
     {
+        { "tagMSG", delegate { throw new NotSupportedException(); } },
+        { "FILE", delegate { throw new NotSupportedException(); } },
+        { "GUID", delegate { throw new NotSupportedException(); } },
+        { "_PROCESS_INFORMATION", delegate { throw new NotSupportedException(); } },
+        { "va_list", delegate { throw new NotSupportedException(); } },
         { "long", delegate(TypeInfo type, GeneratorData data, Translator translator) {
                        if (!type.IsUnsigned) {
                            return "NativeLong";

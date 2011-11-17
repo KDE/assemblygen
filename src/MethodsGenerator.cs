@@ -310,8 +310,8 @@ public unsafe class MethodsGenerator {
                 } else {
                     // virtual/final
                     MemberAttributes access;
-                    bool isOverride;
                     bool foundInInterface = false;
+                    bool isOverride = MethodOverrides(smoke, method, out access, out foundInInterface);
 
                     // methods that have to be implemented from interfaces can't override anything
                     if (iface == null && (isOverride = MethodOverrides(smoke, method, out access, out foundInInterface))) {
@@ -326,7 +326,7 @@ public unsafe class MethodsGenerator {
 
                             // The code generator doesn't like MemberAttributes.Abstract | MemberAttributes.Override being set.
                             if (isOverride && !type.IsInterface) {
-                                cmm.ReturnType.BaseType = "override " + cmm.ReturnType.BaseType;
+                                cmm.ReturnType.BaseType = "override " + cmm.ReturnType.BaseType == "System.Void" ? "void" : cmm.ReturnType.BaseType;
                             }
                         } else {
                             cmm.Attributes |= MemberAttributes.Override;

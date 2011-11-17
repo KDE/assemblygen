@@ -18,10 +18,12 @@
 */
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Reflection;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.CodeDom;
@@ -226,6 +228,8 @@ Any options not listed here are directly passed to the compiler (leading dashes 
         cp.GenerateInMemory = false;
         cp.WarningLevel = warnLevel;
         cp.CompilerOptions = compilerOptions.ToString();
+        cp.ReferencedAssemblies.Add(typeof(Regex).Assembly.Location);
+        cp.ReferencedAssemblies.Add(typeof(ExtensionAttribute).Assembly.Location);
         foreach (Assembly assembly in references) {
             cp.ReferencedAssemblies.Add(assembly.Location);
         }
