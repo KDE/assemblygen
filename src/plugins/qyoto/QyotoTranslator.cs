@@ -42,6 +42,21 @@ public class QyotoTranslator : ICustomTranslator {
         { "PageSetupDialogOptions", typeof(uint) },
         { "PrintDialogOptions", typeof(uint) },
         { "WatchMode", typeof(uint) },
+        { "HDC__", typeof(IntPtr) },
+        { "HWND__", typeof(IntPtr) },
+        { "HPALETTE__", typeof(IntPtr) },
+        { "HBITMAP__", typeof(IntPtr) },
+        { "HICON__", typeof(IntPtr) },
+        { "HFONT__", typeof(IntPtr) },
+        { "HINSTANCE__", typeof(IntPtr) },
+        { "HRGN__", typeof(IntPtr) },
+
+ 
+        { "GLint", typeof(int) },
+        { "GL
+        { "GLfloat", typeof(float) },
+        { "GLenum", t
+        { "GLbitfield", typeof(int) },
     };
 
     Dictionary<string, string> typeStringMap = new Dictionary<string, string>()
