@@ -63,7 +63,7 @@
 extern bool qRegisterResourceData(int, const unsigned char *, const unsigned char *, const unsigned char *);
 extern bool qUnregisterResourceData(int, const unsigned char *, const unsigned char *, const unsigned char *);
 
-extern Q_DECL_IMPORT TypeHandler Qyoto_handlers[];
+extern TypeHandler Qyoto_handlers[];
 
 extern bool IsContainedInstanceQtCore(smokeqyoto_object *o);
 extern const char * qyoto_resolve_classname_qtcore(smokeqyoto_object * o);
