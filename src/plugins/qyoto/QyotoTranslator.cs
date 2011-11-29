@@ -51,11 +51,11 @@ public class QyotoTranslator : ICustomTranslator {
         { "HINSTANCE__", typeof(IntPtr) },
         { "HRGN__", typeof(IntPtr) },
 
- 
+        // OpenGL types
         { "GLint", typeof(int) },
-        { "GL
+        { "GLuint", typeof(uint) },
         { "GLfloat", typeof(float) },
-        { "GLenum", t
+        { "GLenum", typeof(int) },
         { "GLbitfield", typeof(int) },
     };
 
