@@ -4,7 +4,7 @@ namespace Qyoto {
 	using System.Runtime.InteropServices;
 
 	public partial class QModelIndex : Object, IDisposable {
-		[DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi)]
+		[DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr ModelIndexInternalPointer(IntPtr obj);
 		
 		public object InternalPointer() {

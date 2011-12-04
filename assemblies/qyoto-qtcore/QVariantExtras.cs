@@ -8,10 +8,10 @@ namespace Qyoto {
 
     public partial class QVariant : Object, IDisposable {
 
-        [DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi)]
+        [DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         static extern IntPtr QVariantValue(string typeName, IntPtr variant);
 
-        [DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi)]
+        [DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         static extern IntPtr QVariantFromValue(int type, IntPtr value);
 
         static QVariant() {
@@ -227,7 +227,7 @@ namespace Qyoto {
             } else if (valueType == typeof(QVariant)) {
                 return new QVariant((QVariant) value);
             } else if (valueType.IsEnum) {
-                return new QVariant((long) value);
+                return new QVariant((int) value);
             } else {
                 string typeName;
                 if (SmokeMarshallers.IsSmokeClass(valueType))

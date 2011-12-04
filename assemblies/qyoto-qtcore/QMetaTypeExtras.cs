@@ -24,16 +24,19 @@ namespace Qyoto {
     using System.Runtime.InteropServices;
 
     public partial class QMetaType : Object, IDisposable {
+		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void Destructor(IntPtr obj);
+
+		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate IntPtr Constructor(IntPtr copy);
 
-        [DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi)]
+        [DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         static extern void DestroyObject(string name, IntPtr ptr);
 
-        [DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi)]
+        [DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         static extern IntPtr CreateObject(string name, IntPtr other);
 
-        [DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi)]
+        [DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         static extern int QMetaTypeRegisterType(string name, Destructor dtor, Constructor ctor);
 
         public static int RegisterType<T>() {

@@ -16,7 +16,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblySmokeInitializer(typeof(InitQtGui))]
 
 internal class InitQtGui {
-    [DllImport("qyoto-qtgui-native", CharSet=CharSet.Ansi)]
+    [DllImport("qyoto-qtgui-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
     static extern void Init_qyoto_qtgui();
 
     [DllImport("qyoto-qtgui-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]

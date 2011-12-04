@@ -13,7 +13,7 @@ namespace Qyoto {
 			FuzzyHit = 1,
 		}
 
-		[DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi)]
+		[DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
 		private static extern IntPtr qyoto_qt_metacast(IntPtr obj, string target);
 
 		public static QCoreApplication qApp = null;
