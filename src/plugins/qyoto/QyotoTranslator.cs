@@ -50,6 +50,11 @@ public class QyotoTranslator : ICustomTranslator {
         { "HFONT__", typeof(IntPtr) },
         { "HINSTANCE__", typeof(IntPtr) },
         { "HRGN__", typeof(IntPtr) },
+        { "__HIShape", typeof(IntPtr) },
+        { "OpaqueRgnHandle", typeof(IntPtr) },
+        { "OpaqueEventHandlerCallRef", typeof(IntPtr) },
+        { "OpaqueEventRef", typeof(IntPtr) },
+        { "CGImage", typeof(IntPtr) },
 
  
         { "GLint", typeof(int) },
