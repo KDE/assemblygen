@@ -12,7 +12,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtdbus.dll
                             -unsafe -out:qyoto-qtdbus.dll -r:qyoto-qtcore.dll
                             -plugins:QyotoGenerator.dll
                             -code-file:qyoto-qtdbus.cs "-keyfile:${KEYFILE}"
-                            libsmokeqtdbus.so
+                            libsmokeqtdbus{CMAKE_SHARED_LIBRARY_SUFFIX}
                             ${qyoto_qtdbus_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
                    DEPENDS ${qyoto_qtdbus_SRC})

@@ -7,7 +7,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtopengl.dll
                             -unsafe -out:qyoto-qtopengl.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll
                             -plugins:QyotoGenerator.dll
                             -code-file:qyoto-qtopengl.cs "-keyfile:${KEYFILE}"
-                            libsmokeqtopengl.so
+                            libsmokeqtopengl${CMAKE_SHARED_LIBRARY_SUFFIX}
                             ${qyoto_qtopengl_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
                    DEPENDS ${qyoto_qtopengl_SRC})

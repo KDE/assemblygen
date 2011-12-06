@@ -7,7 +7,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtuitools.dll
                             -unsafe -out:qyoto-qtuitools.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll
                             -plugins:QyotoGenerator.dll
                             -code-file:qyoto-qtuitools.cs "-keyfile:${KEYFILE}"
-                            libsmokeqtuitools.so
+                            libsmokeqtuitools${CMAKE_SHARED_LIBRARY_SUFFIX}
                             ${qyoto_qtuitools_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
                    DEPENDS ${qyoto_qtuitools_SRC})
