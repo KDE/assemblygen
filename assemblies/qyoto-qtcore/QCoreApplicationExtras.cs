@@ -6,6 +6,7 @@ namespace Qyoto {
 	using System.Runtime.InteropServices;
 	using System.Text;
 
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate void EventFunc();
 
 	class EventReceiver : QObject {

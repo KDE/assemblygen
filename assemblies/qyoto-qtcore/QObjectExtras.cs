@@ -4,15 +4,22 @@ namespace Qyoto {
 	using System.Runtime.InteropServices;
 	using System.Collections.Generic;
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate void SlotFunc();
-	public delegate void SlotFunc<T>(T arg);
-	public delegate void SlotFunc<T1, T2>(T1 arg1, T2 arg2);
-	public delegate void SlotFunc<T1, T2, T3>(T1 arg1, T2 arg2, T3 arg3);
-	public delegate void SlotFunc<T1, T2, T3, T4>(T1 arg1, T2 arg2, T3 arg3, T4 arg4);
-	public delegate void SlotFunc<T1, T2, T3, T4, T5>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5);
+    [UnmanagedFunctionPointer (CallingConvention.Cdecl)]
+    public delegate void SlotFunc<T> (T arg);
+    [UnmanagedFunctionPointer (CallingConvention.Cdecl)]
+    public delegate void SlotFunc<T1, T2> (T1 arg1, T2 arg2);
+    [UnmanagedFunctionPointer (CallingConvention.Cdecl)]
+    public delegate void SlotFunc<T1, T2, T3> (T1 arg1, T2 arg2, T3 arg3);
+    [UnmanagedFunctionPointer (CallingConvention.Cdecl)]
+    public delegate void SlotFunc<T1, T2, T3, T4> (T1 arg1, T2 arg2, T3 arg3, T4 arg4);
+    [UnmanagedFunctionPointer (CallingConvention.Cdecl)]
+    public delegate void SlotFunc<T1, T2, T3, T4, T5> (T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5);
 
 	public partial class QObject : Qt, IDisposable {
-		private delegate void AddToListFn(IntPtr obj);
+        [UnmanagedFunctionPointer (CallingConvention.Cdecl)]
+        private delegate void AddToListFn (IntPtr obj);
 		
 		[DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
 		private static extern IntPtr FindQObjectChild(IntPtr parent, string childTypeName, IntPtr childMetaObject, string childName);

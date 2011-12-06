@@ -21,10 +21,12 @@ namespace Qyoto {
 	using System.Collections.Generic;
 	using System.Text;
 	using System.Text.RegularExpressions;
+    using System.Runtime.InteropServices;
 	
 	class QyotoMetaData {
 		byte[] stringdata;
 		uint[] data;
+		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		private delegate uint Handler(string str);
 		Handler handler;
 	
