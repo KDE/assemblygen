@@ -82,6 +82,10 @@ public class QyotoTranslator : ICustomTranslator {
 
     Dictionary<string, Translator.TranslateFunc> typeCodeMap = new Dictionary<string, Translator.TranslateFunc>()
     {
+		// HACK: Work around a missing qyoto-qtdeclarative assembly.
+        { "QDeclarativeListProperty", delegate { throw new NotSupportedException(); } },
+        { "NavigationMenu", delegate { throw new NotSupportedException(); } },
+
         { "QThread", delegate { throw new NotSupportedException(); } },
         { "QMutex", delegate { throw new NotSupportedException(); } },
         { "QDebug", delegate { throw new NotSupportedException(); } },
