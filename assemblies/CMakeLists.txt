@@ -25,12 +25,11 @@ if (ENABLE_QYOTO_PLUGIN)
     endif (SMOKE_PHONON_LIBRARY)
 endif (ENABLE_QYOTO_PLUGIN)
 
-find_package(KDE4 REQUIRED)
-
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
 if (ENABLE_KIMONO_PLUGIN)
+	find_package(KDE4 REQUIRED)
     add_subdirectory(kimono-attica)
     add_subdirectory(kimono-kdecore)
     add_subdirectory(kimono-kdeui)
