@@ -517,9 +517,11 @@ public unsafe class MethodsGenerator {
             PostMethodBodyHooks(smoke, method, cmm, containingType);
         }
 
+		GenerateEvent(containingType, cmm);
+
         containingType.Members.Add(cmm);
 
-        if ((method->flags & (uint) Smoke.MethodFlags.mf_dtor) != 0) {
+    	if ((method->flags & (uint) Smoke.MethodFlags.mf_dtor) != 0) {
             containingType.BaseTypes.Add(new CodeTypeReference(typeof(IDisposable)));
             CodeMemberMethod dispose = new CodeMemberMethod();
             dispose.Name = "Dispose";
@@ -532,4 +534,28 @@ public unsafe class MethodsGenerator {
         }
         return cmm;
     }
+
+	private static void GenerateEvent(CodeTypeDeclaration containingType, CodeMemberMethod cmm)
+	{
+		if (cmm.Name != "Event" && cmm.Name.EndsWith("Event"))
+		{
+			if (cmm.Parameters.Count == 1 && cmm.Parameters[0].Type.BaseType.EndsWith("Event") && 
+				(cmm.Attributes & MemberAttributes.Override) == 0)
+			{
+				CodeMemberEvent codeMemberEvent = new CodeMemberEvent();
+				codeMemberEvent.Name = cmm.Name;
+				CodeTypeReference eventType = new CodeTypeReference(typeof(EventHandler));
+				eventType.TypeArguments.Add(
+					new CodeTypeReference(new CodeTypeParameter(string.Format("QEventArgs<{0}>", cmm.Parameters[0].Type.BaseType))));
+				codeMemberEvent.Type = eventType;
+				codeMemberEvent.Attributes = (codeMemberEvent.Attributes & ~MemberAttributes.AccessMask) |
+				                             MemberAttributes.Public;
+				containingType.Members.Add(codeMemberEvent);
+			}
+			if (!cmm.Name.StartsWith("~"))
+			{
+				cmm.Name = "On" + cmm.Name;
+			}
+		}
+	}
 }

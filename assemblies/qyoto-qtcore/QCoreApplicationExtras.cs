@@ -42,7 +42,7 @@ namespace Qyoto {
 		public static void Invoke(EventFunc dele) {
 			ThreadEvent e = new ThreadEvent(dele);
 			e.handle = GCHandle.Alloc(e);  // we don't want the GC to collect the event too early
-			PostEvent(qApp.receiver, e);
+			OnPostEvent(qApp.receiver, e);
 		}
 
 		string[] GenerateArgs(string[] argv)
