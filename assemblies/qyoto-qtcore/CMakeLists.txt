@@ -19,9 +19,10 @@ set (qyoto_qtcore_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/QVariantExtras.cs
     ${CMAKE_CURRENT_SOURCE_DIR}/Qyoto.cs
     ${CMAKE_CURRENT_SOURCE_DIR}/QyotoMetaData.cs
+    ${CMAKE_CURRENT_SOURCE_DIR}/QEventArgs.cs
+    ${CMAKE_CURRENT_SOURCE_DIR}/QEventHandler.cs
     ${CMAKE_CURRENT_SOURCE_DIR}/SmokeInvocation.cs
     ${CMAKE_CURRENT_SOURCE_DIR}/SmokeMarshallers.cs
-
     ${CMAKE_CURRENT_SOURCE_DIR}/StreamWrapper.cs
     ${CMAKE_CURRENT_SOURCE_DIR}/QIODeviceWrapper.cs
     ${CMAKE_CURRENT_SOURCE_DIR}/NativeLong.cs
