@@ -7,7 +7,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtnetwork.dll
                             -unsafe -out:qyoto-qtnetwork.dll -r:qyoto-qtcore.dll
                             -plugins:QyotoGenerator.dll
                             -code-file:qyoto-qtnetwork.cs "-keyfile:${KEYFILE}"
-                            libsmokeqtnetwork${CMAKE_SHARED_LIBRARY_SUFFIX}
+                            ${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtnetwork${CMAKE_SHARED_LIBRARY_SUFFIX}
                             ${qyoto_qtnetwork_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
                    DEPENDS ${qyoto_qtnetwork_SRC})

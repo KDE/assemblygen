@@ -7,7 +7,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/kimono-plasma.dll
                             -unsafe -out:kimono-plasma.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:qyoto-qtxml.dll -r:qyoto-phonon.dll -r:qyoto-qtwebkit.dll -r:kimono-kdecore.dll -r:kimono-kdeui.dll -r:kimono-kio.dll
                             -namespace:Kimono -import:Qyoto -plugins:QyotoGenerator.dll,KimonoGenerator.dll
                             -code-file:kimono-plasma.cs "-keyfile:${KEYFILE}"
-                            libsmokeplasma.so
+                            ${CMAKE_SHARED_LIBRARY_PREFIX}smokeplasma.so
                             ${kimono_plasma_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
                    DEPENDS ${kimono_plasma_SRC})

@@ -7,7 +7,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtxmlpatterns.dll
                             -unsafe -out:qyoto-qtxmlpatterns.dll -r:qyoto-qtcore.dll -r:qyoto-qtnetwork.dll
                             -plugins:QyotoGenerator.dll
                             -code-file:qyoto-qtxmlpatterns.cs "-keyfile:${KEYFILE}"
-                            libsmokeqtxmlpatterns${CMAKE_SHARED_LIBRARY_SUFFIX}
+                            ${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtxmlpatterns${CMAKE_SHARED_LIBRARY_SUFFIX}
                             ${qyoto_qtxmlpatterns_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
                    DEPENDS ${qyoto_qtxmlpatterns_SRC})

@@ -33,7 +33,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtcore.dll
                             -unsafe -out:qyoto-qtcore.dll -global-class:Qt
                             -plugins:QyotoGenerator.dll
                             -code-file:qyoto-qtcore.cs "-keyfile:${KEYFILE}"
-                            libsmokeqtcore${CMAKE_SHARED_LIBRARY_SUFFIX}
+                            ${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtcore${CMAKE_SHARED_LIBRARY_SUFFIX}
                             ${qyoto_qtcore_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
                    DEPENDS ${qyoto_qtcore_SRC})

@@ -7,7 +7,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtscript.dll
                             -unsafe -out:qyoto-qtscript.dll -r:qyoto-qtcore.dll
                             -plugins:QyotoGenerator.dll
                             -code-file:qyoto-qtscript.cs "-keyfile:${KEYFILE}"
-                            libsmokeqtscript${CMAKE_SHARED_LIBRARY_SUFFIX}
+                            ${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtscript${CMAKE_SHARED_LIBRARY_SUFFIX}
                             ${qyoto_qtscript_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
                    DEPENDS ${qyoto_qtscript_SRC})

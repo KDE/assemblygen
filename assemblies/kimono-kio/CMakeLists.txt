@@ -10,7 +10,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/kimono-kio.dll
                                                         -r:kimono-kdecore.dll -r:kimono-kdeui.dll -r:kimono-solid.dll
                             -namespace:Kimono -import:Qyoto -plugins:QyotoGenerator.dll,KimonoGenerator.dll
                             -code-file:kimono-kio.cs "-keyfile:${KEYFILE}"
-                            libsmokekio.so
+                            ${CMAKE_SHARED_LIBRARY_PREFIX}smokekio.so
                             ${kimono_kio_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
                    DEPENDS ${kimono_kio_SRC})

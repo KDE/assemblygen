@@ -21,7 +21,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtgui.dll
                             -unsafe -out:qyoto-qtgui.dll -r:qyoto-qtcore.dll
                             -plugins:QyotoGenerator.dll
                             -code-file:qyoto-qtgui.cs "-keyfile:${KEYFILE}"
-                            libsmokeqtgui${CMAKE_SHARED_LIBRARY_SUFFIX}
+                            ${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtgui${CMAKE_SHARED_LIBRARY_SUFFIX}
                             ${qyoto_qtgui_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
                    DEPENDS ${qyoto_qtgui_SRC})

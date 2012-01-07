@@ -11,7 +11,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/kimono-kdecore.dll
                             -unsafe -out:kimono-kdecore.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:qyoto-qtnetwork.dll -r:qyoto-qtdbus.dll
                             -global-class:KDE -namespace:Kimono -import:Qyoto -plugins:QyotoGenerator.dll,KimonoGenerator.dll
                             -code-file:kimono-kdecore.cs "-keyfile:${KEYFILE}"
-                            libsmokekdecore.so
+                            ${CMAKE_SHARED_LIBRARY_PREFIX}smokekdecore.so
                             ${kimono_kdecore_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
                    DEPENDS ${kimono_kdecore_SRC})

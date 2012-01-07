@@ -8,7 +8,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/kimono-attica.dll
                             -unsafe -out:kimono-attica.dll -r:qyoto-qtcore.dll -r:qyoto-qtnetwork.dll
                             -namespace:Kimono -import:Qyoto -plugins:QyotoGenerator.dll,KimonoGenerator.dll
                             -code-file:kimono-attica.cs "-keyfile:${KEYFILE}"
-                            libsmokeattica.so
+                            ${CMAKE_SHARED_LIBRARY_PREFIX}smokeattica.so
                             ${kimono_attica_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH})
 

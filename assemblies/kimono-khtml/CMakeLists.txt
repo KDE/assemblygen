@@ -8,7 +8,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/kimono-khtml.dll
                             -unsafe -out:kimono-khtml.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:kimono-kdecore.dll -r:kimono-kdeui.dll -r:kimono-kparts.dll -r:kimono-kio.dll
                             -namespace:Kimono -import:Qyoto -plugins:QyotoGenerator.dll,KimonoGenerator.dll
                             -code-file:kimono-khtml.cs "-keyfile:${KEYFILE}"
-                            libsmokekhtml.so
+                            ${CMAKE_SHARED_LIBRARY_PREFIX}smokekhtml.so
                             ${kimono_khtml_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
                    DEPENDS ${kimono_khtml_SRC})

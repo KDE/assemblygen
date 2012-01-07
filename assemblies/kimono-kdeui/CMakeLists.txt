@@ -9,7 +9,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/kimono-kdeui.dll
                             -unsafe -out:kimono-kdeui.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:qyoto-qtsvg.dll -r:qyoto-qtxml.dll -r:kimono-kdecore.dll
                             -namespace:Kimono -import:Qyoto -plugins:QyotoGenerator.dll,KimonoGenerator.dll
                             -code-file:kimono-kdeui.cs "-keyfile:${KEYFILE}"
-                            libsmokekdeui.so
+                            ${CMAKE_SHARED_LIBRARY_PREFIX}smokekdeui.so
                             ${kimono_kdeui_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
                    DEPENDS ${kimono_kdeui_SRC})

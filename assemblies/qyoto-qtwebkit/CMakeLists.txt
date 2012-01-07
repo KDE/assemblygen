@@ -7,7 +7,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtwebkit.dll
                             -unsafe -out:qyoto-qtwebkit.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:qyoto-qtnetwork.dll -r:qyoto-qtscript.dll
                             -plugins:QyotoGenerator.dll
                             -code-file:qyoto-qtwebkit.cs "-keyfile:${KEYFILE}"
-                            libsmokeqtwebkit${CMAKE_SHARED_LIBRARY_SUFFIX}
+                            ${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtwebkit${CMAKE_SHARED_LIBRARY_SUFFIX}
                             ${qyoto_qtwebkit_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
                    DEPENDS ${qyoto_qtwebkit_SRC})

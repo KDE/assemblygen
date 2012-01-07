@@ -7,7 +7,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtsql.dll
                             -unsafe -out:qyoto-qtsql.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll
                             -plugins:QyotoGenerator.dll
                             -code-file:qyoto-qtsql.cs "-keyfile:${KEYFILE}"
-                            libsmokeqtsql${CMAKE_SHARED_LIBRARY_SUFFIX}
+                            ${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtsql${CMAKE_SHARED_LIBRARY_SUFFIX}
                             ${qyoto_qtsql_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
                    DEPENDS ${qyoto_qtsql_SRC})

@@ -7,7 +7,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/kimono-kparts.dll
                             -unsafe -out:kimono-kparts.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:qyoto-qtxml.dll -r:kimono-kdecore.dll -r:kimono-kdeui.dll -r:kimono-kio.dll
                             -namespace:Kimono -import:Qyoto -plugins:QyotoGenerator.dll,KimonoGenerator.dll
                             -code-file:kimono-kparts.cs "-keyfile:${KEYFILE}"
-                            libsmokekparts.so
+                            ${CMAKE_SHARED_LIBRARY_PREFIX}smokekparts.so
                             ${kimono_kparts_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
                    DEPENDS ${kimono_kparts_SRC})

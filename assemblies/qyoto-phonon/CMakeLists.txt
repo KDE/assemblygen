@@ -7,7 +7,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-phonon.dll
                             -unsafe -out:qyoto-phonon.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll
                             -plugins:QyotoGenerator.dll
                             -code-file:qyoto-phonon.cs "-keyfile:${KEYFILE}"
-                            libsmokephonon${CMAKE_SHARED_LIBRARY_SUFFIX}
+                            ${CMAKE_SHARED_LIBRARY_PREFIX}smokephonon${CMAKE_SHARED_LIBRARY_SUFFIX}
                             ${qyoto_phonon_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
                    DEPENDS ${qyoto_phonon_SRC})
