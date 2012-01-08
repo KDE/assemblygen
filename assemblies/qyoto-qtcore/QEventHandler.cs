@@ -3,17 +3,37 @@ using System.Collections.Generic;
 
 namespace Qyoto
 {
-	public class QEventHandler<T> : QObject where T : QEvent
+	public class QEventHandler : QObject
 	{
-		private readonly EventHandler<QEventArgs<T>> handler;
-		private readonly QObject sender;
-		private readonly QEventArgs<T> args;
+		protected readonly QObject sender;
+		private readonly object handler;
 
-		public QEventHandler(QObject sender, QEventArgs<T> args, EventHandler<QEventArgs<T>> handler)
+		public QEventHandler(QObject sender, object handler)
 		{
 			this.sender = sender;
+			this.handler = handler;
+		}
+
+		public object Handler
+		{
+			get { return handler; }
+		}
+	}
+
+	public class QEventHandler<T> : QEventHandler where T : QEvent
+	{
+		private readonly EventHandler<QEventArgs<T>> handler;
+		private readonly QEventArgs<T> args;
+
+		public QEventHandler(QObject sender, QEventArgs<T> args, EventHandler<QEventArgs<T>> handler) : base(sender, handler)
+		{
 			this.args = args;
 			this.handler = handler;
+		}
+
+		public new EventHandler<QEventArgs<T>> Handler
+		{
+			get { return handler; }
 		}
 
 		public override bool EventFilter(QObject arg1, QEvent arg2)
