@@ -21,7 +21,6 @@ using System;
 using System.Reflection;
 using System.Diagnostics;
 using System.Linq;
-using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -537,25 +536,92 @@ public unsafe class MethodsGenerator {
 
 	private static void GenerateEvent(CodeTypeDeclaration containingType, CodeMemberMethod cmm)
 	{
-		if (cmm.Name != "Event" && cmm.Name.EndsWith("Event"))
+		if (!cmm.Name.EndsWith("Event"))
 		{
-			if (cmm.Parameters.Count == 1 && cmm.Parameters[0].Type.BaseType.EndsWith("Event") && 
-				(cmm.Attributes & MemberAttributes.Override) == 0)
-			{
-				CodeMemberEvent codeMemberEvent = new CodeMemberEvent();
-				codeMemberEvent.Name = cmm.Name;
-				CodeTypeReference eventType = new CodeTypeReference(typeof(EventHandler));
-				eventType.TypeArguments.Add(
-					new CodeTypeReference(new CodeTypeParameter(string.Format("QEventArgs<{0}>", cmm.Parameters[0].Type.BaseType))));
-				codeMemberEvent.Type = eventType;
-				codeMemberEvent.Attributes = (codeMemberEvent.Attributes & ~MemberAttributes.AccessMask) |
-				                             MemberAttributes.Public;
-				containingType.Members.Add(codeMemberEvent);
-			}
-			if (!cmm.Name.StartsWith("~"))
-			{
-				cmm.Name = "On" + cmm.Name;
-			}
+			return;
+		}
+		string paramType;
+		// TODO: add support for IQGraphicsItem
+		if (cmm.Parameters.Count == 1 && (paramType = cmm.Parameters[0].Type.BaseType).EndsWith("Event") && 
+			(cmm.Attributes & MemberAttributes.Override) == 0 && 
+			!new[] { "QGraphicsItem", "QGraphicsObject", "QGraphicsTextItem", 
+					 "QGraphicsProxyWidget", "QGraphicsWidget", "QGraphicsLayout", 
+					 "QGraphicsScene"}.Contains(containingType.Name))
+		{
+			CodeSnippetTypeMember codeMemberEvent = new CodeSnippetTypeMember();
+			codeMemberEvent.Name = cmm.Name;
+			codeMemberEvent.Text = string.Format(@"
+				public event EventHandler<QEventArgs<{0}>> {1}
+				{{
+					add
+					{{
+						QEventArgs<{0}> qEventArgs = new QEventArgs<{0}>({2});
+						QEventHandler<{0}> qEventHandler = new QEventHandler<{0}>(this, qEventArgs, value);
+						// define (once for the class, best in QObject) a dictionary field - key = value (delegate), value = qEventHandler; to use in the remove method
+						this.InstallEventFilter(qEventHandler);
+					}}
+					remove
+					{{
+							// ...
+					}}
+				}}
+				", paramType, cmm.Name, GetEventTypes(cmm.Name));
+			codeMemberEvent.Attributes = (codeMemberEvent.Attributes & ~MemberAttributes.AccessMask) |
+			                             MemberAttributes.Public;
+			containingType.Members.Add(codeMemberEvent);
+		}
+		if (!cmm.Name.StartsWith("~"))
+		{
+			cmm.Name = "On" + cmm.Name;
+		}
+	}
+
+	private static string GetEventTypes(string methodName)
+	{
+		string eventName = methodName.Substring(0, methodName.IndexOf("Event", StringComparison.Ordinal));
+		switch (eventName)
+		{
+			case "Change":
+				return string.Format(@"new List<QEvent.Type> {{ {0}{1}, {0}{2}, {0}{3}, {0}{4}, 
+																{0}{5}, {0}{6}, {0}{7}, {0}{8}, 
+																{0}{9}, {0}{10}, {0}{11}, {0}{12},
+																{0}{13}, {0}{14}, {0}{15}}}", 
+									 "QEvent.Type.",
+									 "ToolBarChange", "ActivationChange", "EnabledChange", "FontChange", "StyleChange", 
+									 "PaletteChange", "WindowTitleChange", "IconTextChange", "ModifiedChange", "MouseTrackingChange", 
+									 "ParentChange", "WindowStateChange", "LanguageChange", "LocaleChange", "LayoutDirectionChange");
+			case "Action":
+				return string.Format("new List<QEvent.Type> {{ {0}{1}, {0}{2}, {0}{3} }}", "QEvent.Type.",
+				                     eventName + "Added", eventName + "Removed", eventName + "Changed");
+			case "Child":
+				return string.Format("new List<QEvent.Type> {{ {0}{1}, {0}{2}, {0}{3} }}", "QEvent.Type.",
+									 eventName + "Added", eventName + "Polished", eventName + "Removed");
+			case "Tablet":
+				return string.Format("new List<QEvent.Type> {{ {0}{1}, {0}{2}, {0}{3}, {0}{4}, {0}{5} }}", "QEvent.Type.",
+									 eventName + "Move", eventName + "Press", eventName + "Release", eventName + "EnterProximity", eventName + "LeaveProximity");
+			case "Filter":// QInputContext
+				return string.Format("new List<QEvent.Type> {{ {0}{1}, {0}{2}, {0}{3}, {0}{4}, {0}{5}, {0}{6}, {0}{7}, {0}{8} }}", "QEvent.Type.",
+									 "CloseSoftwareInputPanel", "KeyPress", "KeyRelease", "MouseButtonDblClick",
+									 "MouseButtonPress", "MouseButtonRelease", "MouseMove", "RequestSoftwareInputPanel");
+			case "MouseDoubleClick":
+				return string.Format("new List<QEvent.Type> {{ QEvent.Type.MouseButtonDblClick }}");
+			case "MousePress":
+				return string.Format("new List<QEvent.Type> {{ QEvent.Type.MouseButtonPress }}");
+			case "MouseRelease":
+				return string.Format("new List<QEvent.Type> {{ QEvent.Type.MouseButtonRelease }}");
+			case "Send":// QInputContext
+				return string.Format("new List<QEvent.Type> {{ QEvent.Type.InputMethod }}");
+			case "Viewport":
+			case "Post":
+			case "Widget":
+			case "":
+				return "new List<QEvent.Type> ()";
+			case "Custom":
+				return "new List<QEvent.Type> {{ QEvent.Type.User }}";
+			case "SwallowContextMenu":
+				return "new List<QEvent.Type> {{ QEvent.Type.ContextMenu }}";
+			default:
+				return string.Format("new List<QEvent.Type> {{ QEvent.Type.{0} }}", eventName);
 		}
 	}
 }

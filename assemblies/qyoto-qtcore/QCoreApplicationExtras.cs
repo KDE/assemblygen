@@ -12,7 +12,7 @@ namespace Qyoto {
 	class EventReceiver : QObject {
 		public EventReceiver(QObject parent) : base(parent) {}
 		
-		public override bool Event(QEvent e) {
+		public override bool OnEvent(QEvent e) {
 			if (e != null && e.type() == QEvent.Type.User) {
 				ThreadEvent my = e as ThreadEvent;
 				if (e != null) {

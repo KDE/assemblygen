@@ -49,6 +49,7 @@ public unsafe class GeneratorData {
 
         DefaultNamespace = new CodeNamespace(defaultNamespace);
         DefaultNamespace.Imports.Add(new CodeNamespaceImport("System"));
+		DefaultNamespace.Imports.Add(new CodeNamespaceImport("System.Collections.Generic"));
         DefaultNamespace.Imports.Add(new CodeNamespaceImport("System.Runtime.InteropServices"));
         foreach (string import in imports) {
             DefaultNamespace.Imports.Add(new CodeNamespaceImport(import));
@@ -129,7 +130,8 @@ public unsafe class GeneratorData {
         // Define a new namespace.
         nspace = new CodeNamespace(prefix.Replace("::", "."));
         nspace.Imports.Add(new CodeNamespaceImport("System"));
-        nspace.Imports.Add(new CodeNamespaceImport("System.Runtime.InteropServices"));
+		nspace.Imports.Add(new CodeNamespaceImport("System.Collections.Generic"));
+		nspace.Imports.Add(new CodeNamespaceImport("System.Runtime.InteropServices"));
         nspace.Imports.Add(new CodeNamespaceImport(DefaultNamespace.Name));
         foreach (string import in Imports) {
             nspace.Imports.Add(new CodeNamespaceImport(import));
