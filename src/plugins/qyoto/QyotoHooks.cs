@@ -197,7 +197,7 @@ public unsafe class QyotoHooks : IHookProvider {
 
 	private void PostMethodBodyHooks(Smoke* smoke, Smoke.Method* smokeMethod, CodeMemberMethod cmm, CodeTypeDeclaration type)
 	{
-		if (!cmm.Name.EndsWith("Event"))
+		if (!cmm.Name.EndsWith("Event") || (type.Name == "QCoreApplication" && (cmm.Name == "PostEvent" || cmm.Name == "SendEvent")))
 		{
 			return;
 		}
