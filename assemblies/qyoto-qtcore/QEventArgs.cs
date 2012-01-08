@@ -1,15 +1,16 @@
 using System;
+using System.Collections.Generic;
 
 namespace Qyoto
 {
 	public class QEventArgs<T> : EventArgs where T : QEvent
 	{
-		public QEventArgs(QEvent.Type eventType)
+		public QEventArgs(ICollection<QEvent.Type> eventTypes)
 		{
-			this.EventType = eventType;
+			this.EventTypes = eventTypes;
 		}
 
-		public QEvent.Type EventType { get; private set; }
+		public ICollection<QEvent.Type> EventTypes { get; private set; }
 
 		public bool Handled { get; set; }
 

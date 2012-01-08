@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Qyoto
 {
@@ -17,7 +18,7 @@ namespace Qyoto
 
 		public override bool EventFilter(QObject arg1, QEvent arg2)
 		{
-			if (arg1 == sender && arg2.type() == args.EventType)
+			if (arg1 == sender && args.EventTypes.Contains(arg2.type()))
 			{
 				args.Event = (T) arg2;
 				handler(sender, args);
