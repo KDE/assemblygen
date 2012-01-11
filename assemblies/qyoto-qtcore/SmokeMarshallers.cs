@@ -73,13 +73,6 @@ namespace Qyoto {
 		
 		[DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
 		public static extern void AddUIntToQListQRgb(IntPtr ptr, uint i);
-		
-// 		[DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
-// 		public static extern IntPtr ConstructQListWizardButton();
-
-//         [DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-// 		public static extern void AddWizardButtonToQList(IntPtr ptr, int i);
-
 
         [DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr ConstructQHash(int type);
@@ -187,9 +180,6 @@ namespace Qyoto {
 
         [DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
 		public static extern IntPtr InstallListUIntToQListQRgb(GetIntPtr callback);
-
-//         [DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-// 		public static extern void InstallListWizardButtonToQListWizardButton(GetIntPtr callback);
 
         [DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void InstallAddIntPtrToList(SetIntPtr callback);
@@ -310,7 +300,6 @@ namespace Qyoto {
         private static GetIntPtr dListToPointerList = ListToPointerList;
         private static GetIntPtr dListIntToQListInt = ListIntToQListInt;
         private static GetIntPtr dListUIntToQListQRgb = ListUIntToQListQRgb;
-//         private static GetIntPtr dListWizardButtonToQListWizardButton = ListWizardButtonToQListWizardButton;
         private static SetIntPtr dAddIntPtrToList = AddIntPtrToList;
         private static AddInt dAddIntToListInt = AddIntToListInt;
         private static AddUInt dAddUIntToListUInt = AddUIntToListUInt;
@@ -635,7 +624,7 @@ namespace Qyoto {
 															| BindingFlags.DeclaredOnly);
 
 				klass = klass.BaseType;
-			} while (result.proxyCreator == null && klass != typeof(object));
+			} while (result.proxyCreator == null && klass != typeof(object) && klass != null);
 
 //			Debug.Assert(	result.proxyCreator != null, 
 //							"GetSmokeClassData(\"" + result.className + "\") no CreateProxy() found" );
@@ -787,15 +776,6 @@ namespace Qyoto {
 			}
 			return QList;
 		}
-
-/*		public static IntPtr ListWizardButtonToQListWizardButton(IntPtr ptr) {
-			List<QWizard.WizardButton> list = (List<QWizard.WizardButton>) ((GCHandle) ptr).Target;
-			IntPtr QList = ConstructQListWizardButton();
-			foreach (QWizard.WizardButton wb in list) {
-				AddWizardButtonToQList(QList, (int) wb);
-			}
-			return QList;
-		}*/
 		
 		public static IntPtr ListUIntToQListQRgb(IntPtr ptr) {
 			List<uint> il = (List<uint>) ((GCHandle) ptr).Target;
@@ -1180,7 +1160,6 @@ namespace Qyoto {
 			InstallListToPointerList(dListToPointerList);
 			InstallListIntToQListInt(dListIntToQListInt);
 			InstallListUIntToQListQRgb(dListUIntToQListQRgb);
-// 			InstallListWizardButtonToQListWizardButton(dListWizardButtonToQListWizardButton);
 			InstallAddIntPtrToList(dAddIntPtrToList);
 			InstallAddIntToListInt(dAddIntToListInt);
 			InstallAddUIntToListUInt(dAddUIntToListUInt);

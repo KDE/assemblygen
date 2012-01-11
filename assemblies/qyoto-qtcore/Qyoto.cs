@@ -44,7 +44,7 @@ namespace Qyoto
 		QTDB_ALL = QTDB_VERBOSE | QTDB_VIRTUAL | QTDB_GC | QTDB_CALLS | QTDB_TRANSPARENT_PROXY | QTDB_AMBIGUOUS
 	}
 
-	public class QDebug {
+	public partial class QDebug {
 		[DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
 		public static extern void SetDebug(QtDebugChannel debugChannel);
 

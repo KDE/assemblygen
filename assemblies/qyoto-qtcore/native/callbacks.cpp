@@ -59,7 +59,6 @@ SetIntPtrFromCharStar StringBuilderFromQString;
 GetIntPtr StringListToQStringList;
 GetIntPtr ListIntToQListInt;
 GetIntPtr ListUIntToQListQRgb;
-GetIntPtr ListWizardButtonToQListWizardButton;
 AddInt AddIntToListInt;
 AddUInt AddUIntToListUInt;
 AddIntObject AddIntObjectToDictionary;
@@ -173,11 +172,6 @@ Q_DECL_EXPORT void InstallListUIntToQListQRgb(GetIntPtr callback)
 Q_DECL_EXPORT void InstallAddUIntToListUInt(AddUInt callback)
 {
     AddUIntToListUInt = callback;
-}
-
-Q_DECL_EXPORT void InstallListWizardButtonToQListWizardButton(GetIntPtr callback)
-{
-    ListWizardButtonToQListWizardButton = callback;
 }
 
 Q_DECL_EXPORT void InstallGenericPointerGetIntPtr(GetIntPtr callback)

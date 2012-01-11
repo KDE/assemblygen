@@ -79,6 +79,8 @@
 #include <windows.h>
 #endif
 
+GetIntPtr ListWizardButtonToQListWizardButton;
+
 extern "C" {
 
 #if QT_VERSION >= 0x40300
@@ -92,6 +94,12 @@ Q_DECL_EXPORT void AddWizardButtonToQList(void* ptr, int i)
 	QList<QWizard::WizardButton>* list = (QList<QWizard::WizardButton>*) ptr;
 	list->append((QWizard::WizardButton) i);
 }
+
+Q_DECL_EXPORT void InstallListWizardButtonToQListWizardButton(GetIntPtr callback)
+{
+    ListWizardButtonToQListWizardButton = callback;
+}
+
 #endif
 
 }
