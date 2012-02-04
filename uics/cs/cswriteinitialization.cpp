@@ -531,7 +531,7 @@ void WriteInitialization::acceptWidget(DomWidget *node)
 
         if (m_uic->customWidgetsInfo()->extends(className, QLatin1String("QMenuBar"))) {
             if (!m_uic->customWidgetsInfo()->extends(parentClass, QLatin1String("Q3MainWindow")))
-                m_output << m_option.indent << parentWidget << ".SetMenuBar(" << varName <<");\n";
+                m_output << m_option.indent << parentWidget << ".MenuBar = " << varName <<";\n";
         } else if (m_uic->customWidgetsInfo()->extends(className, QLatin1String("QToolBar"))) {
             QString area;
             if (const DomProperty *pstyle = attributes.value(QLatin1String("toolBarArea"))) {
@@ -556,9 +556,9 @@ void WriteInitialization::acceptWidget(DomWidget *node)
 
             m_output << m_option.indent << parentWidget << ".AddDockWidget(" << area << ", " << varName << ");\n";
         } else if (m_uic->customWidgetsInfo()->extends(className, QLatin1String("QStatusBar"))) {
-            m_output << m_option.indent << parentWidget << ".SetStatusBar(" << varName << ");\n";
+            m_output << m_option.indent << parentWidget << ".StatusBar = " << varName << ";\n";
         } else if (className == QLatin1String("QWidget")) {
-            m_output << m_option.indent << parentWidget << ".SetCentralWidget(" << varName << ");\n";
+            m_output << m_option.indent << parentWidget << ".CentralWidget = " << varName << ";\n";
         }
     }
 
