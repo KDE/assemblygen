@@ -18,6 +18,9 @@
 */
 
 using System;
+using System.CodeDom.Compiler;
+using System.IO;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Diagnostics;
 using System.Linq;
@@ -25,6 +28,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.CodeDom;
+using Microsoft.CSharp;
 
 public unsafe delegate void MethodHook(Smoke *smoke, Smoke.Method *smokeMethod, CodeMemberMethod cmm, CodeTypeDeclaration typeDecl);
 
@@ -258,22 +262,24 @@ public unsafe class MethodsGenerator {
 
                 // If the new name clashes with a name of a type declaration, keep the lower-case name.
                 var typesWithSameName = from member in data.GetAccessibleMembers(smokeClass)
-                                        where (   member.Type == MemberTypes.NestedType
-                                               || member.Type == MemberTypes.Property)
-                                               && member.Name == tmp
+                                        where member.Type == MemberTypes.NestedType && member.Name == tmp
                                         select member;
 
-                if (iface != null && typesWithSameName.Count() == 1 && (method->flags & (uint) Smoke.MethodFlags.mf_protected) == 0) {
-                    foreach (var member in typesWithSameName) {
-                        if (member.Type == MemberTypes.Property) {
-                            cmm.PrivateImplementationType = iface;
+                var propertiesWithSameName = (from member in data.GetAccessibleMembers(smokeClass)
+                                              where member.Type == MemberTypes.Property && member.Name == tmp
+                                              select member).ToList();
+
+                if (iface != null && propertiesWithSameName.Count() == 1 && (method->flags & (uint) Smoke.MethodFlags.mf_protected) == 0) {
+                    cmm.PrivateImplementationType = iface;
+                    csName = tmp;
+                } else {
+                    if (propertiesWithSameName.Any()) {
+                        if ((method->flags & (uint) Smoke.MethodFlags.mf_virtual) == 0) {
+                            Debug.Print ("  |--Conflicting names: method/(type or property): {0} in class {1} - keeping original method name", tmp, className);
+                        } else {
                             csName = tmp;
                         }
-                    }
-                } else {
-                    if (typesWithSameName.Count() > 0) {
-                        Debug.Print("  |--Conflicting names: method/(type or property): {0} in class {1} - keeping original method name", tmp, className);
-                    } else if (tmp == csharpClassName) {
+                    } else if (typesWithSameName.Any()) {
                         Debug.Print("  |--Conflicting names: method/classname: {0} in class {1} - keeping original method name", tmp, className);
                     } else {
                         csName = tmp;
@@ -530,5 +536,147 @@ public unsafe class MethodsGenerator {
             containingType.Members.Add(dispose);
         }
         return cmm;
+    }
+
+    public void GenerateProperties(IEnumerable<CodeMemberMethod> setters, IList<CodeMemberMethod> nonSetters)
+    {
+        List<CodeMemberMethod> methods = type.Members.OfType<CodeMemberMethod>().ToList ();
+
+        foreach (CodeMemberMethod setter in setters) {
+            if (!type.Members.Contains(setter)) {
+                continue;
+            }
+            string afterSet = setter.Name.Substring(3);
+            for (int i = nonSetters.Count - 1; i >= 0; i--) {
+                CodeMemberMethod getter = nonSetters[i];
+                if (!type.Members.Contains(getter)) {
+                    continue;
+                }
+                if (string.Compare(getter.Name, afterSet, StringComparison.OrdinalIgnoreCase) == 0 && 
+                    getter.Parameters.Count == 0 && getter.ReturnType.BaseType == setter.Parameters[0].Type.BaseType &&
+                    (getter.Attributes & MemberAttributes.Public) == (setter.Attributes & MemberAttributes.Public) &&
+                    !methods.Any(m => m != getter && string.Compare(getter.Name, m.Name, StringComparison.OrdinalIgnoreCase) == 0)) {
+                    methods.Remove(getter);
+                    if (type.IsInterface) {
+                        CodeSnippetTypeMember property = new CodeSnippetTypeMember();
+                        property.Name = getter.Name;
+                        property.Text = string.Format("        {0} {1} {{ get; set; }}", getter.ReturnType.BaseType, getter.Name);
+                        type.Members.Add (property);
+                        type.Members.Remove(getter);
+                        type.Members.Remove(setter);
+                    } else {
+                        GenerateProperty(getter, setter);
+                    }
+                    goto next;
+                }
+            }
+            CodeTypeMember baseVirtualProperty = GetBaseVirtualProperty(type, afterSet);
+            if (!type.IsInterface && baseVirtualProperty != null) {
+                CodeMemberMethod getter = new CodeMemberMethod { Name = baseVirtualProperty.Name };
+                getter.Statements.Add(new CodeSnippetStatement(string.Format("            return base.{0};", afterSet)));
+                GenerateProperty(getter, setter);
+            }
+        next:
+            ;
+        }
+        foreach (CodeMemberMethod nonSetter in nonSetters) {
+            CodeTypeMember baseVirtualProperty = GetBaseVirtualProperty(type, nonSetter.Name);
+            if (!type.IsInterface && baseVirtualProperty != null) {
+                CodeMemberMethod setter = new CodeMemberMethod { Name = baseVirtualProperty.Name };
+                setter.Statements.Add(new CodeSnippetStatement(string.Format("            base.{0} = value;", nonSetter.Name)));
+                GenerateProperty(nonSetter, setter);
+            }
+        }
+    }
+
+    private void GenerateProperty(CodeMemberMethod getter, CodeMemberMethod setter)
+    {
+        if (type.Members.OfType<CodeSnippetTypeMember>().All(p => string.Compare(getter.Name, p.Name, StringComparison.OrdinalIgnoreCase) != 0) &&
+            type.Members.OfType<CodeMemberProperty>().All(p => string.Compare(getter.Name, p.Name, StringComparison.OrdinalIgnoreCase) != 0)) {
+            CodeMemberProperty property = new CodeMemberProperty();
+            property.Name = getter.Name;
+            property.Type = setter.Parameters[0].Type;
+            property.Attributes = setter.Attributes;
+            property.GetStatements.AddRange(getter.Statements);
+            CodeVariableDeclarationStatement variableStatement = setter.Statements.OfType<CodeVariableDeclarationStatement>().First();
+            CodeArrayCreateExpression arrayExpression = (CodeArrayCreateExpression) variableStatement.InitExpression;
+            CodeArgumentReferenceExpression argExpression = arrayExpression.Initializers.OfType<CodeArgumentReferenceExpression>().First();
+            argExpression.ParameterName = "value";
+            property.SetStatements.AddRange(setter.Statements);
+            type.Members.Add(AddAttributes(getter, setter, property));
+            if (type.Members.Contains(getter)) {
+                type.Members.Remove(getter);
+            }
+            if (type.Members.Contains(setter)) {
+                type.Members.Remove(setter);                
+            }
+        }
+    }
+
+    private static CodeSnippetTypeMember AddAttributes(CodeTypeMember getter, CodeTypeMember setter, CodeTypeMember property)
+    {
+        CodeSnippetTypeMember propertySnippet = new CodeSnippetTypeMember();
+        AddAttributes(getter, property, propertySnippet, @"{(\s*)get", @"{{$1{0}$1get");
+        AddAttributes(setter, property, propertySnippet, @"}(\s*)set", @"}}$1{0}$1set");
+        return propertySnippet;
+    }
+
+    private static void AddAttributes(CodeTypeMember method, CodeTypeMember property, CodeSnippetTypeMember propertySnippet, string findRegex, string replaceRegex)
+    {
+        if (method.CustomAttributes.Count > 0) {
+            using (CodeDomProvider provider = new CSharpCodeProvider()) {
+                using (StringWriter writer = new StringWriter()) {
+                    string propertyCode;
+                    if (string.IsNullOrEmpty(propertySnippet.Name)) {
+                        provider.GenerateCodeFromMember(property, writer, null);
+                        propertyCode = writer.ToString();
+                    } else {
+                        propertyCode = propertySnippet.Text;
+                    }
+                    writer.GetStringBuilder().Length = 0;
+                    provider.GenerateCodeFromMember(method, writer, null);
+                    string getterCode = writer.ToString();
+                    string attribute = string.Format(replaceRegex, Regex.Match(getterCode, @"(\[.+\])").Groups[1].Value);
+                    string propertyWithAttribute = Regex.Replace(propertyCode, findRegex, attribute);
+                    propertySnippet.Name = property.Name;
+                    propertySnippet.Attributes = property.Attributes;
+                    propertySnippet.Text = propertyWithAttribute;
+                }
+            }
+        }
+    }
+
+    private CodeTypeMember GetBaseVirtualProperty (CodeTypeDeclaration containingType, string propertyName)
+    {
+        return (from CodeTypeReference baseType in containingType.BaseTypes
+                where data.CSharpTypeMap.ContainsKey(baseType.BaseType)
+                select GetBaseVirtualProperty(data.CSharpTypeMap [baseType.BaseType], propertyName)).FirstOrDefault() ??
+               (from CodeTypeReference baseType in containingType.BaseTypes
+                let @interface = data.InterfaceTypeMap.Values.FirstOrDefault(t => t.Name == baseType.BaseType)
+                where @interface != null
+                select GetBaseVirtualProperty(@interface, propertyName)).FirstOrDefault() ??
+                (containingType != type ?
+                (containingType.IsInterface ?
+                (from CodeTypeMember prop in containingType.Members
+                 where (prop is CodeSnippetTypeMember || prop is CodeMemberProperty) &&
+                 string.Compare(prop.Name, propertyName, StringComparison.OrdinalIgnoreCase) == 0
+                 select prop).FirstOrDefault() :
+                (from CodeTypeMember prop in containingType.Members
+                 where (prop is CodeSnippetTypeMember || prop is CodeMemberProperty) && 
+                 string.Compare(prop.Name, propertyName, StringComparison.OrdinalIgnoreCase) == 0 && 
+                 (prop.Attributes & MemberAttributes.Final) == 0
+                 select prop).FirstOrDefault()) : null);
+    }
+
+    public static void DistributeMethod(CodeMemberMethod method, ICollection<CodeMemberMethod> setters, ICollection<CodeMemberMethod> nonSetters)
+    {
+        if (method != null) {
+            if (method.Name.StartsWith("Set") && method.Parameters.Count == 1 &&
+                method.ReturnType.BaseType == "System.Void") {
+                setters.Add(method);
+            } else {
+                nonSetters.Add(method);
+            }
+        }
     }
 }

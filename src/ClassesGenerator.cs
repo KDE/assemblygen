@@ -18,6 +18,7 @@
 */
 
 using System;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Reflection;
 using System.Collections;
@@ -256,7 +257,9 @@ public unsafe class ClassesGenerator {
         GenerateInternalImplementationMethods();
     }
 
-    void GenerateInheritedMethods(Smoke.Class *klass, MethodsGenerator methgen, AttributeGenerator attrgen, List<Smoke.ModuleIndex> alreadyImplemented) {
+    void GenerateInheritedMethods(Smoke.Class *klass, MethodsGenerator methgen, AttributeGenerator attrgen, List<Smoke.ModuleIndex> alreadyImplemented, 
+                                  ICollection<CodeMemberMethod> setters, ICollection<CodeMemberMethod> nonSetters)
+    {
         // Contains inherited methods that have to be implemented by the current class.
         // We use our custom comparer, so we don't end up with the same method multiple times.
         IDictionary<Smoke.ModuleIndex, string> implementMethods =
@@ -293,7 +296,8 @@ public unsafe class ClassesGenerator {
                 continue;
             }
 
-            methgen.GenerateMethod(pair.Key.smoke, meth, pair.Value, translator.CppToCSharp(ByteArrayManager.GetString(ifaceKlass->className)));
+            CodeMemberMethod method = methgen.GenerateMethod(pair.Key.smoke, meth, pair.Value, translator.CppToCSharp(ByteArrayManager.GetString(ifaceKlass->className)));
+            MethodsGenerator.DistributeMethod(method, setters, nonSetters);
         }
     }
 
@@ -304,6 +308,8 @@ public unsafe class ClassesGenerator {
                 continue;
             }
             CodeTypeDeclaration type = data.SmokeTypeMap[(IntPtr) klass];
+            List<CodeMemberMethod> setters = new List<CodeMemberMethod>();
+            List<CodeMemberMethod> nonSetters = new List<CodeMemberMethod>();
 
             CodeTypeDeclaration implType;
             if (!data.InternalTypeMap.TryGetValue(type, out implType)) {
@@ -314,8 +320,9 @@ public unsafe class ClassesGenerator {
             methgen.InternalImplementation = true;
 
             foreach (KeyValuePair<Smoke.ModuleIndex, string> pair in Util.GetAbstractMethods(data.Smoke, i)) {
-                methgen.GenerateMethod(pair.Key.smoke, pair.Key.index, pair.Value);
+                MethodsGenerator.DistributeMethod(methgen.GenerateMethod(pair.Key.smoke, pair.Key.index, pair.Value), setters, nonSetters);
             }
+            methgen.GenerateProperties(setters, nonSetters);
         }
     }
 
@@ -329,6 +336,8 @@ public unsafe class ClassesGenerator {
         AttributeGenerator attrgen = null;
         CodeTypeDeclaration type = null;
         List<Smoke.ModuleIndex> alreadyImplemented = new List<Smoke.ModuleIndex>();
+        List<CodeMemberMethod> setters = new List<CodeMemberMethod> ();
+        List<CodeMemberMethod> nonSetters = new List<CodeMemberMethod>();
 
         for (short i = 1; i < data.Smoke->numMethodMaps; i++) {
             Smoke.MethodMap *map = data.Smoke->methodMaps + i;
@@ -337,7 +346,7 @@ public unsafe class ClassesGenerator {
                 // we encountered a new class
                 if (attrgen != null) {
                     // generate inherited methods
-                    GenerateInheritedMethods(klass, methgen, attrgen, alreadyImplemented);
+                    GenerateInheritedMethods(klass, methgen, attrgen, alreadyImplemented, setters, nonSetters);
 
                     // generate all scheduled attributes
                     attrgen.Run();
@@ -345,6 +354,7 @@ public unsafe class ClassesGenerator {
                     if (PostMembersHooks != null) {
                         PostMembersHooks(data.Smoke, klass, type);
                     }
+                    methgen.GenerateProperties(setters, nonSetters);
                 }
 
                 currentClassId = map->classId;
@@ -352,6 +362,8 @@ public unsafe class ClassesGenerator {
                 type = data.SmokeTypeMap[(IntPtr) klass];
 
                 alreadyImplemented.Clear();
+                setters.Clear();
+                nonSetters.Clear();
                 attrgen = new AttributeGenerator(data, translator, type);
                 methgen = new MethodsGenerator(data, translator, type, klass);
             }
@@ -374,7 +386,7 @@ public unsafe class ClassesGenerator {
                     continue;
                 }
 
-                methgen.GenerateMethod(map->method, mungedName);
+                MethodsGenerator.DistributeMethod(methgen.GenerateMethod(map->method, mungedName), setters, nonSetters);
                 alreadyImplemented.Add(new Smoke.ModuleIndex(data.Smoke, map->method));
             } else if (map->method < 0) {
                 for (short *overload = data.Smoke->ambiguousMethodList + (-map->method); *overload > 0; overload++) {
@@ -401,7 +413,7 @@ public unsafe class ClassesGenerator {
                             nextDiffersByConst = true;
                     }
 
-                    methgen.GenerateMethod(*overload, mungedName);
+                    MethodsGenerator.DistributeMethod(methgen.GenerateMethod(*overload, mungedName), setters, nonSetters);
                     alreadyImplemented.Add(new Smoke.ModuleIndex(data.Smoke, *overload));
                     if (nextDiffersByConst)
                         overload++;
@@ -412,12 +424,12 @@ public unsafe class ClassesGenerator {
         // Generate the last scheduled attributes
         attrgen.Run();
         // Generate remaining inherited methods
-        GenerateInheritedMethods(klass, methgen, attrgen, alreadyImplemented);
+        GenerateInheritedMethods(klass, methgen, attrgen, alreadyImplemented, setters, nonSetters);
 
         if (PostMembersHooks != null) {
             PostMembersHooks(data.Smoke, klass, type);
         }
-
+        methgen.GenerateProperties(setters, nonSetters);
         AddMissingOperators();
     }
 

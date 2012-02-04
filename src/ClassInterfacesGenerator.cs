@@ -17,7 +17,6 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-using System;
 using System.CodeDom;
 using System.Collections.Generic;
 
@@ -115,6 +114,9 @@ public unsafe class ClassInterfacesGenerator {
             mg = new MethodsGenerator(data, translator, ifaceDecl, klass);
             ag = new AttributeGenerator(data, translator, ifaceDecl);
 
+            List<CodeMemberMethod> setters = new List<CodeMemberMethod>();
+            List<CodeMemberMethod> nonSetters = new List<CodeMemberMethod>();
+
             ///TODO: replace this algorithm, it's highly inefficient
             for (short i = 0; i <= data.Smoke->numMethods && data.Smoke->methods[i].classId <= idx; i++) {
                 Smoke.Method *meth = data.Smoke->methods + i;
@@ -141,8 +143,11 @@ public unsafe class ClassInterfacesGenerator {
                 CodeMemberMethod cmm = mg.GenerateBasicMethodDefinition(data.Smoke, meth);
                 if (cmm != null && !ifaceDecl.HasMethod(cmm)) {
                     ifaceDecl.Members.Add(cmm);
+                    MethodsGenerator.DistributeMethod(cmm, setters, nonSetters);
                 }
             }
+
+            mg.GenerateProperties(setters, nonSetters);
 
             foreach (CodeMemberProperty prop in ag.GenerateBasicAttributeDefinitions()) {
                 ifaceDecl.Members.Add(prop);
