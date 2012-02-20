@@ -223,8 +223,14 @@ public unsafe class MethodsGenerator {
         // translate arguments
         for (short* typeIndex = smoke->argumentList + method->args; *typeIndex > 0; typeIndex++) {
             try {
+                string arg;
+                if (isOperator) {
+                    arg = "arg" + count++;
+                } else {
+                    arg = ByteArrayManager.GetString(smoke->argumentNames[method->argNames + count++ - 1]);                  
+                }
                 CodeParameterDeclarationExpression exp =
-                    new CodeParameterDeclarationExpression(translator.CppToCSharp(smoke->types + *typeIndex, out isRef), "arg" + count++);
+                    new CodeParameterDeclarationExpression(translator.CppToCSharp(smoke->types + *typeIndex, out isRef), arg);
                 if (isRef) {
                     exp.Direction = FieldDirection.Ref;
                 }
@@ -504,7 +510,13 @@ public unsafe class MethodsGenerator {
                     continue;
                 }
 
-                cmm.Statements.Add(new CodeAssignStatement(new CodeVariableReferenceExpression("arg" + i),
+                string arg;
+                if (cmm.Name.StartsWith("operator")) {
+                    arg = "arg" + i;
+                } else {
+                    arg = ByteArrayManager.GetString(smoke->argumentNames[method->argNames + i - 1]);
+                }
+                cmm.Statements.Add(new CodeAssignStatement(new CodeVariableReferenceExpression(arg),
                     new CodeCastExpression(param.Type.BaseType,
                         new CodeArrayIndexerExpression(
                             new CodeVariableReferenceExpression("smokeArgs"), new CodePrimitiveExpression(i*2 - 1)

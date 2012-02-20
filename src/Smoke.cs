@@ -110,6 +110,7 @@ public unsafe partial struct Smoke {
         public short classId;      // Index into classes
         public short name;     // Index into methodNames; real name
         public short args;     // Index into argumentList
+        public short argNames;     // Index into argumentNames
         public byte numArgs;  // Number of arguments
         public ushort flags;   // MethodFlags (const/static/etc...)
         public short ret;      // Index into types for the return type
@@ -215,6 +216,11 @@ public unsafe partial struct Smoke {
      * Method.args = index into this array.
      */
     public short *argumentList;
+    /**
+     * Groups of strings, describing the names of arguments for a method.
+     * Method.argNames = index into this array.
+     */
+    public byte **argumentNames;
     /**
      * Groups of method prototypes with the same number of arguments, but different types.
      * Used to resolve overloading.
