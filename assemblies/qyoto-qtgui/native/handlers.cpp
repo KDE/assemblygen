@@ -305,6 +305,7 @@ TypeHandler qtgui_handlers[] = {
     { "QList<QModelIndex>&", marshall_QModelIndexList },
     { "QList<QPixmap>", marshall_QPixmapList },
     { "QList<QPolygonF>", marshall_QPolygonFList },
+    { "QList<QPrinterInfo>", marshall_QPrinterInfoList },
     { "QList<QStandardItem*>", marshall_QStandardItemList },
     { "QList<QStandardItem*>&", marshall_QStandardItemList },
     { "QList<QTableWidgetItem*>", marshall_QTableWidgetItemList },
