@@ -9,11 +9,11 @@ namespace Qyoto {
 			m_stream = stream;
 			if (!open) return;
 			if (stream.CanRead && stream.CanWrite)
-				Open((uint) OpenModeFlag.ReadWrite);
+				Open(OpenModeFlag.ReadWrite);
 			else if (stream.CanRead)
-				Open((uint) OpenModeFlag.ReadOnly);
+				Open(OpenModeFlag.ReadOnly);
 			else if (stream.CanWrite)
-				Open((uint) OpenModeFlag.WriteOnly);
+				Open(OpenModeFlag.WriteOnly);
 		}
 
 		public StreamWrapper(Stream stream) : this(stream, true) {}
