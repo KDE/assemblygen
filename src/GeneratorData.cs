@@ -18,13 +18,11 @@
 */
 
 using System;
+using System.IO;
 using System.Reflection;
 using System.CodeDom;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Diagnostics;
 
 public unsafe class GeneratorData {
 
@@ -35,6 +33,7 @@ public unsafe class GeneratorData {
     public string GlobalSpaceClassName = "Global";
     public List<Assembly> References;
     public List<string> Imports;
+    public IDictionary<string, string[]> ArgumentNames = new Dictionary<string, string[]>();
 
     public GeneratorData(Smoke* smoke, string defaultNamespace, List<Assembly> references)
         : this(smoke, defaultNamespace, new List<string>(), references, new CodeCompileUnit()) {}
@@ -44,6 +43,10 @@ public unsafe class GeneratorData {
 
     public GeneratorData(Smoke* smoke, string defaultNamespace, List<string> imports, List<Assembly> references, CodeCompileUnit unit) {
         Smoke = smoke;
+        string argNamesFile = ByteArrayManager.GetString(Smoke->argNamesFile);
+        if (File.Exists(argNamesFile)) {
+            ArgumentNames[argNamesFile] = File.ReadAllLines(argNamesFile);
+        }
         CompileUnit = unit;
         Imports = imports;
 

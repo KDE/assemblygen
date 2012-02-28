@@ -220,7 +220,7 @@ public unsafe partial struct Smoke {
      * Groups of strings, describing the names of arguments for a method.
      * Method.argNames = index into this array.
      */
-    public byte **argumentNames;
+    public byte *argNamesFile;
     /**
      * Groups of method prototypes with the same number of arguments, but different types.
      * Used to resolve overloading.
