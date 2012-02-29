@@ -18,12 +18,13 @@
 */
 
 using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Collections;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.CodeDom;
 
@@ -116,9 +117,13 @@ public unsafe class QyotoHooks : IHookProvider {
 
                 ifaceDecl.BaseTypes.Add(new CodeTypeReference(parentInterface));
             }
-
+            OrderedDictionary signalImplementations = new OrderedDictionary ();
+            OrderedDictionary signalParamNames = new OrderedDictionary ();
             GetSignals(smoke, klass, delegate(string signature, string name, string typeName, IntPtr metaMethod) {
-                CodeMemberMethod signal = new CodeMemberMethod();
+                CodeMemberEvent signal = new CodeMemberEvent();
+                signal.Type = new CodeTypeReference(typeof(Action));
+                StringBuilder fullNameBuilder = new StringBuilder(signal.Type.BaseType);
+                signal.Attributes = MemberAttributes.Abstract;
 
                 // capitalize the first letter
                 StringBuilder builder = new StringBuilder(name);
@@ -127,21 +132,13 @@ public unsafe class QyotoHooks : IHookProvider {
 
                 signal.Name = tmp;
                 bool isRef;
-                try {
-                    if (typeName == string.Empty)
-                        signal.ReturnType = new CodeTypeReference(typeof(void));
-                    else
-                        signal.ReturnType = Translator.CppToCSharp(typeName, out isRef);
-                } catch (NotSupportedException) {
-                    Debug.Print("  |--Won't wrap signal {0}::{1}", className, signature);
-                    return;
-                }
 
                 CodeAttributeDeclaration attr = new CodeAttributeDeclaration("Q_SIGNAL",
                     new CodeAttributeArgument(new CodePrimitiveExpression(signature)));
                 signal.CustomAttributes.Add(attr);
 
                 int argNum = 1;
+                List<string> paramNames = new List<string>(argNum);
                 GetMetaMethodParameters(metaMethod, delegate(string paramType, string paramName) {
                     if (paramName == string.Empty) {
                         paramName = "arg" + argNum.ToString();
@@ -174,14 +171,65 @@ public unsafe class QyotoHooks : IHookProvider {
                     if (isRef) {
                         param.Direction = FieldDirection.Ref;
                     }
-
-                    signal.Parameters.Add(param);
+                    paramNames.Add(paramName);
+                    signal.Type.TypeArguments.Add(param.Type);
+                    if (argNum == 2) {
+                        fullNameBuilder.Append ('<');
+                    }
+                    fullNameBuilder.Append (param.Type.BaseType);
+                    fullNameBuilder.Append (',');
                 });
-
+                signalParamNames.Add(signal, paramNames);
+                CodeMemberEvent existing = ifaceDecl.Members.Cast<CodeMemberEvent>().FirstOrDefault(m => m.Name == signal.Name);
+                if (existing != null) {
+                    CodeMemberEvent signalToUse = paramNames.Count == 0 ? existing : signal;
+                    string suffix = ((IEnumerable<string>) signalParamNames[signalToUse]).Last();
+                    if (suffix.StartsWith("arg") && suffix.Length > 3 && char.IsDigit(suffix[3])) {
+                        string lastType = signalToUse.Type.TypeArguments.Cast<CodeTypeReference>().Last().BaseType;
+                        suffix = lastType.Substring(lastType.LastIndexOf('.') + 1);
+                    } else {
+                        StringBuilder lastParamBuilder = new StringBuilder(suffix);
+                        lastParamBuilder[0] = char.ToUpper(lastParamBuilder[0]);
+                        suffix = lastParamBuilder.ToString();
+                    }
+                    signalToUse.Name += suffix;
+                    if (signalImplementations.Contains(signalToUse)) {
+                        CodeSnippetTypeMember implementation = (CodeSnippetTypeMember) signalImplementations[signalToUse];
+                        implementation.Text = implementation.Text.Replace(implementation.Name, implementation.Name += suffix);
+                    }
+                }
                 ifaceDecl.Members.Add(signal);
+                CodeSnippetTypeMember signalImplementation = new CodeSnippetTypeMember();
+                signalImplementation.Name = signal.Name;
+                if (fullNameBuilder[fullNameBuilder.Length - 1] == ',') {
+                    fullNameBuilder[fullNameBuilder.Length - 1] = '>';
+                }
+                signalImplementation.Text = string.Format(@"
+        public event {0} {1}
+		{{
+			add
+			{{
+                QObject.Connect(this, Qt.SIGNAL(""{2}""), (QObject) value.Target, Qt.SLOT(value.Method.Name + ""{3}""));
+			}}
+			remove
+			{{
+                QObject.Disconnect(this, Qt.SIGNAL(""{2}""), (QObject) value.Target, Qt.SLOT(value.Method.Name + ""{3}""));
+			}}
+		}}", fullNameBuilder, signal.Name, signature, signature.Substring(signature.IndexOf('(')));
+                signalImplementations.Add(signal, signalImplementation);
             });
 
             typeCollection.Add(ifaceDecl);
+            type.BaseTypes.Add(ifaceDecl.Name);
+            foreach (DictionaryEntry dictionaryEntry in signalImplementations) {
+                CodeTypeMember signalImplementation = (CodeTypeMember) dictionaryEntry.Value;
+                foreach (CodeTypeMember current in from CodeTypeMember member in type.Members
+                                                   where member.Name == signalImplementation.Name
+                                                   select member) {
+                    current.Name = "On" + current.Name;
+                }
+                type.Members.Add(signalImplementation);
+            }
         }
     }
 
@@ -220,28 +268,29 @@ public unsafe class QyotoHooks : IHookProvider {
 			CodeSnippetTypeMember codeMemberEvent = new CodeSnippetTypeMember();
 			codeMemberEvent.Name = cmm.Name;
 			codeMemberEvent.Text = string.Format(@"
-				public event EventHandler<QEventArgs<{0}>> {1}
+		public event EventHandler<QEventArgs<{0}>> {1}
+		{{
+			add
+			{{
+				QEventArgs<{0}> qEventArgs = new QEventArgs<{0}>({2});
+				QEventHandler<{0}> qEventHandler = new QEventHandler<{0}>(this, qEventArgs, value);
+				eventFilters.Add(qEventHandler);
+				this.InstallEventFilter(qEventHandler);
+			}}
+			remove
+			{{
+				for (int i = eventFilters.Count - 1; i >= 0; i--)
 				{{
-					add
+					QEventHandler eventFilter = eventFilters[i];
+					if (eventFilter.Handler == value)
 					{{
-						QEventArgs<{0}> qEventArgs = new QEventArgs<{0}>({2});
-						QEventHandler<{0}> qEventHandler = new QEventHandler<{0}>(this, qEventArgs, value);
-						eventFilters.Add(qEventHandler);
-						this.InstallEventFilter(qEventHandler);
-					}}
-					remove
-					{{
-						for (int i = eventFilters.Count - 1; i >= 0; i--)
-						{{
-							QEventHandler eventFilter = eventFilters[i];
-							if (eventFilter.Handler == value)
-							{{
-								this.RemoveEventFilter(eventFilter);
-								eventFilters.RemoveAt(i);	
-							}}
-						}}
+						this.RemoveEventFilter(eventFilter);
+						eventFilters.RemoveAt(i);
+                        break;
 					}}
 				}}
+			}}
+		}}
 				", paramType, cmm.Name, GetEventTypes(cmm.Name));
 			codeMemberEvent.Attributes = (codeMemberEvent.Attributes & ~MemberAttributes.AccessMask) |
 										 MemberAttributes.Public;
