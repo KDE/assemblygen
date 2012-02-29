@@ -221,10 +221,17 @@ public unsafe class MethodsGenerator {
         }
 
         // translate arguments
+        string[] methodArgs = GetMethodArgs(smoke, method);
         for (short* typeIndex = smoke->argumentList + method->args; *typeIndex > 0; typeIndex++) {
             try {
+                string arg;
+                if (isOperator || methodArgs == null) {
+                    arg = "arg" + count++;
+                } else {
+                    arg = methodArgs[count++ - 1];
+                }
                 CodeParameterDeclarationExpression exp =
-                    new CodeParameterDeclarationExpression(translator.CppToCSharp(smoke->types + *typeIndex, out isRef), "arg" + count++);
+                    new CodeParameterDeclarationExpression(translator.CppToCSharp(smoke->types + *typeIndex, out isRef), arg);
                 if (isRef) {
                     exp.Direction = FieldDirection.Ref;
                 }
@@ -498,13 +505,20 @@ public unsafe class MethodsGenerator {
             }
 
             int i = 0;
+            string[] methodArgs = GetMethodArgs(smoke, method);
             foreach (CodeParameterDeclarationExpression param in cmm.Parameters) {
                 ++i;
                 if (param.Direction != FieldDirection.Ref) {
                     continue;
                 }
 
-                cmm.Statements.Add(new CodeAssignStatement(new CodeVariableReferenceExpression("arg" + i),
+                string arg;
+                if (cmm.Name.StartsWith("operator") || methodArgs == null) {
+                    arg = "arg" + i;
+                } else {
+                    arg = methodArgs[i - 1];
+                }
+                cmm.Statements.Add(new CodeAssignStatement(new CodeVariableReferenceExpression(arg),
                     new CodeCastExpression(param.Type.BaseType,
                         new CodeArrayIndexerExpression(
                             new CodeVariableReferenceExpression("smokeArgs"), new CodePrimitiveExpression(i*2 - 1)
@@ -536,6 +550,20 @@ public unsafe class MethodsGenerator {
             containingType.Members.Add(dispose);
         }
         return cmm;
+    }
+
+    private string[] GetMethodArgs(Smoke* smoke, Smoke.Method* method)
+    {
+        string argNamesFile = ByteArrayManager.GetString(smoke->argNamesFile);
+        if (data.ArgumentNames.ContainsKey(ByteArrayManager.GetString(smoke->argNamesFile))) {
+            return data.ArgumentNames[argNamesFile][method->argNames].Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        }
+        if (File.Exists(argNamesFile)) {
+            string[] argNames = File.ReadAllLines(argNamesFile);
+            data.ArgumentNames[argNamesFile] = argNames;
+            return argNames[method->argNames].Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        }
+        return null;
     }
 
     public void GenerateProperties(IEnumerable<CodeMemberMethod> setters, IList<CodeMemberMethod> nonSetters)

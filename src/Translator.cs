@@ -165,6 +165,12 @@ public unsafe class Translator {
         } else if (typeId == Smoke.TypeId.t_int) {
             typeRef = new CodeTypeReference(typeof(int));
         } else if (typeId == Smoke.TypeId.t_uint) {
+            string typeName = ByteArrayManager.GetString (type->name);
+            if (typeName.StartsWith("QFlags<") &&
+                // HACK: qdrawutil.h says, DrawingHint is for internal use; nonetheless, SMOKE generates an overload using it; ignoring
+                typeName != "QFlags<QDrawBorderPixmap::DrawingHint>") {
+                return CppToCSharp (typeName, out isRef);
+            }
             typeRef = new CodeTypeReference(typeof(uint));
         } else if (typeId == Smoke.TypeId.t_long) {
             typeRef = new CodeTypeReference("NativeLong");
@@ -206,6 +212,11 @@ public unsafe class Translator {
         }
         int pointerDepth = match.Groups[5].Value.Length;
         bool isCppRef = match.Groups[6].Value != string.Empty;
+
+        if (name == "QFlags") {
+            name = templateArgument;
+            templateArgument = string.Empty;
+        }
 
         // look up the translations in the translation tables above
         string partialTypeStr;

@@ -162,8 +162,9 @@ public unsafe class QyotoHooks : IHookProvider {
                                 } else {
                                     paramTypeRef = Translator.CppToCSharp(paramType, out isRef);
                                 }
+                            } else {
+                                paramTypeRef = Translator.CppToCSharp (paramType, out isRef);                                
                             }
-                            paramTypeRef = Translator.CppToCSharp(paramType, out isRef);
                         }
                         param = new CodeParameterDeclarationExpression(paramTypeRef, paramName);
                     } catch (NotSupportedException) {
