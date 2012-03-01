@@ -118,6 +118,16 @@ namespace {
 //        str << indent << "ScriptContext scriptContext;\n";
 //        str << indent << "List<QWidget> childWidgets = new List<QWidget>();\n";
     }
+
+    QString getItemRole(DomLayoutItem* node) {
+        if (node->attributeColSpan() == 2) {
+            return "QFormLayout.ItemRole.SpanningRole";
+        }
+        if (node->attributeColumn() == 0) {
+            return "QFormLayout.ItemRole.LabelRole";
+        }
+        return "QFormLayout.ItemRole.FieldRole";
+    }
 }
 
 namespace CS {
@@ -763,24 +773,22 @@ void WriteInitialization::acceptLayoutItem(DomLayoutItem *node)
     QString method = QLatin1String("AddItem");
     switch (node->kind()) {
         case DomLayoutItem::Widget:
+            if (layout->attributeClass() == QLatin1String("QFormLayout")) {
+                method = QLatin1String("SetWidget");
+                m_output << "\n" << m_option.indent << layoutName << "." << method << "(" << node->attributeRow() << ", "
+                         << getItemRole(node) << ", " << varName << opt << ");\n\n";
+                return;
+            }
             method = QLatin1String("AddWidget");
             break;
         case DomLayoutItem::Layout:
             if (layout->attributeClass() == QLatin1String("QFormLayout")) {
                 method = QLatin1String("SetLayout");
-                QString itemRole;
-                if (node->attributeRowSpan() == 2) {
-                    itemRole = "QFormLayout.ItemRole.SpanningRole";
-                } else if (node->attributeColumn() == 0) {
-                    itemRole = "QFormLayout.ItemRole.LabelRole";
-                } else {
-                    itemRole = "QFormLayout.ItemRole.FieldRole";
-                }
-                m_output << "\n" << m_option.indent << layoutName << "." << method << "(" << node->attributeRow() << ", " << itemRole << ", " << varName << opt << ");\n\n";
+                m_output << "\n" << m_option.indent << layoutName << "." << method << "(" << node->attributeRow() << ", "
+                         << getItemRole(node) << ", " << varName << opt << ");\n\n";
                 return;
-            } else {
-                method = QLatin1String("AddLayout");
             }
+            method = QLatin1String("AddLayout");
             break;
         case DomLayoutItem::Spacer:
             method = QLatin1String("AddItem");
