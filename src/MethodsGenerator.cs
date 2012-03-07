@@ -654,16 +654,9 @@ public unsafe class MethodsGenerator {
         if (method.CustomAttributes.Count > 0) {
             using (CodeDomProvider provider = new CSharpCodeProvider()) {
                 using (StringWriter writer = new StringWriter()) {
-                    string propertyCode;
-                    if (string.IsNullOrEmpty(propertySnippet.Name)) {
-                        provider.GenerateCodeFromMember(property, writer, null);
-                        propertyCode = writer.ToString();
-                    } else {
-                        propertyCode = propertySnippet.Text;
-                    }
+                    string propertyCode = string.IsNullOrEmpty(propertySnippet.Name) ? GetMemberCode(property, provider, writer) : propertySnippet.Text;
                     writer.GetStringBuilder().Length = 0;
-                    provider.GenerateCodeFromMember(method, writer, null);
-                    string getterCode = writer.ToString();
+                    string getterCode = GetMemberCode(method, provider, writer);
                     string attribute = string.Format(replaceRegex, Regex.Match(getterCode, @"(\[.+\])").Groups[1].Value);
                     string propertyWithAttribute = Regex.Replace(propertyCode, findRegex, attribute);
                     propertySnippet.Name = property.Name;
@@ -672,6 +665,18 @@ public unsafe class MethodsGenerator {
                 }
             }
         }
+    }
+
+    private static string GetMemberCode(CodeTypeMember member, CodeDomProvider provider, TextWriter writer) {
+        CodeTypeDeclaration dummyType = new CodeTypeDeclaration();
+        dummyType.Members.Add(member);
+        provider.GenerateCodeFromType(dummyType, writer, null);
+        string propertyCode = writer.ToString();
+        StringBuilder propertyCodeBuilder = new StringBuilder(propertyCode);
+        propertyCodeBuilder.Remove(0, propertyCode.IndexOf('{') + 1);
+        propertyCodeBuilder.Length -= propertyCode.Length - propertyCode.LastIndexOf('}');
+        propertyCode = propertyCodeBuilder.ToString();
+        return propertyCode;
     }
 
     private CodeTypeMember GetBaseVirtualProperty (CodeTypeDeclaration containingType, string propertyName)
