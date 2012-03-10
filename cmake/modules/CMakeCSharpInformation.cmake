@@ -126,7 +126,7 @@ function(csharp_add_executable target)
     endif (NOT IS_ABSOLUTE "${outdir}")
 
     file(RELATIVE_PATH relative_path "${CMAKE_BINARY_DIR}" "${outdir}/${target}.exe")
-    file(TO_NATIVE_PATH "${outdir}/${target}" native_target)
+    file(TO_CMAKE_PATH "${outdir}/${target}" native_target)
     
     # inlined - this doesn't work as a macro :(
     foreach(file ${sources})
@@ -226,7 +226,7 @@ function(csharp_add_library target)
     endif (NOT IS_ABSOLUTE "${outdir}")
 
     file(RELATIVE_PATH relative_path "${CMAKE_BINARY_DIR}" "${outdir}/${target}.dll")
-    file(TO_NATIVE_PATH "${outdir}/${target}" native_target)
+    file(TO_CMAKE_PATH "${outdir}/${target}" native_target)
     
     # inlined - this doesn't work as a macro :(
     foreach(file ${sources})

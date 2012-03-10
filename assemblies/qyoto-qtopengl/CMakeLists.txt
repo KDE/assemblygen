@@ -6,7 +6,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtopengl.dll
                    COMMAND ${MONO_EXECUTABLE} ${LIBRARY_OUTPUT_PATH}/assemblygen.exe
                             -unsafe -out:qyoto-qtopengl.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll
                             -plugins:QyotoGenerator.dll
-                            -code-file:qyoto-qtopengl.cs "-keyfile:${KEYFILE}"
+                            -code-file:qyoto-qtopengl.cs \"-keyfile:${KEYFILE}\"
                             ${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtopengl${CMAKE_SHARED_LIBRARY_SUFFIX}
                             ${qyoto_qtopengl_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}

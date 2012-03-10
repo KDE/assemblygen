@@ -20,7 +20,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtgui.dll
                    COMMAND ${MONO_EXECUTABLE} ${LIBRARY_OUTPUT_PATH}/assemblygen.exe
                             -unsafe -out:qyoto-qtgui.dll -r:qyoto-qtcore.dll
                             -plugins:QyotoGenerator.dll
-                            -code-file:qyoto-qtgui.cs "-keyfile:${KEYFILE}"
+                            -code-file:qyoto-qtgui.cs \"-keyfile:${KEYFILE}\"
                             ${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtgui${CMAKE_SHARED_LIBRARY_SUFFIX}
                             ${qyoto_qtgui_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}

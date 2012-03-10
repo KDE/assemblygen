@@ -9,7 +9,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/kimono-kio.dll
                             -unsafe -out:kimono-kio.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:qyoto-qtdbus.dll -r:qyoto-qtnetwork.dll -r:qyoto-qtxml.dll
                                                         -r:kimono-kdecore.dll -r:kimono-kdeui.dll -r:kimono-solid.dll
                             -namespace:Kimono -import:Qyoto -plugins:QyotoGenerator.dll,KimonoGenerator.dll
-                            -code-file:kimono-kio.cs "-keyfile:${KEYFILE}"
+                            -code-file:kimono-kio.cs \"-keyfile:${KEYFILE}\"
                             ${CMAKE_SHARED_LIBRARY_PREFIX}smokekio.so
                             ${kimono_kio_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
