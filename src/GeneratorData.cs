@@ -19,6 +19,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.CodeDom;
 using System.Collections;
@@ -43,9 +44,11 @@ public unsafe class GeneratorData {
 
     public GeneratorData(Smoke* smoke, string defaultNamespace, List<string> imports, List<Assembly> references, CodeCompileUnit unit) {
         Smoke = smoke;
-        string argNamesFile = ByteArrayManager.GetString(Smoke->argNamesFile);
+    	string argNamesFile = ByteArrayManager.GetString(Smoke->module_name) + ".argnames.txt";
         if (File.Exists(argNamesFile)) {
-            ArgumentNames[argNamesFile] = File.ReadAllLines(argNamesFile);
+        	foreach (string[] strings in File.ReadAllLines(argNamesFile).Select(line => line.Split(';'))) {
+        		ArgumentNames[strings[0]] = strings[1].Split(',');
+        	}
         }
         CompileUnit = unit;
         Imports = imports;

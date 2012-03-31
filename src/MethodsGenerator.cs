@@ -144,9 +144,8 @@ public unsafe class MethodsGenerator {
         // do we actually want that method?
         string className = ByteArrayManager.GetString(smokeClass->className);
         string completeSignature = className + "::" + cppSignature;
-        foreach (Regex regex in translator.ExcludedMethods) {
-            if (regex.IsMatch(completeSignature))
-                return null;
+        if (translator.ExcludedMethods.Any(regex => regex.IsMatch(completeSignature))) {
+        	return null;
         }
 
         List<CodeParameterDeclarationExpression> args = new List<CodeParameterDeclarationExpression>();
@@ -221,11 +220,11 @@ public unsafe class MethodsGenerator {
         }
 
         // translate arguments
-        string[] methodArgs = GetMethodArgs(smoke, method);
+        string[] methodArgs = isOperator ? null : GetMethodArgs(smoke, method);
         for (short* typeIndex = smoke->argumentList + method->args; *typeIndex > 0; typeIndex++) {
             try {
                 string arg;
-                if (isOperator || methodArgs == null) {
+                if (methodArgs == null) {
                     arg = "arg" + count++;
                 } else {
                     arg = methodArgs[count++ - 1];
@@ -554,16 +553,23 @@ public unsafe class MethodsGenerator {
 
     private string[] GetMethodArgs(Smoke* smoke, Smoke.Method* method)
     {
-        string argNamesFile = ByteArrayManager.GetString(smoke->argNamesFile);
-        if (data.ArgumentNames.ContainsKey(ByteArrayManager.GetString(smoke->argNamesFile))) {
-            return data.ArgumentNames[argNamesFile][method->argNames].Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+    	if (method->numArgs == 0) {
+    		return new string[0];
+    	}
+		string argNamesFile = ByteArrayManager.GetString(smoke->module_name) + ".argnames.txt";
+		string className = ByteArrayManager.GetString(smoke->classes[method->classId].className);
+    	className = className.Substring(className.LastIndexOf(":") + 1);
+    	string key = className + "," + ByteArrayManager.GetString(smoke->methodNames[method->name]) + "," + method->numArgs;
+    	if (data.ArgumentNames.ContainsKey(key)) {
+			return data.ArgumentNames[key];
         }
-        if (File.Exists(argNamesFile)) {
-            string[] argNames = File.ReadAllLines(argNamesFile);
-            data.ArgumentNames[argNamesFile] = argNames;
-            return argNames[method->argNames].Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-        }
-        return null;
+		if (File.Exists(argNamesFile)) {
+			foreach (string[] strings in File.ReadAllLines(argNamesFile).Select(line => line.Split(';'))) {
+				data.ArgumentNames[strings[0]] = strings[1].Split(',');
+			}
+			return data.ArgumentNames[key];
+		}
+    	return null;
     }
 
     public void GenerateProperties(IEnumerable<CodeMemberMethod> setters, IList<CodeMemberMethod> nonSetters)
