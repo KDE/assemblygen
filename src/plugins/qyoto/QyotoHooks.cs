@@ -24,6 +24,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Collections;
 using System.Runtime.InteropServices;
 using System.CodeDom;
@@ -121,8 +122,11 @@ public unsafe class QyotoHooks : IHookProvider {
             OrderedDictionary signalParamNames = new OrderedDictionary ();
             GetSignals(smoke, klass, delegate(string signature, string name, string typeName, IntPtr metaMethod) {
                 CodeMemberEvent signal = new CodeMemberEvent();
-                signal.Type = new CodeTypeReference(typeof(Action));
-                StringBuilder fullNameBuilder = new StringBuilder(signal.Type.BaseType);
+				// HACK: both .NET and Mono have bugs with a generic CodeTypeReference so different implementations are needed
+				if (Environment.OSVersion.Platform == PlatformID.Win32NT) {
+					signal.Type = new CodeTypeReference(typeof(Action));
+				}
+                StringBuilder fullNameBuilder = new StringBuilder("System.Action");
                 signal.Attributes = MemberAttributes.Abstract;
 
                 // capitalize the first letter
@@ -179,14 +183,24 @@ public unsafe class QyotoHooks : IHookProvider {
                     fullNameBuilder.Append (param.Type.BaseType);
                     fullNameBuilder.Append (',');
                 });
+                if (fullNameBuilder[fullNameBuilder.Length - 1] == ',') {
+                    fullNameBuilder[fullNameBuilder.Length - 1] = '>';
+                }
+				if (Environment.OSVersion.Platform != PlatformID.Win32NT) {
+					signal.Type = new CodeTypeReference(fullNameBuilder.ToString());                                                                                                		
+                }
                 signalParamNames.Add(signal, paramNames);
                 CodeMemberEvent existing = ifaceDecl.Members.Cast<CodeMemberEvent>().FirstOrDefault(m => m.Name == signal.Name);
                 if (existing != null) {
                     CodeMemberEvent signalToUse = paramNames.Count == 0 ? existing : signal;
                     string suffix = ((IEnumerable<string>) signalParamNames[signalToUse]).Last();
                     if (suffix.StartsWith("arg") && suffix.Length > 3 && char.IsDigit(suffix[3])) {
-                        string lastType = signalToUse.Type.TypeArguments.Cast<CodeTypeReference>().Last().BaseType;
-                        suffix = lastType.Substring(lastType.LastIndexOf('.') + 1);
+						if (Environment.OSVersion.Platform == PlatformID.Win32NT) {
+							string lastType = signalToUse.Type.TypeArguments.Cast<CodeTypeReference>().Last().BaseType;
+							suffix = lastType.Substring(lastType.LastIndexOf('.') + 1);
+						} else {
+							suffix = Regex.Match(signalToUse.Type.BaseType, @"<(\w+,)*(\w+\.)*(\w+)>").Groups[3].Value;
+						}
                     } else {
                         StringBuilder lastParamBuilder = new StringBuilder(suffix);
                         lastParamBuilder[0] = char.ToUpper(lastParamBuilder[0]);
@@ -201,9 +215,6 @@ public unsafe class QyotoHooks : IHookProvider {
                 ifaceDecl.Members.Add(signal);
                 CodeSnippetTypeMember signalImplementation = new CodeSnippetTypeMember();
                 signalImplementation.Name = signal.Name;
-                if (fullNameBuilder[fullNameBuilder.Length - 1] == ',') {
-                    fullNameBuilder[fullNameBuilder.Length - 1] = '>';
-                }
                 signalImplementation.Text = string.Format(@"
         public event {0} {1}
 		{{
