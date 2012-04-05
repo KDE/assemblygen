@@ -2,10 +2,11 @@ set (qyoto_qtxml_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs
 )
 
+GET_LIBRARY_OUTPUT_DIR(library_target_dir)
 add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtxml.dll
                    COMMAND ${MONO_EXECUTABLE} ${LIBRARY_OUTPUT_PATH}/assemblygen.exe
                             -unsafe -out:qyoto-qtxml.dll -r:qyoto-qtcore.dll
-                            -plugins:QyotoGenerator.dll
+                            -plugins:QyotoGenerator.dll -dest:${library_target_dir}
                             -code-file:qyoto-qtxml.cs \"-keyfile:${KEYFILE}\"
                             ${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtxml${CMAKE_SHARED_LIBRARY_SUFFIX}
                             ${qyoto_qtxml_SRC}
@@ -17,7 +18,6 @@ add_dependencies(qyoto-qtxml assemblygen QyotoGenerator qyoto-qtcore)
 set_property(TARGET qyoto-qtxml PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/qyoto-qtxml.dll)
 set_property(TARGET qyoto-qtxml PROPERTY _assembly_type dll)
 
-GET_LIBRARY_OUTPUT_DIR(library_target_dir)
 FILE(WRITE ${library_target_dir}/qyoto-qtxml.dll.config "<configuration><dllmap dll=\"qyoto-qtxml-native\" target=\"libqyoto-qtxml-native.so.2\"/></configuration>")
 
 install_assembly(qyoto-qtxml DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)

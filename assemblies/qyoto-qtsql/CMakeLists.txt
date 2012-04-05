@@ -2,10 +2,11 @@ set (qyoto_qtsql_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/AssemblyInfo.cs
 )
 
+GET_LIBRARY_OUTPUT_DIR(library_target_dir)
 add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtsql.dll
                    COMMAND ${MONO_EXECUTABLE} ${LIBRARY_OUTPUT_PATH}/assemblygen.exe
                             -unsafe -out:qyoto-qtsql.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll
-                            -plugins:QyotoGenerator.dll
+                            -plugins:QyotoGenerator.dll -dest:${library_target_dir}
                             -code-file:qyoto-qtsql.cs \"-keyfile:${KEYFILE}\"
                             ${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtsql${CMAKE_SHARED_LIBRARY_SUFFIX}
                             ${qyoto_qtsql_SRC}
@@ -17,7 +18,6 @@ add_dependencies(qyoto-qtsql assemblygen QyotoGenerator qyoto-qtcore)
 set_property(TARGET qyoto-qtsql PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/qyoto-qtsql.dll)
 set_property(TARGET qyoto-qtsql PROPERTY _assembly_type dll)
 
-GET_LIBRARY_OUTPUT_DIR(library_target_dir)
 FILE(WRITE ${library_target_dir}/qyoto-qtsql.dll.config "<configuration><dllmap dll=\"qyoto-qtsql-native\" target=\"libqyoto-qtsql-native.so.2\"/></configuration>")
 
 install_assembly(qyoto-qtsql DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)

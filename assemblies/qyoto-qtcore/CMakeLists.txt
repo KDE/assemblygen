@@ -28,10 +28,12 @@ set (qyoto_qtcore_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/NativeLong.cs
 )
 
+GET_LIBRARY_OUTPUT_DIR(library_target_dir)
+
 add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtcore.dll
                    COMMAND ${MONO_EXECUTABLE} ${LIBRARY_OUTPUT_PATH}/assemblygen.exe
                             -unsafe -out:qyoto-qtcore.dll -global-class:Qt
-                            -plugins:QyotoGenerator.dll
+                            -plugins:QyotoGenerator.dll -dest:${library_target_dir}
                             -code-file:qyoto-qtcore.cs \"-keyfile:${KEYFILE}\"
                             ${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtcore${CMAKE_SHARED_LIBRARY_SUFFIX}
                             ${qyoto_qtcore_SRC}
@@ -43,7 +45,6 @@ add_dependencies(qyoto-qtcore assemblygen QyotoGenerator)
 set_property(TARGET qyoto-qtcore PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/qyoto-qtcore.dll)
 set_property(TARGET qyoto-qtcore PROPERTY _assembly_type dll)
 
-GET_LIBRARY_OUTPUT_DIR(library_target_dir)
 FILE(WRITE ${library_target_dir}/qyoto-qtcore.dll.config "<configuration><dllmap dll=\"qyoto-qtcore-native\" target=\"libqyoto-qtcore-native.so.2\"/></configuration>")
 
 install_assembly(qyoto-qtcore DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)

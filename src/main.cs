@@ -18,6 +18,7 @@
 */
 
 using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Reflection;
 using System.Diagnostics;
@@ -58,6 +59,7 @@ Possible options:
     -namespace:<name>        Name of the default namespace. Defaults to 'Qyoto'.
     -import:<name>[,n2,...]  Adds additional 'using <name>' statements to each namespace.
     -plugins:P1[,Pn]         Loads additional plugins. Absolute path or relative path to the 'plugins' directory.
+    -dest:d1                 The destination directory.
     -verbose                 Be verbose (VERY verbose!).
     -help                    Shows this message.
 
@@ -87,45 +89,60 @@ Any options not listed here are directly passed to the compiler (leading dashes 
         string smokeLib = null;
         string defaultNamespace = "Qyoto";
         string globalClass = "Global";
+        string destination = string.Empty;
 
         List<Assembly> plugins = new List<Assembly>();
-        List<ICustomTranslator> customTranslators = new List<ICustomTranslator>();
 
         foreach (string arg in args) {
             if (arg == "-help" || arg == "--help" || arg == "-h") {
                 PrintHelp();
                 return 0;
-            } else if (arg == "-verbose") {
+            }
+            if (arg == "-verbose") {
                 Debug.Listeners.Add(new ConsoleTraceListener(true));
                 continue;
-            } else if (arg == "-code-only") {
+            }
+            if (arg == "-code-only") {
                 codeOnly = true;
                 continue;
-            } else if (arg.StartsWith("-code-file:")) {
+            }
+            if (arg.StartsWith("-code-file:")) {
                 codeFile = arg.Substring(11);
                 continue;
-            } else if (arg.StartsWith("-out:")) {
+            }
+            if (arg.StartsWith("-out:")) {
                 assemblyFile = arg.Substring(5);
                 continue;
-            } else if (arg.StartsWith("-warn:")) {
+            }
+            if (arg.StartsWith("-warn:")) {
                 warnLevel = int.Parse(arg.Substring(6));
                 continue;
-            } else if (arg.StartsWith("-r:")) {
+            }
+            if (arg.StartsWith("-r:")) {
                 references.Add(Assembly.LoadFrom(arg.Substring(3)));
                 continue;
-            } else if (arg.StartsWith("-reference:")) {
+            }
+            if (arg.StartsWith("-reference:")) {
                 references.Add(Assembly.LoadFrom(arg.Substring(11)));
                 continue;
-            } else if (arg.StartsWith("-global-class:")) {
+            }
+            if (arg.StartsWith("-global-class:")) {
                 globalClass = arg.Substring(14);
                 continue;
-            } else if (arg.StartsWith("-namespace:")) {
+            }
+            if (arg.StartsWith("-namespace:")) {
                 defaultNamespace = arg.Substring(11);
                 continue;
-            } else if (arg.StartsWith("-import:")) {
+            }
+            if (arg.StartsWith ("-dest:")) {
+                destination = arg.Substring ("-dest:".Length);
+                continue;
+            }
+            if (arg.StartsWith("-import:")) {
                 imports.AddRange(arg.Substring(8).Split(','));
                 continue;
-            } else if (arg.StartsWith("-plugins:")) {
+            }
+            if (arg.StartsWith("-plugins:")) {
                 foreach (string str in arg.Substring(9).Split(',')) {
                     Assembly a;
                     try {
@@ -136,7 +153,8 @@ Any options not listed here are directly passed to the compiler (leading dashes 
                     plugins.Add(a);
                 }
                 continue;
-            } else if (arg.StartsWith("-")) {
+            }
+            if (arg.StartsWith("-")) {
                 compilerOptions.Append(" /");
                 compilerOptions.Append(arg.Substring(1));
                 continue;
@@ -164,33 +182,23 @@ Any options not listed here are directly passed to the compiler (leading dashes 
             return SmokeLoadingFailure;
         }
 
-        foreach (Assembly plugin in plugins) {
-            foreach (Type type in plugin.GetTypes()) {
-                foreach (Type iface in type.GetInterfaces()) {
-                    if (iface == typeof(ICustomTranslator)) {
-                        ICustomTranslator customTranslator = (ICustomTranslator) Activator.CreateInstance(type);
-                        customTranslators.Add(customTranslator);
-                    }
-                }
-            }
-        }
+        List<ICustomTranslator> customTranslators = (from plugin in plugins
+                                                     from type in plugin.GetTypes()
+                                                     from iface in type.GetInterfaces()
+                                                     where iface == typeof(ICustomTranslator)
+                                                     select (ICustomTranslator) Activator.CreateInstance(type)).ToList();
 
         GeneratorData data = new GeneratorData(smoke, defaultNamespace, imports, references);
         data.GlobalSpaceClassName = globalClass;
+        data.Destination = destination;
         Translator translator = new Translator(data, customTranslators);
 
-        foreach (Assembly plugin in plugins) {
-            foreach (Type type in plugin.GetTypes()) {
-                foreach (Type iface in type.GetInterfaces()) {
-                    if (iface == typeof(IHookProvider)) {
-                        IHookProvider provider = (IHookProvider) Activator.CreateInstance(type);
-                        provider.Translator = translator;
-                        provider.Data = data;
-                        provider.RegisterHooks();
-                        break;
-                    }
-                }
-            }
+        foreach (IHookProvider provider in from type in plugins.SelectMany(plugin => plugin.GetTypes()) 
+                                           where type.GetInterfaces().Any(iface => iface == typeof(IHookProvider)) 
+                                           select (IHookProvider) Activator.CreateInstance(type)) {
+            provider.Translator = translator;
+            provider.Data = data;
+            provider.RegisterHooks();
         }
 
         ClassesGenerator classgen = new ClassesGenerator(data, translator);

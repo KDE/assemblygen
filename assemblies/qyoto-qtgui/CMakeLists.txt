@@ -15,11 +15,11 @@ set (qyoto_qtgui_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/QTransformExtras.cs
 )
 
-
+GET_LIBRARY_OUTPUT_DIR(library_target_dir)
 add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtgui.dll
                    COMMAND ${MONO_EXECUTABLE} ${LIBRARY_OUTPUT_PATH}/assemblygen.exe
                             -unsafe -out:qyoto-qtgui.dll -r:qyoto-qtcore.dll
-                            -plugins:QyotoGenerator.dll
+                            -plugins:QyotoGenerator.dll -dest:${library_target_dir}
                             -code-file:qyoto-qtgui.cs \"-keyfile:${KEYFILE}\"
                             ${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtgui${CMAKE_SHARED_LIBRARY_SUFFIX}
                             ${qyoto_qtgui_SRC}
@@ -31,7 +31,6 @@ add_dependencies(qyoto-qtgui assemblygen QyotoGenerator qyoto-qtcore)
 set_property(TARGET qyoto-qtgui PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/qyoto-qtgui.dll)
 set_property(TARGET qyoto-qtgui PROPERTY _assembly_type dll)
 
-GET_LIBRARY_OUTPUT_DIR(library_target_dir)
 FILE(WRITE ${library_target_dir}/qyoto-qtgui.dll.config "<configuration><dllmap dll=\"qyoto-qtgui-native\" target=\"libqyoto-qtgui-native.so.2\"/></configuration>")
 
 install_assembly(qyoto-qtgui DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)

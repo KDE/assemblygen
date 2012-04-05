@@ -18,6 +18,7 @@
 */
 
 using System;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -29,9 +30,10 @@ public unsafe class GeneratorData {
 
     public Smoke* Smoke = (Smoke*) IntPtr.Zero;
 
-    public CodeCompileUnit CompileUnit = null;
-    public CodeNamespace DefaultNamespace = null;
+    public CodeCompileUnit CompileUnit;
+    public CodeNamespace DefaultNamespace;
     public string GlobalSpaceClassName = "Global";
+    public string Destination = string.Empty;
     public List<Assembly> References;
     public List<string> Imports;
     public IDictionary<string, string[]> ArgumentNames = new Dictionary<string, string[]>();
@@ -44,7 +46,17 @@ public unsafe class GeneratorData {
 
     public GeneratorData(Smoke* smoke, string defaultNamespace, List<string> imports, List<Assembly> references, CodeCompileUnit unit) {
         Smoke = smoke;
-    	string argNamesFile = ByteArrayManager.GetString(Smoke->module_name) + ".argnames.txt";
+        string destination = Destination;
+        if (string.IsNullOrEmpty(destination)) {
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT) {
+                destination = Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.Windows));            
+            } else {
+                destination = Path.DirectorySeparatorChar.ToString(CultureInfo.InvariantCulture);
+            }
+        }
+        destination = Path.Combine(destination, "share");
+        destination = Path.Combine(destination, "smoke");
+        string argNamesFile = Path.Combine(destination, ByteArrayManager.GetString(Smoke->module_name) + ".argnames.txt");
         if (File.Exists(argNamesFile)) {
         	foreach (string[] strings in File.ReadAllLines(argNamesFile).Select(line => line.Split(';'))) {
         		ArgumentNames[strings[0]] = strings[1].Split(',');
@@ -87,8 +99,8 @@ public unsafe class GeneratorData {
         NamespaceMap[defaultNamespace] = DefaultNamespace;
     }
 
-    Type smokeClassAttribute = null;
-    MethodInfo smokeClassGetSignature = null;
+    readonly Type smokeClassAttribute;
+    readonly MethodInfo smokeClassGetSignature;
 
     public Dictionary<string, Type> ReferencedTypeMap = new Dictionary<string, Type>();
 
@@ -105,14 +117,14 @@ public unsafe class GeneratorData {
     // maps public abstract classes to their internal implemented types
     public readonly Dictionary<CodeTypeDeclaration, CodeTypeDeclaration> InternalTypeMap = new Dictionary<CodeTypeDeclaration, CodeTypeDeclaration>();
 
-    public bool Debug = false;
+    public bool Debug;
 
     /*
      * Returns the collection of sub-types for a given prefix (which may be a namespace or a class).
      * If 'prefix' is empty, returns the collection of the default namespace.
      */
     public IList GetTypeCollection(string prefix) {
-        if (prefix == null || prefix == string.Empty)
+        if (string.IsNullOrEmpty(prefix))
             return DefaultNamespace.Types;
         CodeNamespace nspace;
         CodeTypeDeclaration typeDecl;
@@ -176,21 +188,20 @@ public unsafe class GeneratorData {
             return;
         }
 
-        CodeTypeDeclaration typeDecl = null;
+        CodeTypeDeclaration typeDecl;
         if (!SmokeTypeMap.TryGetValue((IntPtr) klass, out typeDecl)) {
             AddReferencedMembers(klass, list);
             return;
-        } else {
-            foreach (CodeTypeMember member in typeDecl.Members) {
-                if (member is CodeMemberProperty) {
-                    list.Add(new InternalMemberInfo(MemberTypes.Property, member.Name));
-                } else if (member is CodeMemberMethod) {
-                    list.Add(new InternalMemberInfo(MemberTypes.Method, member.Name));
-                } else if (member is CodeMemberField) {
-                    list.Add(new InternalMemberInfo(MemberTypes.Field, member.Name));
-                } else if (member is CodeTypeDeclaration) {
-                    list.Add(new InternalMemberInfo(MemberTypes.NestedType, member.Name));
-                }
+        }
+        foreach (CodeTypeMember member in typeDecl.Members) {
+            if (member is CodeMemberProperty) {
+                list.Add(new InternalMemberInfo(MemberTypes.Property, member.Name));
+            } else if (member is CodeMemberMethod) {
+                list.Add(new InternalMemberInfo(MemberTypes.Method, member.Name));
+            } else if (member is CodeMemberField) {
+                list.Add(new InternalMemberInfo(MemberTypes.Field, member.Name));
+            } else if (member is CodeTypeDeclaration) {
+                list.Add(new InternalMemberInfo(MemberTypes.NestedType, member.Name));
             }
         }
 
@@ -200,7 +211,7 @@ public unsafe class GeneratorData {
         }
     }
 
-    void AddReferencedMembers(Smoke.Class *klass, List<InternalMemberInfo> list) {
+    void AddReferencedMembers(Smoke.Class *klass, ICollection<InternalMemberInfo> list) {
         string smokeClassName = ByteArrayManager.GetString(klass->className);
         Type type;
 
