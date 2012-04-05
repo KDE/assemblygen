@@ -44,7 +44,9 @@ public unsafe class GeneratorData {
 
     public GeneratorData(Smoke* smoke, string defaultNamespace, List<string> imports, List<Assembly> references, CodeCompileUnit unit) {
         Smoke = smoke;
-    	string argNamesFile = ByteArrayManager.GetString(Smoke->module_name) + ".argnames.txt";
+        string argNamesFile = Path.GetDirectoryName(Environment.CurrentDirectory);
+        argNamesFile = Path.Combine(Path.Combine(argNamesFile, "share"), "smoke");
+        argNamesFile = Path.Combine(argNamesFile, ByteArrayManager.GetString(Smoke->module_name) + ".argnames.txt");
         if (File.Exists(argNamesFile)) {
         	foreach (string[] strings in File.ReadAllLines(argNamesFile).Select(line => line.Split(';'))) {
         		ArgumentNames[strings[0]] = strings[1].Split(',');
