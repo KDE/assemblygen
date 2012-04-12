@@ -165,7 +165,7 @@ public unsafe class Translator {
         } else if (typeId == Smoke.TypeId.t_int) {
             typeRef = new CodeTypeReference(typeof(int));
         } else if (typeId == Smoke.TypeId.t_uint) {
-            string typeName = ByteArrayManager.GetString (type->name);
+            string typeName = ByteArrayManager.GetString(type->name);
             if (typeName.StartsWith("QFlags<") &&
                 // HACK: qdrawutil.h says, DrawingHint is for internal use; nonetheless, SMOKE generates an overload using it; ignoring
                 typeName != "QFlags<QDrawBorderPixmap::DrawingHint>") {
