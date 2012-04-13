@@ -6,7 +6,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/kimono-ktexteditor.dll
                    COMMAND ${MONO_EXECUTABLE} --debug ${LIBRARY_OUTPUT_PATH}/assemblygen.exe
                             -unsafe -out:kimono-ktexteditor.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:qyoto-qtxml.dll
                                 -r:kimono-kdecore.dll -r:kimono-kdeui.dll -r:kimono-kparts.dll
-                            -namespace:Kimono -import:Qyoto -plugins:QyotoGenerator.dll -dest:${library_target_dir},KimonoGenerator.dll
+                            -namespace:Kimono -import:Qyoto -plugins:QyotoGenerator.dll,KimonoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
                             -code-file:kimono-ktexteditor.cs \"-keyfile:${KEYFILE}\"
                             ${CMAKE_SHARED_LIBRARY_PREFIX}smokektexteditor.so
                             ${kimono_ktexteditor_SRC}

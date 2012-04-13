@@ -6,7 +6,7 @@ GET_LIBRARY_OUTPUT_DIR(library_target_dir)
 add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtsql.dll
                    COMMAND ${MONO_EXECUTABLE} ${LIBRARY_OUTPUT_PATH}/assemblygen.exe
                             -unsafe -out:qyoto-qtsql.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll
-                            -plugins:QyotoGenerator.dll -dest:${library_target_dir}
+                            -plugins:QyotoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
                             -code-file:qyoto-qtsql.cs \"-keyfile:${KEYFILE}\"
                             ${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtsql${CMAKE_SHARED_LIBRARY_SUFFIX}
                             ${qyoto_qtsql_SRC}

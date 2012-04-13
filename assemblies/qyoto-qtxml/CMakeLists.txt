@@ -6,7 +6,7 @@ GET_LIBRARY_OUTPUT_DIR(library_target_dir)
 add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtxml.dll
                    COMMAND ${MONO_EXECUTABLE} ${LIBRARY_OUTPUT_PATH}/assemblygen.exe
                             -unsafe -out:qyoto-qtxml.dll -r:qyoto-qtcore.dll
-                            -plugins:QyotoGenerator.dll -dest:${library_target_dir}
+                            -plugins:QyotoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
                             -code-file:qyoto-qtxml.cs \"-keyfile:${KEYFILE}\"
                             ${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtxml${CMAKE_SHARED_LIBRARY_SUFFIX}
                             ${qyoto_qtxml_SRC}

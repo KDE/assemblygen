@@ -5,7 +5,7 @@ set (kimono_solid_SRC
 add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/kimono-solid.dll
                    COMMAND ${MONO_EXECUTABLE} ${LIBRARY_OUTPUT_PATH}/assemblygen.exe
                             -unsafe -out:kimono-solid.dll -r:qyoto-qtcore.dll
-                            -namespace:Kimono -import:Qyoto -plugins:QyotoGenerator.dll -dest:${library_target_dir},KimonoGenerator.dll
+                            -namespace:Kimono -import:Qyoto -plugins:QyotoGenerator.dll,KimonoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
                             -code-file:kimono-solid.cs \"-keyfile:${KEYFILE}\"
                             ${CMAKE_SHARED_LIBRARY_PREFIX}smokesolid.so
                             ${kimono_solid_SRC}

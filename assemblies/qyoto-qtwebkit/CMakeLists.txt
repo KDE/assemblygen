@@ -6,7 +6,7 @@ GET_LIBRARY_OUTPUT_DIR(library_target_dir)
 add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtwebkit.dll
                    COMMAND ${MONO_EXECUTABLE} ${LIBRARY_OUTPUT_PATH}/assemblygen.exe
                             -unsafe -out:qyoto-qtwebkit.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:qyoto-qtnetwork.dll -r:qyoto-qtscript.dll
-                            -plugins:QyotoGenerator.dll -dest:${library_target_dir}
+                            -plugins:QyotoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
                             -code-file:qyoto-qtwebkit.cs \"-keyfile:${KEYFILE}\"
                             ${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtwebkit${CMAKE_SHARED_LIBRARY_SUFFIX}
                             ${qyoto_qtwebkit_SRC}
