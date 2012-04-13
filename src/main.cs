@@ -189,9 +189,8 @@ Any options not listed here are directly passed to the compiler (leading dashes 
                                                      where iface == typeof(ICustomTranslator)
                                                      select (ICustomTranslator) Activator.CreateInstance(type)).ToList();
 
-        GeneratorData data = new GeneratorData(smoke, defaultNamespace, imports, references);
+        GeneratorData data = new GeneratorData(smoke, defaultNamespace, imports, references, destination);
         data.GlobalSpaceClassName = globalClass;
-        data.Destination = destination;
         Translator translator = new Translator(data, customTranslators);
 
         foreach (IHookProvider provider in from type in plugins.SelectMany(plugin => plugin.GetTypes()) 

@@ -33,30 +33,26 @@ public unsafe class GeneratorData {
     public CodeCompileUnit CompileUnit;
     public CodeNamespace DefaultNamespace;
     public string GlobalSpaceClassName = "Global";
-    public string Destination = string.Empty;
     public List<Assembly> References;
     public List<string> Imports;
     public IDictionary<string, string[]> ArgumentNames = new Dictionary<string, string[]>();
 
-    public GeneratorData(Smoke* smoke, string defaultNamespace, List<Assembly> references)
-        : this(smoke, defaultNamespace, new List<string>(), references, new CodeCompileUnit()) {}
+    public GeneratorData(Smoke* smoke, string defaultNamespace, List<string> imports, List<Assembly> references, string destination)
+        : this(smoke, defaultNamespace, imports, references, new CodeCompileUnit(), destination) {}
 
-    public GeneratorData(Smoke* smoke, string defaultNamespace, List<string> imports, List<Assembly> references)
-        : this(smoke, defaultNamespace, imports, references, new CodeCompileUnit()) {}
-
-    public GeneratorData(Smoke* smoke, string defaultNamespace, List<string> imports, List<Assembly> references, CodeCompileUnit unit) {
+    public GeneratorData(Smoke* smoke, string defaultNamespace, List<string> imports, List<Assembly> references, CodeCompileUnit unit, string destination) {
         Smoke = smoke;
-        string destination = Destination;
-        if (string.IsNullOrEmpty(destination)) {
+        string dest = destination;
+        if (string.IsNullOrEmpty(dest)) {
             if (Environment.OSVersion.Platform == PlatformID.Win32NT) {
-                destination = Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.Windows));            
+                dest = Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.Windows));            
             } else {
-                destination = Path.DirectorySeparatorChar.ToString(CultureInfo.InvariantCulture);
+                dest = Path.DirectorySeparatorChar.ToString(CultureInfo.InvariantCulture);
             }
         }
-        destination = Path.Combine(destination, "share");
-        destination = Path.Combine(destination, "smoke");
-        string argNamesFile = Path.Combine(destination, ByteArrayManager.GetString(Smoke->module_name) + ".argnames.txt");
+        dest = Path.Combine(dest, "share");
+        dest = Path.Combine(dest, "smoke");
+        string argNamesFile = Path.Combine(dest, ByteArrayManager.GetString(Smoke->module_name) + ".argnames.txt");
         if (File.Exists(argNamesFile)) {
         	foreach (string[] strings in File.ReadAllLines(argNamesFile).Select(line => line.Split(';'))) {
         		ArgumentNames[strings[0]] = strings[1].Split(',');
