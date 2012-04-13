@@ -27,6 +27,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 public unsafe class GeneratorData {
+    public string Destination { get; set; }
 
     public Smoke* Smoke = (Smoke*) IntPtr.Zero;
 
@@ -41,18 +42,9 @@ public unsafe class GeneratorData {
         : this(smoke, defaultNamespace, imports, references, new CodeCompileUnit(), destination) {}
 
     public GeneratorData(Smoke* smoke, string defaultNamespace, List<string> imports, List<Assembly> references, CodeCompileUnit unit, string destination) {
+        Destination = destination;
         Smoke = smoke;
-        string dest = destination;
-        if (string.IsNullOrEmpty(dest)) {
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT) {
-                dest = Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.Windows));            
-            } else {
-                dest = Path.DirectorySeparatorChar.ToString(CultureInfo.InvariantCulture);
-            }
-        }
-        dest = Path.Combine(dest, "share");
-        dest = Path.Combine(dest, "smoke");
-        string argNamesFile = Path.Combine(dest, ByteArrayManager.GetString(Smoke->module_name) + ".argnames.txt");
+        string argNamesFile = GetArgNamesFile();
         if (File.Exists(argNamesFile)) {
         	foreach (string[] strings in File.ReadAllLines(argNamesFile).Select(line => line.Split(';'))) {
         		ArgumentNames[strings[0]] = strings[1].Split(',');
@@ -219,5 +211,19 @@ public unsafe class GeneratorData {
         foreach (MemberInfo member in type.GetMembers(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)) {
             list.Add(new InternalMemberInfo(member.MemberType, member.Name));
         }
+    }
+
+    public unsafe string GetArgNamesFile() {
+        string dest = Destination;
+        if (string.IsNullOrEmpty(dest)) {
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT) {
+                dest = Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.Windows));
+            } else {
+                dest = Path.DirectorySeparatorChar.ToString(CultureInfo.InvariantCulture);
+            }
+        }
+        dest = Path.Combine(dest, "share");
+        dest = Path.Combine(dest, "smoke");
+        return Path.Combine(dest, ByteArrayManager.GetString(Smoke->module_name) + ".argnames.txt");
     }
 }

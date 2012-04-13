@@ -556,13 +556,13 @@ public unsafe class MethodsGenerator {
     	if (method->numArgs == 0) {
     		return new string[0];
     	}
-		string argNamesFile = ByteArrayManager.GetString(smoke->module_name) + ".argnames.txt";
 		string className = ByteArrayManager.GetString(smoke->classes[method->classId].className);
     	className = className.Substring(className.LastIndexOf(":") + 1);
     	string key = className + "," + ByteArrayManager.GetString(smoke->methodNames[method->name]) + "," + method->numArgs;
     	if (data.ArgumentNames.ContainsKey(key)) {
 			return data.ArgumentNames[key];
         }
+        string argNamesFile = data.GetArgNamesFile();
 		if (File.Exists(argNamesFile)) {
 			foreach (string[] strings in File.ReadAllLines(argNamesFile).Select(line => line.Split(';'))) {
 				data.ArgumentNames[strings[0]] = strings[1].Split(',');
