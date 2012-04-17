@@ -36,8 +36,7 @@ namespace Qyoto
 			get { return handler; }
 		}
 
-        [SmokeMethod ("eventFilter(QObject*, QEvent*)")]
-        public override bool EventFilter (QObject arg1, QEvent arg2)
+		public override bool EventFilter(QObject arg1, QEvent arg2)
 		{
 			if (arg1 == sender && 
 				(args.EventTypes.Count == 0 || args.EventTypes.Contains(arg2.type()) ||
