@@ -275,20 +275,20 @@ DEF_LIST_MARSHALLER( QUndoStackList, QList<QUndoStack*>, QUndoStack )
 DEF_LIST_MARSHALLER( QMdiSubWindowList, QList<QMdiSubWindow*>, QMdiSubWindow )
 #endif
 
-DEF_VALUELIST_MARSHALLER( QColorVector, QVector<QColor>, QColor )
-DEF_VALUELIST_MARSHALLER( QImageTextKeyLangList, QList<QImageTextKeyLang>, QImageTextKeyLang )
-DEF_VALUELIST_MARSHALLER( QKeySequenceList, QList<QKeySequence>, QKeySequence )
-DEF_VALUELIST_MARSHALLER( QModelIndexList, QList<QModelIndex>, QModelIndex )
-DEF_VALUELIST_MARSHALLER( QPixmapList, QList<QPixmap>, QPixmap )
-DEF_VALUELIST_MARSHALLER( QPolygonFList, QList<QPolygonF>, QPolygonF )
-DEF_VALUELIST_MARSHALLER( QTableWidgetSelectionRangeList, QList<QTableWidgetSelectionRange>, QTableWidgetSelectionRange )
-DEF_VALUELIST_MARSHALLER( QTextBlockList, QList<QTextBlock>, QTextBlock )
-DEF_VALUELIST_MARSHALLER( QTextFormatVector, QVector<QTextFormat>, QTextFormat )
-DEF_VALUELIST_MARSHALLER( QTextLayoutFormatRangeList, QList<QTextLayout::FormatRange>, QTextLayout::FormatRange)
-DEF_VALUELIST_MARSHALLER( QTextLengthVector, QVector<QTextLength>, QTextLength )
+DEF_LIST_MARSHALLER( QColorVector, QVector<QColor*>, QColor )
+DEF_LIST_MARSHALLER( QImageTextKeyLangList, QList<QImageTextKeyLang*>, QImageTextKeyLang )
+DEF_LIST_MARSHALLER( QKeySequenceList, QList<QKeySequence*>, QKeySequence )
+DEF_LIST_MARSHALLER( QModelIndexList, QList<QModelIndex*>, QModelIndex )
+DEF_LIST_MARSHALLER( QPixmapList, QList<QPixmap*>, QPixmap )
+DEF_LIST_MARSHALLER( QPolygonFList, QList<QPolygonF*>, QPolygonF )
+DEF_LIST_MARSHALLER( QTableWidgetSelectionRangeList, QList<QTableWidgetSelectionRange*>, QTableWidgetSelectionRange )
+DEF_LIST_MARSHALLER( QTextBlockList, QList<QTextBlock*>, QTextBlock )
+DEF_LIST_MARSHALLER( QTextFormatVector, QVector<QTextFormat*>, QTextFormat )
+DEF_LIST_MARSHALLER( QTextLayoutFormatRangeList, QList<QTextLayout::FormatRange*>, QTextLayout::FormatRange)
+DEF_LIST_MARSHALLER( QTextLengthVector, QVector<QTextLength*>, QTextLength )
 
 #if QT_VERSION >= 0x40400
-DEF_VALUELIST_MARSHALLER( QPrinterInfoList, QList<QPrinterInfo>, QPrinterInfo )
+DEF_LIST_MARSHALLER( QPrinterInfoList, QList<QPrinterInfo*>, QPrinterInfo )
 #endif
 
 TypeHandler qtgui_handlers[] = {

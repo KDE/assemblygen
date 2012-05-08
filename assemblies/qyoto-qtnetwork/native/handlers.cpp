@@ -44,18 +44,18 @@
 #include <windows.h>
 #endif
 
-DEF_VALUELIST_MARSHALLER( QHostAddressList, QList<QHostAddress>, QHostAddress )
-DEF_VALUELIST_MARSHALLER( QNetworkAddressEntryList, QList<QNetworkAddressEntry>, QNetworkAddressEntry )
-DEF_VALUELIST_MARSHALLER( QNetworkInterfaceList, QList<QNetworkInterface>, QNetworkInterface )
+DEF_LIST_MARSHALLER( QHostAddressList, QList<QHostAddress*>, QHostAddress )
+DEF_LIST_MARSHALLER( QNetworkAddressEntryList, QList<QNetworkAddressEntry*>, QNetworkAddressEntry )
+DEF_LIST_MARSHALLER( QNetworkInterfaceList, QList<QNetworkInterface*>, QNetworkInterface )
 
 #if QT_VERSION >= 0x40300
-DEF_VALUELIST_MARSHALLER( QSslCertificateList, QList<QSslCertificate>, QSslCertificate )
-DEF_VALUELIST_MARSHALLER( QSslCipherList, QList<QSslCipher>, QSslCipher )
-DEF_VALUELIST_MARSHALLER( QSslErrorList, QList<QSslError>, QSslError )
+DEF_LIST_MARSHALLER( QSslCertificateList, QList<QSslCertificate*>, QSslCertificate )
+DEF_LIST_MARSHALLER( QSslCipherList, QList<QSslCipher*>, QSslCipher )
+DEF_LIST_MARSHALLER( QSslErrorList, QList<QSslError*>, QSslError )
 #endif
 
 #if QT_VERSION >= 0x40400
-DEF_VALUELIST_MARSHALLER( QNetworkCookieList, QList<QNetworkCookie>, QNetworkCookie )
+DEF_LIST_MARSHALLER( QNetworkCookieList, QList<QNetworkCookie*>, QNetworkCookie )
 #endif
 
 DEF_QPAIR_MARSHALLER( QPair_QHostAddress_int, QHostAddress, int, "Qyoto.QHostAddress", "System.Int32" )

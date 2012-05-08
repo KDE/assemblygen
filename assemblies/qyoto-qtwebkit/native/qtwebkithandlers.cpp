@@ -23,11 +23,11 @@
 #include <QtWebKit/qwebhistory.h>
 
 DEF_LIST_MARSHALLER( QWebFrameList, QList<QWebFrame*>, QWebFrame )
-DEF_VALUELIST_MARSHALLER( QWebHistoryItemList, QList<QWebHistoryItem>, QWebHistoryItem )
+DEF_LIST_MARSHALLER( QWebHistoryItemList, QList<QWebHistoryItem*>, QWebHistoryItem )
 
 #if QT_VERSION >= 0x40600
 #include <QtWebKit/qwebelement.h>
-DEF_VALUELIST_MARSHALLER( QWebElementList, QList<QWebElement>, QWebElement )
+DEF_LIST_MARSHALLER( QWebElementList, QList<QWebElement*>, QWebElement )
 #endif
 
 TypeHandler Qyoto_QtWebKit_handlers[] = {

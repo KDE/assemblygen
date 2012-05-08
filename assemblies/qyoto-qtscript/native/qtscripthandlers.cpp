@@ -21,7 +21,7 @@
 
 #include <QScriptValue>
 
-DEF_VALUELIST_MARSHALLER( QScriptValueList, QList<QScriptValue>, QScriptValue )
+DEF_LIST_MARSHALLER( QScriptValueList, QList<QScriptValue*>, QScriptValue )
 
 TypeHandler Qyoto_QtScript_handlers[] = {
     { "QList<QScriptValue>&", marshall_QScriptValueList },
