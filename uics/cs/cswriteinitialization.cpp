@@ -1078,6 +1078,14 @@ void WriteInitialization::writeProperties(const QString &varName,
             propertyValue = p->elementSet();
             if (propertyValue.contains(QLatin1String("::"))) {
                 QStringList enums = propertyValue.split("|");
+                QString csname = propertyName.left(1).toUpper() + propertyName.mid(1);
+                if (csname == "WindowFlags") {
+                    csname = "WindowType";
+                } else if (csname.endsWith("s")) {
+                    csname.chop(1);
+                } else {
+                    csname += "Flag";
+                }
                 QString qyotoValue;
                 for (int i = 0; i < enums.size(); ++i) {
                     enums.at(i);
@@ -1085,7 +1093,7 @@ void WriteInitialization::writeProperties(const QString &varName,
                     if (i > 0) {
                         qyotoValue += QLatin1String(" | ");
                     }
-                    qyotoValue += QLatin1String("Qyoto.Qyoto.GetCPPEnumValue(\"") + parts[0] + "\", \"" + parts[1] + QLatin1String("\")");
+                    qyotoValue += parts[0] + QLatin1String(".") + csname + QLatin1String(".") + parts[1];
                 }
                 propertyValue = qyotoValue;
             }
