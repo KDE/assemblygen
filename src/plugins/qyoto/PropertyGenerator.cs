@@ -31,12 +31,14 @@ public unsafe class PropertyGenerator {
 
     class Property {
         public string Name;
+        public string OriginalType;
         public string Type;
         public bool IsWritable;
         public bool IsEnum;
 
-        public Property(string name, string type, bool writable, bool isEnum) {
+        public Property(string name, string originalType, string type, bool writable, bool isEnum) {
             Name = name;
+            OriginalType = originalType;
             Type = type;
             IsWritable = writable;
             IsEnum = isEnum;
@@ -44,7 +46,7 @@ public unsafe class PropertyGenerator {
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet=CharSet.Ansi)]
-    delegate void AddProperty(string name, string type, [MarshalAs(UnmanagedType.U1)] bool writable, [MarshalAs(UnmanagedType.U1)] bool isEnum);
+    delegate void AddProperty(string name, string originalType, string type, [MarshalAs(UnmanagedType.U1)] bool writable, [MarshalAs(UnmanagedType.U1)] bool isEnum);
 
     [DllImport("qyotogenerator-native", CallingConvention=CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.U1)]
@@ -65,7 +67,7 @@ public unsafe class PropertyGenerator {
                 continue;
 
             List<Property> props = new List<Property>();
-            if (!GetProperties(data.Smoke, classId, (name, typeString, writable, isEnum) => props.Add(new Property(name, typeString, writable, isEnum)))) {
+            if (!GetProperties(data.Smoke, classId, (name, originalType, typeName, writable, isEnum) => props.Add(new Property(name, originalType, typeName, writable, isEnum)))) {
                 continue;
             }
 
@@ -124,7 +126,7 @@ public unsafe class PropertyGenerator {
                 cmp.Attributes = MemberAttributes.Public | MemberAttributes.New | MemberAttributes.Final;
 
                 cmp.CustomAttributes.Add(new CodeAttributeDeclaration("Q_PROPERTY",
-                    new CodeAttributeArgument(new CodePrimitiveExpression(prop.Type)), new CodeAttributeArgument(new CodePrimitiveExpression(prop.Name))));
+                    new CodeAttributeArgument(new CodePrimitiveExpression(prop.OriginalType)), new CodeAttributeArgument(new CodePrimitiveExpression(prop.Name))));
 
                 // ===== get-method =====
                 short getterMapId = FindQPropertyGetAccessorMethodMapId(classId, prop, capitalized);
