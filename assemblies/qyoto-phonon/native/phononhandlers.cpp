@@ -26,9 +26,9 @@
 
 DEF_LIST_MARSHALLER( PhononEffectList, QList<Phonon::Effect*>, Phonon::Effect )
 
-DEF_VALUELIST_MARSHALLER( PhononEffectParametersList, QList<Phonon::EffectParameter>, Phonon::EffectParameter )
-DEF_VALUELIST_MARSHALLER( PhononMediaSourceList, QList<Phonon::MediaSource>, Phonon::MediaSource )
-DEF_VALUELIST_MARSHALLER( PhononPathList, QList<Phonon::Path>, Phonon::Path )
+DEF_LIST_MARSHALLER( PhononEffectParametersList, QList<Phonon::EffectParameter*>, Phonon::EffectParameter )
+DEF_LIST_MARSHALLER( PhononMediaSourceList, QList<Phonon::MediaSource*>, Phonon::MediaSource )
+DEF_LIST_MARSHALLER( PhononPathList, QList<Phonon::Path*>, Phonon::Path )
 
 TypeHandler Qyoto_Phonon_handlers[] = {
     { "QList<Phonon::Effect*>", marshall_PhononEffectList },
