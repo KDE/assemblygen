@@ -20,3 +20,4 @@ enable_language(CSharp)
 
 add_subdirectory(src)
 add_subdirectory(assemblies)
+add_subdirectory(tools)

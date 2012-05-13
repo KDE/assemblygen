@@ -1,3 +1,6 @@
+find_package(Qt4 REQUIRED COMPONENTS QtCore QtXml)
+
+INCLUDE_DIRECTORIES (${QT_INCLUDES})
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/cs )
 
