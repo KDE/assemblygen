@@ -1,6 +1,11 @@
 find_package(Qt4 REQUIRED COMPONENTS QtCore)
 find_package(Smoke REQUIRED COMPONENTS QtCore)
 
+# Enable QtDBus if present.
+if (QT_QTDBUS_LIBRARY)
+    add_definitions(-DUSING_QTDBUS)
+endif (QT_QTDBUS_LIBRARY)
+
 # source files
 SET(SRC_QYOTO_QTCORE_NATIVE
     callbacks.cpp
