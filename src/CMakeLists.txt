@@ -40,5 +40,10 @@ else (MONO_EXECUTABLE)
 endif (MONO_EXECUTABLE)
 
 install(TARGETS assemblygen-native DESTINATION lib${LIB_SUFFIX}/assemblygen)
+if (WIN32)
+    # Get rid of the "lib" prefix on archives/DLLs in Windows.
+    set_target_properties(assemblygen-native
+        PROPERTIES PREFIX "" IMPORT_PREFIX "")
+endif (WIN32)
 
 add_subdirectory(plugins)

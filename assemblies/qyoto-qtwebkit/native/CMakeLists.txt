@@ -15,4 +15,9 @@ set_target_properties(qyoto-qtwebkit-native PROPERTIES VERSION 2.0.0 SOVERSION 2
 
 INSTALL(TARGETS qyoto-qtwebkit-native LIBRARY DESTINATION ${LIB_INSTALL_DIR}
 						  			  ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
-						  			  RUNTIME DESTINATION lib)
+						  			  RUNTIME DESTINATION bin)
+if (WIN32)
+    # Get rid of the "lib" prefix on archives/DLLs in Windows.
+    set_target_properties(qyoto-qtwebkit-native
+        PROPERTIES PREFIX "" IMPORT_PREFIX "")
+endif (WIN32)

@@ -30,7 +30,12 @@ set_target_properties(qyoto-qtcore-native PROPERTIES VERSION 2.0.0 SOVERSION 2 C
 
 INSTALL(TARGETS qyoto-qtcore-native LIBRARY DESTINATION ${LIB_INSTALL_DIR}
 						  			ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
-						  			RUNTIME DESTINATION lib)
+						  			RUNTIME DESTINATION bin)
+if (WIN32)
+    # Get rid of the "lib" prefix on archives/DLLs in Windows.
+    set_target_properties(qyoto-qtcore-native
+        PROPERTIES PREFIX "" IMPORT_PREFIX "")
+endif (WIN32)
 INSTALL(FILES callbacks.h delegateinvocation.h emitsignal.h invokeslot.h marshall.h marshall_macros.h methodcall.h
               methodreturnvalue.h qyoto.h qyotosmokebinding.h signalreturnvalue.h slotreturnvalue.h smokeqyoto.h
               virtualmethodcall.h virtualmethodreturnvalue.h DESTINATION include/qyoto)
