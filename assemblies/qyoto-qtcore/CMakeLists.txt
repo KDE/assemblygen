@@ -30,15 +30,23 @@ set (qyoto_qtcore_SRC
 
 GET_LIBRARY_OUTPUT_DIR(library_target_dir)
 
-add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtcore.dll
-                   COMMAND ${MONO_EXECUTABLE} ${LIBRARY_OUTPUT_PATH}/assemblygen.exe
-                            -unsafe -out:qyoto-qtcore.dll -global-class:Qt
-                            -plugins:QyotoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
-                            -code-file:qyoto-qtcore.cs \"-keyfile:${KEYFILE}\"
-                            ${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtcore${CMAKE_SHARED_LIBRARY_SUFFIX}
-                            ${qyoto_qtcore_SRC}
-                   WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
-                   DEPENDS ${qyoto_qtcore_SRC})
+set (ASSEMBLYGEN_ARGS
+	${LIBRARY_OUTPUT_PATH}/assemblygen.exe
+	-unsafe -out:qyoto-qtcore.dll -global-class:Qt
+	-plugins:QyotoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
+	-code-file:qyoto-qtcore.cs \"-keyfile:${KEYFILE}\"
+	${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtcore${CMAKE_SHARED_LIBRARY_SUFFIX}
+	${qyoto_qtcore_SRC}
+	WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
+	DEPENDS ${qyoto_qtcore_SRC}
+)
+if (MONO_EXECUTABLE)
+	add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtcore.dll
+		COMMAND ${MONO_EXECUTABLE} ${ASSEMBLYGEN_ARGS})
+else (MONO_EXECUTABLE)
+	add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtcore.dll
+		COMMAND ${ASSEMBLYGEN_ARGS})
+endif (MONO_EXECUTABLE)
 
 add_custom_target(qyoto-qtcore ALL DEPENDS ${LIBRARY_OUTPUT_PATH}/qyoto-qtcore.dll)
 add_dependencies(qyoto-qtcore assemblygen QyotoGenerator)

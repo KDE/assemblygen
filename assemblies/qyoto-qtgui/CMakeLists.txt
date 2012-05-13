@@ -16,15 +16,23 @@ set (qyoto_qtgui_SRC
 )
 
 GET_LIBRARY_OUTPUT_DIR(library_target_dir)
-add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtgui.dll
-                   COMMAND ${MONO_EXECUTABLE} ${LIBRARY_OUTPUT_PATH}/assemblygen.exe
-                            -unsafe -out:qyoto-qtgui.dll -r:qyoto-qtcore.dll
-                            -plugins:QyotoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
-                            -code-file:qyoto-qtgui.cs \"-keyfile:${KEYFILE}\"
-                            ${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtgui${CMAKE_SHARED_LIBRARY_SUFFIX}
-                            ${qyoto_qtgui_SRC}
-                   WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
-                   DEPENDS ${qyoto_qtgui_SRC})
+set (ASSEMBLYGEN_ARGS
+	${LIBRARY_OUTPUT_PATH}/assemblygen.exe
+	-unsafe -out:qyoto-qtgui.dll -r:qyoto-qtcore.dll
+	-plugins:QyotoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
+	-code-file:qyoto-qtgui.cs \"-keyfile:${KEYFILE}\"
+	${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtgui${CMAKE_SHARED_LIBRARY_SUFFIX}
+	${qyoto_qtgui_SRC}
+	WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
+	DEPENDS ${qyoto_qtgui_SRC}
+)
+if (MONO_EXECUTABLE)
+	add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtgui.dll
+		COMMAND ${MONO_EXECUTABLE} ${ASSEMBLYGEN_ARGS})
+else (MONO_EXECUTABLE)
+	add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtgui.dll
+		COMMAND ${ASSEMBLYGEN_ARGS})
+endif (MONO_EXECUTABLE)
 
 add_custom_target(qyoto-qtgui ALL DEPENDS ${LIBRARY_OUTPUT_PATH}/qyoto-qtgui.dll)
 add_dependencies(qyoto-qtgui assemblygen QyotoGenerator qyoto-qtcore)
