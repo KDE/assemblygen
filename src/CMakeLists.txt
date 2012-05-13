@@ -28,7 +28,15 @@ set(assemblygen_SRC
     Util.cs
 )
 
-csharp_add_executable(assemblygen ${assemblygen_SRC} UNSAFE COMPILE_DEFINITIONS DEBUG)
+if (WIN32)
+    # Build assemblygen as an x86 application, so that it can
+    # dynamically load smokeqt DLLs.
+    csharp_add_executable(assemblygen ${assemblygen_SRC}
+		COMPILE_FLAGS /platform:x86 UNSAFE COMPILE_DEFINITIONS DEBUG)
+else (WIN32)
+    csharp_add_executable(assemblygen ${assemblygen_SRC} UNSAFE
+        COMPILE_DEFINITIONS DEBUG)
+endif (WIN32)
 
 if (MONO_EXECUTABLE)
     configure_file(assemblygen.cmake assemblygen @ONLY)
