@@ -37,7 +37,7 @@ macro (find_smoke_component name)
     if (NOT SMOKE_${uppercase}_FOUND)
         set (SMOKE_${uppercase}_FOUND FALSE CACHE INTERNAL "")
 
-        find_path(SMOKE_${uppercase}_INCLUDE_DIR smoke/${lowercase}_smoke.h)
+        find_path(SMOKE_${uppercase}_INCLUDE_DIR smoke/${lowercase}_smoke.h "${SMOKE_INCLUDE_DIR}")
         find_library(SMOKE_${uppercase}_LIBRARY smoke${lowercase})
 
         if (NOT SMOKE_${uppercase}_INCLUDE_DIR OR NOT SMOKE_${uppercase}_LIBRARY)

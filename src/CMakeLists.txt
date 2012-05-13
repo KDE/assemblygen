@@ -5,7 +5,7 @@ set(assemblygen_native_SRC
     assemblygen-native.cpp
 )
 
-include_directories(${QT_INCLUDES})
+include_directories(${QT_INCLUDES} "${SMOKE_INCLUDE_DIR}")
 add_library(assemblygen-native SHARED ${assemblygen_native_SRC})
 target_link_libraries(assemblygen-native ${QT_QTCORE_LIBRARY} ${SMOKE_BASE_LIBRARY})
 
