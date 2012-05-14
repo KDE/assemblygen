@@ -712,7 +712,7 @@ namespace Qyoto
 		}
 	}
 
-	[AttributeUsage( AttributeTargets.Event )]
+	[AttributeUsage( AttributeTargets.Method )]
 	public class Q_SIGNAL : Attribute
 	{
 		public string signature;
