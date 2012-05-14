@@ -124,9 +124,9 @@ public unsafe class QyotoHooks : IHookProvider {
                 CodeMemberEvent signal = new CodeMemberEvent();
 				// HACK: both .NET and Mono have bugs with a generic CodeTypeReference so different implementations are needed
 				if (Environment.OSVersion.Platform == PlatformID.Win32NT) {
-					signal.Type = new CodeTypeReference(typeof(Action));
+					signal.Type = new CodeTypeReference("Slot");
 				}
-                StringBuilder fullNameBuilder = new StringBuilder("System.Action");
+                StringBuilder fullNameBuilder = new StringBuilder("Slot");
                 signal.Attributes = MemberAttributes.Abstract;
 
                 // capitalize the first letter
