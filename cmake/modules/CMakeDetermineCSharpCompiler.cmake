@@ -9,7 +9,7 @@
 
 if(NOT CMAKE_CSharp_COMPILER)
     # prefer the environment variable CSC, but not if it's .NET 2.0,
-    # because Qyoto uses .NET 4.0 features
+    # because Qyoto uses .NET 3.5 features
     if($ENV{CSC} MATCHES ".+" AND NOT $ENV{CSC} MATCHES "2.0")
         if (EXISTS $ENV{CSC})
             message(STATUS "Found compiler set in environment variable CSC: $ENV{CSC}.")
@@ -22,13 +22,13 @@ if(NOT CMAKE_CSharp_COMPILER)
     # if no compiler has been specified yet, then look for one
     if (NOT CMAKE_CSharp_COMPILER)
         find_package(Mono)
-        set (CMAKE_CSharp_COMPILER "${DMCS_EXECUTABLE}")
+        set (CMAKE_CSharp_COMPILER "${GMCS_EXECUTABLE}")
 
         # still not found, try csc.exe
         if (NOT CMAKE_CSharp_COMPILER)
             get_filename_component(dotnet_path "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\.NETFramework;InstallRoot]" PATH)
-            find_program(CMAKE_CSharp_COMPILER NAMES csc PATHS "${dotnet_path}/Framework/v4.0.30319")
-            file(TO_NATIVE_PATH "${dotnet_path}/Framework/v4.0.30319" native_path)
+            find_program(CMAKE_CSharp_COMPILER NAMES csc PATHS "${dotnet_path}/Framework/v3.5")
+            file(TO_NATIVE_PATH "${dotnet_path}/Framework/v3.5" native_path)
             message(STATUS "Looking for csc: ${CMAKE_CSharp_COMPILER}")
 
             # give up
