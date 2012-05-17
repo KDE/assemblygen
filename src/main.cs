@@ -206,7 +206,9 @@ Any options not listed here are directly passed to the compiler (leading dashes 
         classgen.Run();
         DestroySmoke((IntPtr) smoke);
 
-        CodeDomProvider csharp = new CSharpCodeProvider();
+        Dictionary<string, string> providerOptions = new Dictionary<string, string>();
+        providerOptions.Add("CompilerVersion", "v3.5");
+        CodeDomProvider csharp = new CSharpCodeProvider(providerOptions);
         if (codeFile != string.Empty) {
             FileStream fs = new FileStream(codeFile, FileMode.Create);
             StreamWriter sw = new StreamWriter(fs);

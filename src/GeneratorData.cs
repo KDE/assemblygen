@@ -217,7 +217,7 @@ public unsafe class GeneratorData {
         string dest = Destination;
         if (string.IsNullOrEmpty(dest)) {
             if (Environment.OSVersion.Platform == PlatformID.Win32NT) {
-                dest = Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.Windows));
+                dest = Path.GetDirectoryName(Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.System)));
             } else {
                 dest = Path.DirectorySeparatorChar.ToString(CultureInfo.InvariantCulture);
             }
