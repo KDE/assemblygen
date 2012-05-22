@@ -504,20 +504,12 @@ public unsafe class MethodsGenerator {
             }
 
             int i = 0;
-            string[] methodArgs = GetMethodArgs(smoke, method);
             foreach (CodeParameterDeclarationExpression param in cmm.Parameters) {
                 ++i;
                 if (param.Direction != FieldDirection.Ref) {
                     continue;
                 }
-
-                string arg;
-                if (cmm.Name.StartsWith("operator") || methodArgs == null) {
-                    arg = "arg" + i;
-                } else {
-                    arg = methodArgs[i - 1];
-                }
-                cmm.Statements.Add(new CodeAssignStatement(new CodeVariableReferenceExpression(arg),
+                cmm.Statements.Add(new CodeAssignStatement(new CodeVariableReferenceExpression(param.Name),
                     new CodeCastExpression(param.Type.BaseType,
                         new CodeArrayIndexerExpression(
                             new CodeVariableReferenceExpression("smokeArgs"), new CodePrimitiveExpression(i*2 - 1)
@@ -558,11 +550,16 @@ public unsafe class MethodsGenerator {
     	}
 		string className = ByteArrayManager.GetString(smoke->classes[method->classId].className);
     	className = className.Substring(className.LastIndexOf(":") + 1);
-    	string key = className + "," + ByteArrayManager.GetString(smoke->methodNames[method->name]) + "," + method->numArgs;
-    	if (data.ArgumentNames.ContainsKey(key)) {
+        StringBuilder keyBuilder = new StringBuilder(className + "," + ByteArrayManager.GetString(smoke->methodNames [method->name]));
+        for (short* typeIndex = smoke->argumentList + method->args; *typeIndex > 0; typeIndex++) {
+            keyBuilder.Append(',');
+            keyBuilder.Append(*typeIndex);
+        }
+        string key = keyBuilder.ToString();
+        if (data.ArgumentNames.ContainsKey(key)) {
 			return data.ArgumentNames[key];
         }
-        string argNamesFile = data.GetArgNamesFile();
+        string argNamesFile = data.GetArgNamesFile(smoke);
 		if (File.Exists(argNamesFile)) {
 			foreach (string[] strings in File.ReadAllLines(argNamesFile).Select(line => line.Split(';'))) {
 				data.ArgumentNames[strings[0]] = strings[1].Split(',');
