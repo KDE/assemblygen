@@ -6,4 +6,9 @@ INCLUDE_DIRECTORIES (${QT_INCLUDES})
 ADD_EXECUTABLE(csrcc ${csrcc_SRCS})
 TARGET_LINK_LIBRARIES (csrcc ${QT_QTCORE_LIBRARY} ${QT_QTXML_LIBRARY})
 
+if (WIN32)
+	# Realign the stack, for compatibility with an older ABI.
+	set_target_properties (csrcc PROPERTIES COMPILE_FLAGS -mstackrealign)
+endif (WIN32)
+
 INSTALL(TARGETS csrcc DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)

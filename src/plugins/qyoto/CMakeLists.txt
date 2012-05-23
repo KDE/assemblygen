@@ -14,6 +14,11 @@ set(qyotogenerator_native_SRC
 add_library(qyotogenerator-native SHARED ${qyotogenerator_native_SRC})
 target_link_libraries(qyotogenerator-native ${QT_QTCORE_LIBRARY} ${SMOKE_BASE_LIBRARY})
 
+if (WIN32)
+	# Realign the stack, for compatibility with an older ABI.
+	set_target_properties (qyotogenerator-native PROPERTIES COMPILE_FLAGS -mstackrealign)
+endif (WIN32)
+
 csharp_add_library(QyotoGenerator ${QyotoGenerator_SRC} UNSAFE REFERENCES assemblygen)
 
 install(TARGETS qyotogenerator-native DESTINATION lib${LIB_SUFFIX}/assemblygen/plugins)
