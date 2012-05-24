@@ -352,13 +352,18 @@ namespace Qyoto
 			if (SmokeMarshallers.IsSmokeClass(type)) {
 				typeString = SmokeMarshallers.SmokeClassName(type);
 			}
-			
+
+            List<string> nonQObjectClasses = new List<string> 
+                                             { 
+                                                 // paint devices
+                                                 "QCustomRasterPaintDevice", "QGLFramebufferObject", "QGLPixelBuffer", "QImage", "QPicture", "QPixmap", "QPrinter", "QSvgGenerator", 
+                                                 // painters
+                                                 "QStylePainter", "Q3Painter", "QPainter",
+                                                 // model items
+                                                 "QListWidgetItem", "QListWidgetItem", "QTableWidgetItem", "QStandardItem"
+                                             };
 			// pointer types
-			if (   type.IsSubclassOf(typeof(QObject))
-			    || typeString == "QListWidgetItem"
-			    || typeString == "QTreeWidgetItem"
-			    || typeString == "QTableWidgetItem"
-			    || typeString == "QStandardItem")
+			if (   type.IsSubclassOf(typeof(QObject)) || nonQObjectClasses.Contains(typeString))
 				typeString += "*";
 			
 			return typeString;
