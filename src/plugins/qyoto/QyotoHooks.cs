@@ -274,7 +274,10 @@ public unsafe class QyotoHooks : IHookProvider {
 				type.Members.Add(eventFilters);
 			}
 			CodeSnippetTypeMember codeMemberEvent = new CodeSnippetTypeMember();
-			codeMemberEvent.Name = cmm.Name;
+			codeMemberEvent.Name = cmm.Name.Substring(0, cmm.Name.IndexOf("Event"));
+            if (new [] { "", "Custom", "Widget", "Show", "Hide", "Close", "Move", "Resize", "Viewport" }.Contains(codeMemberEvent.Name)) {
+                codeMemberEvent.Name += "Event";
+            }
 			codeMemberEvent.Text = string.Format(@"
 		public event EventHandler<QEventArgs<{0}>> {1}
 		{{
@@ -299,7 +302,7 @@ public unsafe class QyotoHooks : IHookProvider {
 				}}
 			}}
 		}}
-				", paramType, cmm.Name, GetEventTypes(cmm.Name));
+				", paramType, codeMemberEvent.Name, GetEventTypes (cmm.Name));
 			codeMemberEvent.Attributes = (codeMemberEvent.Attributes & ~MemberAttributes.AccessMask) |
 										 MemberAttributes.Public;
 			type.Members.Add(codeMemberEvent);
