@@ -59,6 +59,7 @@ public:
             }
         }
 #endif
+    return Qyoto::Binding::callMethod(obj, sqo, signature, args, isAbstract);
     }
 };
 

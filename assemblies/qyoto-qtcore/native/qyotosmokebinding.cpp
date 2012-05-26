@@ -127,6 +127,7 @@ Binding::className(Smoke::Index classId)
 	if (_classname.contains(classId)) {
 		return _classname[classId].data();
 	}
+	return NULL;
 }
 
 }
