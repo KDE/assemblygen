@@ -22,7 +22,7 @@ else (MONO_EXECUTABLE)
 endif (MONO_EXECUTABLE)
 
 add_custom_target(qyoto-qtsql ALL DEPENDS ${LIBRARY_OUTPUT_PATH}/qyoto-qtsql.dll)
-add_dependencies(qyoto-qtsql assemblygen QyotoGenerator qyoto-qtcore)
+add_dependencies(qyoto-qtsql assemblygen QyotoGenerator qyoto-qtcore qyoto-qtgui)
 set_property(TARGET qyoto-qtsql PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/qyoto-qtsql.dll)
 set_property(TARGET qyoto-qtsql PROPERTY _assembly_type dll)
 
