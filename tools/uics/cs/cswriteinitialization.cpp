@@ -890,7 +890,6 @@ void WriteInitialization::writeProperties(const QString &varName,
     lowerCasePropertyNames << "fileMode";
     lowerCasePropertyNames << "flow";
     lowerCasePropertyNames << "horizontalHeaderFormat";
-    lowerCasePropertyNames << "icon";
     lowerCasePropertyNames << "insertPolicy";
     lowerCasePropertyNames << "itemIndexMethod";
     lowerCasePropertyNames << "layoutMode";
