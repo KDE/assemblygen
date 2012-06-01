@@ -1,5 +1,5 @@
 option (ENABLE_QYOTO_PLUGIN "Build the Qyoto plugin" TRUE)
-option (ENABLE_KIMONO_PLUGIN "Build the Kimono plugin" TRUE)
+option (ENABLE_KIMONO_PLUGIN "Build the Kimono plugin" FALSE)
 
 if (ENABLE_QYOTO_PLUGIN)
     add_subdirectory(qyoto)
