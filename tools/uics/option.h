@@ -43,7 +43,7 @@ struct Option
 
     QString inputFile;
     QString outputFile;
-    QString indent;
+    QString indent, dindent;
     QString prefix;
     QString postfix;
     QString translateFunction;
@@ -63,7 +63,10 @@ struct Option
           execCode(0),
           generator(CppGenerator),
           prefix(QLatin1String("Ui_"))
-    { indent.fill(QLatin1Char(' '), 4); }
+    {
+      indent.fill(QLatin1Char(' '), 4);
+      dindent.fill(QLatin1Char(' '), 8);
+    }
 };
 
 #endif // OPTION_H

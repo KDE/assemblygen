@@ -67,10 +67,10 @@ bool RCCFileInfo::writeDataInfo(FILE *out, RCCResourceLibrary::Format format)
     //some info
     if(format == RCCResourceLibrary::C_Code) {
         if(language != QLocale::C)
-            fprintf(out, "  // %s [%d::%d]\n  ", resourceName().toLatin1().constData(),
+            fprintf(out, "          // %s [%d::%d]\n        ", resourceName().toLatin1().constData(),
                     country, language);
         else
-            fprintf(out, "  // %s\n  ", resourceName().toLatin1().constData());
+            fprintf(out, "          // %s\n        ", resourceName().toLatin1().constData());
     }
 
     //pointer data
@@ -147,12 +147,12 @@ qint64 RCCFileInfo::writeDataBlob(FILE *out, qint64 offset, RCCResourceLibrary::
 
     //some info
     if(format == RCCResourceLibrary::C_Code)
-        fprintf(out, "  // %s\n  ", fileInfo.absoluteFilePath().toLatin1().constData());
+        fprintf(out, "          // %s\n        ", fileInfo.absoluteFilePath().toLatin1().constData());
 
     //write the length
     qt_rcc_write_number(out, data.size(), 4, format);
     if(format == RCCResourceLibrary::C_Code)
-        fprintf(out, ",\n  ");
+        fprintf(out, ",\n        ");
     offset += 4;
 
     //write the payload
@@ -161,14 +161,14 @@ qint64 RCCFileInfo::writeDataBlob(FILE *out, qint64 offset, RCCResourceLibrary::
         if(format == RCCResourceLibrary::C_Code) {
             fprintf(out, ",");
             if(!(i % 16))
-                fprintf(out, "\n  ");
+                fprintf(out, "\n        ");
         }
     }
     offset += data.size();
 
     //done
     if(format == RCCResourceLibrary::C_Code)
-        fprintf(out, "\n  ");
+        fprintf(out, "\n");
     return offset;
 }
 
@@ -179,18 +179,18 @@ qint64 RCCFileInfo::writeDataName(FILE *out, qint64 offset, RCCResourceLibrary::
 
     //some info
     if(format == RCCResourceLibrary::C_Code)
-        fprintf(out, "  // %s\n  ", name.toLatin1().constData());
+        fprintf(out, "          // %s\n        ", name.toLatin1().constData());
 
     //write the length
     qt_rcc_write_number(out, name.length(), 2, format);
     if(format == RCCResourceLibrary::C_Code)
-        fprintf(out, ",\n  ");
+        fprintf(out, ",\n        ");
     offset += 2;
 
     //write the hash
     qt_rcc_write_number(out, qHash(name), 4, format);
     if(format == RCCResourceLibrary::C_Code)
-        fprintf(out, ",\n  ");
+        fprintf(out, ",\n        ");
     offset += 4;
 
     //write the name
@@ -200,14 +200,14 @@ qint64 RCCFileInfo::writeDataName(FILE *out, qint64 offset, RCCResourceLibrary::
         if(format == RCCResourceLibrary::C_Code) {
             fprintf(out, ",");
             if(!(i % 16))
-                fprintf(out, "\n  ");
+                fprintf(out, "\n        ");
         }
     }
     offset += name.length()*2;
 
     //done
     if(format == RCCResourceLibrary::C_Code)
-        fprintf(out, "\n  ");
+        fprintf(out, "\n");
     return offset;
 }
 
@@ -475,10 +475,10 @@ RCCResourceLibrary::writeHeader(FILE *out)
         }
 
         fprintf(out, "public class QInitResources%s__dest_class__ {\n\n", initName.toLatin1().constData());
-        fprintf(out, "[DllImport(\"qyoto-qtcore-native\", CharSet=CharSet.Ansi)]\n");
-        fprintf(out, "public static unsafe extern void QyotoRegisterResourceData(int flag, byte * resource_struct, byte * resource_name, byte * resource_data);\n\n");
-        fprintf(out, "[DllImport(\"qyoto-qtcore-native\", CharSet=CharSet.Ansi)]\n");
-        fprintf(out, "public static unsafe extern void QyotoUnregisterResourceData(int flag, byte * resource_struct, byte * resource_name, byte * resource_data);\n\n");
+        fprintf(out, "    [DllImport(\"qyoto-qtcore-native\", CharSet=CharSet.Ansi)]\n");
+        fprintf(out, "    public static unsafe extern void QyotoRegisterResourceData(int flag, byte * resource_struct, byte * resource_name, byte * resource_data);\n\n");
+        fprintf(out, "    [DllImport(\"qyoto-qtcore-native\", CharSet=CharSet.Ansi)]\n");
+        fprintf(out, "    public static unsafe extern void QyotoUnregisterResourceData(int flag, byte * resource_struct, byte * resource_name, byte * resource_data);\n\n");
     } else if(mFormat == Binary) {
         fprintf(out,"qres");
         qt_rcc_write_number(out, 0, 4, mFormat);
@@ -493,7 +493,7 @@ bool
 RCCResourceLibrary::writeDataBlobs(FILE *out)
 {
     if(mFormat == C_Code)
-        fprintf(out, "static byte[] qt_resource_data = {\n");
+        fprintf(out, "    static byte[] qt_resource_data = {\n");
     else if(mFormat == Binary)
         mDataOffset = ftell(out);
     QStack<RCCFileInfo*> pending;
@@ -515,7 +515,7 @@ RCCResourceLibrary::writeDataBlobs(FILE *out)
         }
     }
     if(mFormat == C_Code)
-        fprintf(out, "\n};\n\n");
+        fprintf(out, "\n    };\n\n");
     return true;
 }
 
@@ -523,7 +523,7 @@ bool
 RCCResourceLibrary::writeDataNames(FILE *out)
 {
     if(mFormat == C_Code)
-        fprintf(out, "static byte[] qt_resource_name = {\n");
+        fprintf(out, "    static byte[] qt_resource_name = {\n");
     else if(mFormat == Binary)
         mNamesOffset = ftell(out);
 
@@ -551,7 +551,7 @@ RCCResourceLibrary::writeDataNames(FILE *out)
         }
     }
     if(mFormat == C_Code)
-        fprintf(out, "\n};\n\n");
+        fprintf(out, "    };\n\n");
     return true;
 }
 
@@ -564,7 +564,7 @@ bool
 RCCResourceLibrary::writeDataStructure(FILE *out)
 {
     if(mFormat == C_Code)
-        fprintf(out, "static byte[] qt_resource_struct = {\n");
+        fprintf(out, "    static byte[] qt_resource_struct = {\n");
     else if(mFormat == Binary)
         mTreeOffset = ftell(out);
     QStack<RCCFileInfo*> pending;
@@ -611,7 +611,7 @@ RCCResourceLibrary::writeDataStructure(FILE *out)
         }
     }
     if(mFormat == C_Code)
-        fprintf(out, "\n};\n\n");
+        fprintf(out, "    };\n\n");
 
     return true;
 }
@@ -627,30 +627,30 @@ RCCResourceLibrary::writeInitializer(FILE *out)
         }
 
         //init
-        fprintf(out, "public static int QInitResources%s()\n{\n", initName.toLatin1().constData());
-        fprintf(out, "    unsafe {\n");
-        fprintf(out, "        fixed (byte *s = qt_resource_struct, n = qt_resource_name, d = qt_resource_data)\n");
+        fprintf(out, "    public static int QInitResources%s()\n    {\n", initName.toLatin1().constData());
+        fprintf(out, "        unsafe {\n");
+        fprintf(out, "            fixed (byte *s = qt_resource_struct, n = qt_resource_name, d = qt_resource_data)\n");
 
         // Make the call here, passing in the array.
-        fprintf(out, "        QyotoRegisterResourceData(0x01, s, n, d);\n");
-        fprintf(out, "    }\n");
-        fprintf(out, "    return 1;\n");
-        fprintf(out, "}\n\n");
+        fprintf(out, "            QyotoRegisterResourceData(0x01, s, n, d);\n");
+        fprintf(out, "        }\n");
+        fprintf(out, "        return 1;\n");
+        fprintf(out, "    }\n\n");
 
-        fprintf(out, "static QInitResources%s__dest_class__() {\n", initName.toLatin1().constData());
-        fprintf(out, "    QInitResources%s();\n", initName.toLatin1().constData());
-        fprintf(out, "}\n\n");
+        fprintf(out, "    static QInitResources%s__dest_class__() {\n", initName.toLatin1().constData());
+        fprintf(out, "        QInitResources%s();\n", initName.toLatin1().constData());
+        fprintf(out, "    }\n\n");
 
         //cleanup
-        fprintf(out, "public static int QCleanupResources%s()\n{\n", initName.toLatin1().constData());
-        fprintf(out, "    unsafe {\n");
-        fprintf(out, "        fixed (byte *s = qt_resource_struct, n = qt_resource_name, d = qt_resource_data)\n");
+        fprintf(out, "    public static int QCleanupResources%s()\n    {\n", initName.toLatin1().constData());
+        fprintf(out, "        unsafe {\n");
+        fprintf(out, "            fixed (byte *s = qt_resource_struct, n = qt_resource_name, d = qt_resource_data)\n");
 
         // Make the call here, passing in the array.
-        fprintf(out, "        QyotoUnregisterResourceData(0x01, s, n, d);\n");
-        fprintf(out, "    }\n");
-        fprintf(out, "    return 1;\n");
-        fprintf(out, "}\n\n");
+        fprintf(out, "            QyotoUnregisterResourceData(0x01, s, n, d);\n");
+        fprintf(out, "        }\n");
+        fprintf(out, "        return 1;\n");
+        fprintf(out, "    }\n\n");
         fprintf(out, "}\n");
     } else if(mFormat == Binary) {
         const long old_pos = ftell(out);
