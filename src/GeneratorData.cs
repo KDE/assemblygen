@@ -72,14 +72,16 @@ public unsafe class GeneratorData {
         foreach (Assembly assembly in References) {
             foreach (Type type in assembly.GetTypes()) {
                 object[] attributes = type.GetCustomAttributes(smokeClassAttribute, false);
-                if (attributes.Length == 0)
-                    continue;
-                string smokeClassName = (string) smokeClassGetSignature.Invoke(attributes[0], null);
-                Type t;
-                if (ReferencedTypeMap.TryGetValue(smokeClassName, out t) && t.IsInterface) {
-                    continue;
+                if (attributes.Length != 0) {
+                    string smokeClassName = (string) smokeClassGetSignature.Invoke(attributes [0], null);
+                    Type t;
+                    if (ReferencedTypeMap.TryGetValue(smokeClassName, out t) && t.IsInterface) {
+                        continue;
+                    }
+                    ReferencedTypeMap[smokeClassName] = type;
+                } else {
+                    ReferencedTypeMap[type.Name] = type;                    
                 }
-                ReferencedTypeMap[smokeClassName] = type;
             }
         }
 

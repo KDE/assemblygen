@@ -52,8 +52,11 @@ public unsafe class EnumGenerator {
 
         CodeTypeDeclaration typeDecl = new CodeTypeDeclaration(name);
         typeDecl.IsEnum = true;
-        data.GetTypeCollection(prefix).Add(typeDecl);
-        data.EnumTypeMap[cppName] = typeDecl;
+        if (!data.ReferencedTypeMap.ContainsKey(name) || 
+            data.ReferencedTypeMap[name].FullName != data.DefaultNamespace.Name + "." + cppName.Replace("::", "+")) {
+            data.GetTypeCollection(prefix).Add(typeDecl);
+            data.EnumTypeMap[cppName] = typeDecl;
+        }
         return typeDecl;
     }
 
