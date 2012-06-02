@@ -768,6 +768,13 @@ void WriteInitialization::acceptLayoutItem(DomLayoutItem *node)
             colSpan = node->attributeColSpan();
 
         opt = QString::fromLatin1(", %1, %2, %3, %4").arg(row).arg(col).arg(rowSpan).arg(colSpan);
+        if (node->hasAttributeAlignment() && node->kind() == DomLayoutItem::Widget) {
+            opt += ", " + node->attributeAlignment().replace("::", ".AlignmentFlag.");
+        }
+    } else {
+        if (node->hasAttributeAlignment() && node->kind() == DomLayoutItem::Widget) {
+            opt = QString::fromLatin1(", 0, %1").arg(node->attributeAlignment().replace("::", ".AlignmentFlag."));
+        }
     }
 
     QString method = QLatin1String("AddItem");

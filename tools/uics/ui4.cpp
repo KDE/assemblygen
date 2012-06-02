@@ -2227,6 +2227,8 @@ void DomLayoutItem::read(const QDomElement &node)
         setAttributeRowSpan(node.attribute(QLatin1String("rowspan")).toInt());
     if (node.hasAttribute(QLatin1String("colspan")))
         setAttributeColSpan(node.attribute(QLatin1String("colspan")).toInt());
+    if (node.hasAttribute(QLatin1String("alignment")))
+        setAttributeAlignment(node.attribute(QLatin1String("alignment")));
 
     for (QDomNode n = node.firstChild(); !n.isNull(); n = n.nextSibling()) {
         if (!n.isElement())
