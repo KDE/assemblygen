@@ -783,7 +783,7 @@ void WriteInitialization::acceptLayoutItem(DomLayoutItem *node)
             if (layout->attributeClass() == QLatin1String("QFormLayout")) {
                 method = QLatin1String("SetWidget");
                 m_output << "\n" << m_option.dindent << layoutName << "." << method << "(" << node->attributeRow() << ", "
-                         << getItemRole(node) << ", " << varName << opt << ");\n\n";
+                         << getItemRole(node) << ", " << varName << ");\n\n";
                 return;
             }
             method = QLatin1String("AddWidget");
@@ -792,7 +792,7 @@ void WriteInitialization::acceptLayoutItem(DomLayoutItem *node)
             if (layout->attributeClass() == QLatin1String("QFormLayout")) {
                 method = QLatin1String("SetLayout");
                 m_output << "\n" << m_option.dindent << layoutName << "." << method << "(" << node->attributeRow() << ", "
-                         << getItemRole(node) << ", " << varName << opt << ");\n\n";
+                         << getItemRole(node) << ", " << varName << ");\n\n";
                 return;
             }
             method = QLatin1String("AddLayout");
