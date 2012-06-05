@@ -1026,9 +1026,17 @@ namespace Qyoto {
 				item->s_char = (sbyte) (char) o;
 			} else {
 #if DEBUG
+				if (o is Delegate) {
+					item->s_class = Marshal.GetFunctionPointerForDelegate((Delegate) o);
+				} else {
 					item->s_class = (IntPtr) DebugGCHandle.Alloc(o);
+				}
 #else
+				if (o is Delegate) {
+					item->s_class = Marshal.GetFunctionPointerForDelegate((Delegate) o);
+				} else {
 					item->s_class = (IntPtr) GCHandle.Alloc(o);
+				}
 #endif
 			}
 		}
@@ -1080,6 +1088,9 @@ namespace Qyoto {
 			} else if (t == typeof(char)) {
 				return (char) item->s_char;
 			} else if (item->s_class != IntPtr.Zero) {
+				if (typeof(Delegate).IsAssignableFrom(t)) {
+					return Marshal.GetDelegateForFunctionPointer(item->s_class, t);
+				}
 				// the StackItem contains a GCHandle to an object
 				GCHandle handle = (GCHandle) item->s_class;
 				object ret = handle.Target;

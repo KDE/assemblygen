@@ -1071,6 +1071,17 @@ static void marshall_charP_array(Marshall *m) {
 
 }
 
+static void marshal_function_pointer(Marshall *m) {
+    switch (m->action()) {
+        case Marshall::FromObject:
+            m->item().s_voidp = m->var().s_voidp;
+            break;
+        case Marshall::ToObject:
+            m->var().s_voidp = m->item().s_voidp;
+            break;
+    }
+}
+
 void marshall_QMapintQVariant(Marshall *m) {
 	switch(m->action()) {
 		case Marshall::FromObject: 
@@ -1489,6 +1500,12 @@ Marshall::HandlerFn getMarshallFn(const SmokeType &type) {
 	if(h != 0) {
 		return h->fn;
 	}
+
+    QRegExp regexFunction("^[^(]+\\(\\*\\)\\([^)]*\\)$");
+    int pos = regexFunction.indexIn(type.name());
+    if (pos > -1) {
+        return marshal_function_pointer;
+    }
 
 	return marshall_unknown;
 }

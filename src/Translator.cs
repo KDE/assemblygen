@@ -20,8 +20,10 @@
 using System;
 using System.CodeDom;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Linq;
 
 static class CollectionExtensions {
     public static void AddRange<T, U>(this IDictionary<T, U> self, IDictionary<T, U> dict) {
@@ -198,8 +200,7 @@ public unsafe class Translator {
         isRef = false;
         Match match = Regex.Match(typeString, @"^(const )?(unsigned |signed )?([\w\s:]+)(<.+>)?(\*)*(&)?$");
         if (!match.Success) {
-            // Console.WriteLine("Can't handle type {0}", typeString);
-            throw new NotSupportedException(typeString);
+            return CheckForFunctionPointer(typeString);
         }
         string ret;
         bool isConst = match.Groups[1].Value != string.Empty;
@@ -282,6 +283,42 @@ public unsafe class Translator {
         return new CodeTypeReference(ret);
     }
 
-#endregion
+    private CodeTypeReference CheckForFunctionPointer(string typeString)
+    {
+        Match match = Regex.Match(typeString, @"^([^(]+)\(\*\)\(([^)]*)\)$");
+        if (match.Success) {
+            string returnType = match.Groups[1].Value;
+            StringBuilder delegateNameBuilder = new StringBuilder();
+            CodeTypeDelegate @delegate = new CodeTypeDelegate();
+            @delegate.ReturnType = this.CppToCSharp(returnType);
+            if (returnType == "void") {
+                delegateNameBuilder.Append("Action");
+            } else {
+                delegateNameBuilder.Append("Func");
+                CodeTypeReference returnTypeReference = this.CppToCSharp(returnType);
+                delegateNameBuilder.Append(returnTypeReference.BaseType.Substring(returnTypeReference.BaseType.LastIndexOf('.') + 1));
+            }
+            foreach (string argumentType in match.Groups[2].Value.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries)) {
+                CodeTypeReference argType = CppToCSharp(argumentType);
+                string argTypeName = argType.BaseType.Substring(argType.BaseType.LastIndexOf('.') + 1);
+                string arg = argTypeName[0].ToString(CultureInfo.InvariantCulture).ToLowerInvariant() + argTypeName.Substring(1);
+                @delegate.Parameters.Add(new CodeParameterDeclarationExpression(argType, arg));
+                delegateNameBuilder.Append(argTypeName);
+            }
+            @delegate.Name = delegateNameBuilder.ToString();
+            if (@delegate.Name == "Action") {
+                return new CodeTypeReference(typeof(Action));
+            }
+            CodeTypeDeclaration globalType = data.CSharpTypeMap[data.GlobalSpaceClassName];
+            if (globalType.Members.Cast<CodeTypeMember>().All(m => m.Name != @delegate.Name)) {
+                globalType.Members.Add(@delegate);
+            }
+            delegateNameBuilder.Insert(0, globalType.Name + '.');
+            return new CodeTypeReference(delegateNameBuilder.ToString());
+        }
+        throw new NotSupportedException(typeString);
+    }
+
+    #endregion
 
 }
