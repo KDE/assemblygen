@@ -699,13 +699,13 @@ namespace Qyoto {
 			}
 
 			object result = data.constructorInfo.Invoke(data.constructorParamTypes);
+			data.proxyCreator.Invoke(result, null);
+			data.smokeObjectField.SetValue(result, smokeObjectPtr);
 #if DEBUG
 			if ((QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0) {
 				Console.WriteLine("CreateInstance(\"{0}\") constructed {1}", className, result);
 			}
 #endif
-			data.proxyCreator.Invoke(result, null);
-			data.smokeObjectField.SetValue(result, smokeObjectPtr);
 #if DEBUG
 			return (IntPtr) DebugGCHandle.Alloc(result);
 #else
