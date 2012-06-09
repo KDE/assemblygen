@@ -19,11 +19,7 @@ namespace Qyoto {
         }
 
         public T Value<T>() {
-            object value = Value(typeof(T));
-            if (value == null) {
-                return default(T);
-            }
-            return (T) value;
+            return (T) Value();
         }
 
         public object Value() {
