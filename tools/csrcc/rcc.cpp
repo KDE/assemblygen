@@ -475,9 +475,9 @@ RCCResourceLibrary::writeHeader(FILE *out)
         }
 
         fprintf(out, "public class QInitResources%s__dest_class__ {\n\n", initName.toLatin1().constData());
-        fprintf(out, "    [DllImport(\"qyoto-qtcore-native\", CharSet=CharSet.Ansi)]\n");
+        fprintf(out, "    [DllImport(\"qyoto-qtcore-native\", CharSet=CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]\n");
         fprintf(out, "    public static unsafe extern void QyotoRegisterResourceData(int flag, byte * resource_struct, byte * resource_name, byte * resource_data);\n\n");
-        fprintf(out, "    [DllImport(\"qyoto-qtcore-native\", CharSet=CharSet.Ansi)]\n");
+        fprintf(out, "    [DllImport(\"qyoto-qtcore-native\", CharSet=CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]\n");
         fprintf(out, "    public static unsafe extern void QyotoUnregisterResourceData(int flag, byte * resource_struct, byte * resource_name, byte * resource_data);\n\n");
     } else if(mFormat == Binary) {
         fprintf(out,"qres");
@@ -635,10 +635,6 @@ RCCResourceLibrary::writeInitializer(FILE *out)
         fprintf(out, "            QyotoRegisterResourceData(0x01, s, n, d);\n");
         fprintf(out, "        }\n");
         fprintf(out, "        return 1;\n");
-        fprintf(out, "    }\n\n");
-
-        fprintf(out, "    static QInitResources%s__dest_class__() {\n", initName.toLatin1().constData());
-        fprintf(out, "        QInitResources%s();\n", initName.toLatin1().constData());
         fprintf(out, "    }\n\n");
 
         //cleanup
