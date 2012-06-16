@@ -58,12 +58,14 @@ public unsafe class QyotoHooks : IHookProvider {
         ClassesGenerator.PostMembersHooks += PostMembersHook;
         ClassesGenerator.SupportingMethodsHooks += SupportingMethodsHook;
         ClassesGenerator.PreClassesHook += PreClassesHook;
+		ClassesGenerator.PostClassesHook += PostClassesHook;
 		MethodsGenerator.PostMethodBodyHooks += this.PostMethodBodyHooks;
         Console.WriteLine("Registered Qyoto hooks.");
     }
 
     public Translator Translator { get; set; }
     public GeneratorData Data { get; set; }
+    private readonly Dictionary<string, CodeMemberMethod> eventMethods = new Dictionary<string, CodeMemberMethod>();
 
     public void PreMembersHook(Smoke *smoke, Smoke.Class *klass, CodeTypeDeclaration type) {
         if (type.Name == "QObject") {
@@ -252,41 +254,65 @@ public unsafe class QyotoHooks : IHookProvider {
         pg.Run();
     }
 
+    void PostClassesHook () {
+        if (!Data.CSharpTypeMap.ContainsKey("QAbstractScrollArea")) {
+            return;
+        }
+        CodeTypeDeclaration typeQAbstractScrollArea = Data.CSharpTypeMap ["QAbstractScrollArea"];
+        foreach (KeyValuePair<string, CodeMemberMethod> eventMethod in eventMethods.Where(e => !typeQAbstractScrollArea.Members.Contains(e.Value))) {
+            GenerateEvent(eventMethod.Value, eventMethod.Key, typeQAbstractScrollArea, false);
+        }
+    }
+
 	private void PostMethodBodyHooks(Smoke* smoke, Smoke.Method* smokeMethod, CodeMemberMethod cmm, CodeTypeDeclaration type)
 	{
-		if (!cmm.Name.EndsWith("Event") || (type.Name == "QCoreApplication" && (cmm.Name == "PostEvent" || cmm.Name == "SendEvent")))
-		{
-			return;
-		}
-		string paramType;
-		// TODO: add support for IQGraphicsItem
-		if (cmm.Parameters.Count == 1 && (paramType = cmm.Parameters[0].Type.BaseType).EndsWith("Event") &&
-			(cmm.Attributes & MemberAttributes.Override) == 0 &&
-			!new[] { "QGraphicsItem", "QGraphicsObject", "QGraphicsTextItem", 
-					 "QGraphicsProxyWidget", "QGraphicsWidget", "QGraphicsLayout", 
-					 "QGraphicsScene"}.Contains(type.Name))
-		{
-			if (!HasField(type, "eventFilters"))
-			{
-				CodeSnippetTypeMember eventFilters = new CodeSnippetTypeMember();
-				eventFilters.Name = "eventFilters";
-				eventFilters.Text = "protected readonly List<QEventHandler> eventFilters = new List<QEventHandler>();";
-				type.Members.Add(eventFilters);
-			}
-			CodeSnippetTypeMember codeMemberEvent = new CodeSnippetTypeMember();
-			codeMemberEvent.Name = cmm.Name.Substring(0, cmm.Name.IndexOf("Event"));
-            if (new [] { "", "Custom", "Widget", "Show", "Hide", "Close", "Move", "Resize", "Viewport" }.Contains(codeMemberEvent.Name)) {
+	    GenerateEvent(cmm, cmm.Name, type, true);
+	}
+
+    private void GenerateEvent(CodeMemberMethod cmm, string name, CodeTypeDeclaration type, bool isVirtual)
+    {
+        if (!name.EndsWith("Event") ||
+            (type.Name == "QCoreApplication" && (name == "PostEvent" || name == "SendEvent")))
+        {
+            return;
+        }
+        string paramType;
+        // TODO: add support for IQGraphicsItem
+        if (cmm.Parameters.Count == 1 && (paramType = cmm.Parameters[0].Type.BaseType).EndsWith("Event") &&
+            (cmm.Attributes & MemberAttributes.Override) == 0 &&
+            !new[]
+                 {
+                     "QGraphicsItem", "QGraphicsObject", "QGraphicsTextItem",
+                     "QGraphicsProxyWidget", "QGraphicsWidget", "QGraphicsLayout",
+                     "QGraphicsScene"
+                 }.Contains(type.Name))
+        {
+            if (!this.HasField(type, "eventFilters"))
+            {
+                CodeSnippetTypeMember eventFilters = new CodeSnippetTypeMember();
+                eventFilters.Name = "eventFilters";
+                eventFilters.Text = "protected readonly List<QEventHandler> eventFilters = new List<QEventHandler>();";
+                type.Members.Add(eventFilters);
+            }
+            CodeSnippetTypeMember codeMemberEvent = new CodeSnippetTypeMember();
+            codeMemberEvent.Name = name.Substring(0, name.IndexOf("Event"));
+            if (
+                new[] {"", "Custom", "Widget", "Show", "Hide", "Close", "Move", "Resize", "Viewport"}.Contains(
+                    codeMemberEvent.Name))
+            {
                 codeMemberEvent.Name += "Event";
             }
-			codeMemberEvent.Text = string.Format(@"
-		public event EventHandler<QEventArgs<{0}>> {1}
+            codeMemberEvent.Text =
+                string.Format(
+                    @"
+		public {0} event EventHandler<QEventArgs<{1}>> {2}
 		{{
 			add
 			{{
-				QEventArgs<{0}> qEventArgs = new QEventArgs<{0}>({2});
-				QEventHandler<{0}> qEventHandler = new QEventHandler<{0}>(this, qEventArgs, value);
+				QEventArgs<{1}> qEventArgs = new QEventArgs<{1}>({3});
+				QEventHandler<{1}> qEventHandler = new QEventHandler<{1}>(this{4}, qEventArgs, value);
 				eventFilters.Add(qEventHandler);
-				this.InstallEventFilter(qEventHandler);
+				this{4}.InstallEventFilter(qEventHandler);
 			}}
 			remove
 			{{
@@ -295,25 +321,44 @@ public unsafe class QyotoHooks : IHookProvider {
 					QEventHandler eventFilter = eventFilters[i];
 					if (eventFilter.Handler == value)
 					{{
-						this.RemoveEventFilter(eventFilter);
+						this{4}.RemoveEventFilter(eventFilter);
 						eventFilters.RemoveAt(i);
                         break;
 					}}
 				}}
 			}}
 		}}
-				", paramType, codeMemberEvent.Name, GetEventTypes (cmm.Name));
-			codeMemberEvent.Attributes = (codeMemberEvent.Attributes & ~MemberAttributes.AccessMask) |
-										 MemberAttributes.Public;
-			type.Members.Add(codeMemberEvent);
-		}
-		if (!cmm.Name.StartsWith("~"))
-		{
-			cmm.Name = "On" + cmm.Name;
-		}
-	}
+				",
+                 isVirtual ? "virtual" : "override", paramType, codeMemberEvent.Name, GetEventTypes (name), isVirtual ? string.Empty : ".Viewport");
+            codeMemberEvent.Attributes = (codeMemberEvent.Attributes & ~MemberAttributes.AccessMask) |
+                                         MemberAttributes.Public;
+            type.Members.Add(codeMemberEvent);
+            if (isVirtual && InheritsQWidget(type)) {
+                eventMethods[cmm.Name] = cmm;
+            }
+        }
+        if (isVirtual && !cmm.Name.StartsWith("~")) {
+            cmm.Name = "On" + cmm.Name;
+        }
+    }
 
-	private bool HasField(CodeTypeDeclaration containingType, string field)
+    private bool InheritsQWidget(CodeTypeDeclaration type)
+    {
+        if (type.Name == "QWidget") {
+            return true;
+        }
+        foreach (CodeTypeReference baseType in type.BaseTypes) {
+            if (baseType.BaseType == "QWidget") {
+                return true;
+            }
+            if (Data.CSharpTypeMap.ContainsKey(baseType.BaseType) && this.InheritsQWidget(Data.CSharpTypeMap[baseType.BaseType])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private bool HasField(CodeTypeDeclaration containingType, string field)
 	{
 		return containingType.Members.Cast<CodeTypeMember>().Any(m => m.Name == field) ||
 			   containingType.BaseTypes.Cast<CodeTypeReference>().Any(
