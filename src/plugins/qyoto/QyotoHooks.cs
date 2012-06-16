@@ -311,8 +311,15 @@ public unsafe class QyotoHooks : IHookProvider {
 			{{
 				QEventArgs<{1}> qEventArgs = new QEventArgs<{1}>({3});
 				QEventHandler<{1}> qEventHandler = new QEventHandler<{1}>(this{4}, qEventArgs, value);
+                foreach (QEventHandler eventFilter in eventFilters)
+                {{
+                    this{4}.RemoveEventFilter(eventFilter);
+                }}
 				eventFilters.Add(qEventHandler);
-				this{4}.InstallEventFilter(qEventHandler);
+                for (int i = eventFilters.Count - 1; i >= 0; i--)
+                {{
+				    this{4}.InstallEventFilter(eventFilters[i]);                    
+                }}
 			}}
 			remove
 			{{
