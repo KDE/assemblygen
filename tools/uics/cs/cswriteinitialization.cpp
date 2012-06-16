@@ -402,7 +402,7 @@ void WriteInitialization::acceptUI(DomUI *node)
             continue;
         }
 
-        m_output << m_option.dindent << b.objName << ".SetBuddy(" << b.buddy << ");\n";
+        m_output << m_option.dindent << b.objName << ".Buddy = " << b.buddy << ";\n";
     }
 
     if (node->elementTabStops())
