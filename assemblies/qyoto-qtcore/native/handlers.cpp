@@ -198,6 +198,7 @@ qyoto_resolve_classname_qtcore(smokeqyoto_object * o)
 			break;
 		case QEvent::Hide:
 			SET_SMOKEQYOTO_OBJECT("QHideEvent")
+			break;
 		case QEvent::Close:
 			SET_SMOKEQYOTO_OBJECT("QCloseEvent")
 			break;
@@ -241,6 +242,7 @@ qyoto_resolve_classname_qtcore(smokeqyoto_object * o)
 			break;
 		case QEvent::DragMove:
 			SET_SMOKEQYOTO_OBJECT("QDragMoveEvent")
+			break;
 		case QEvent::Drop:
 			SET_SMOKEQYOTO_OBJECT("QDropEvent")
 			break;
@@ -344,6 +346,7 @@ qyoto_resolve_classname_qtcore(smokeqyoto_object * o)
 		case QEvent::AccessibilityHelp:
 		case QEvent::AccessibilityDescription:
 			SET_SMOKEQYOTO_OBJECT("QEvent")
+			break;
 #if QT_VERSION >= 0x40200
 		case QEvent::GraphicsSceneMouseMove:
 		case QEvent::GraphicsSceneMousePress:
