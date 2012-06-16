@@ -768,11 +768,11 @@ void WriteInitialization::acceptLayoutItem(DomLayoutItem *node)
             colSpan = node->attributeColSpan();
 
         opt = QString::fromLatin1(", %1, %2, %3, %4").arg(row).arg(col).arg(rowSpan).arg(colSpan);
-        if (node->hasAttributeAlignment() && node->kind() == DomLayoutItem::Widget) {
+        if (node->hasAttributeAlignment() && node->attributeAlignment() != "" && node->kind() == DomLayoutItem::Widget) {
             opt += ", " + node->attributeAlignment().replace("::", ".AlignmentFlag.");
         }
     } else {
-        if (node->hasAttributeAlignment() && node->kind() == DomLayoutItem::Widget) {
+        if (node->hasAttributeAlignment() && node->attributeAlignment() != "" && node->kind() == DomLayoutItem::Widget) {
             opt = QString::fromLatin1(", 0, %1").arg(node->attributeAlignment().replace("::", ".AlignmentFlag."));
         }
     }
@@ -896,6 +896,7 @@ void WriteInitialization::writeProperties(const QString &varName,
     lowerCasePropertyNames << "echoMode";
     lowerCasePropertyNames << "fileMode";
     lowerCasePropertyNames << "flow";
+    lowerCasePropertyNames << "fieldGrowthPolicy";
     lowerCasePropertyNames << "horizontalHeaderFormat";
     lowerCasePropertyNames << "insertPolicy";
     lowerCasePropertyNames << "itemIndexMethod";
