@@ -518,7 +518,7 @@ namespace Qyoto {
 					if (	(QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0
 							&& QDebug.debugLevel >= DebugLevel.Extensive ) 
 					{
-						Console.WriteLine("GetInstance() weakRef.IsAlive 0x{0:x8} -> {1}", (int) ptr, weakRef.Target);
+						Console.WriteLine("GetInstance() weakRef.IsAlive 0x{0:x8} -> {1}", (int) ptr, weakRef.Target is MethodInfo ? ((MethodInfo) weakRef.Target).Name : weakRef.Target.ToString());
 					}
 #endif
 					if (!allInstances && IsSmokeClass(weakRef.Target.GetType())) {

@@ -68,7 +68,7 @@ namespace Qyoto
 			if (	QDebug.debugLevel >= DebugLevel.High
 					&& (QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0 ) 
 			{
-				Console.WriteLine("GCHandle.Alloc 0x{0:x8} -> {1}", (IntPtr) handle, instance.GetType());
+				Console.WriteLine("GCHandle.Alloc 0x{0:x8} -> {1}", (IntPtr) handle, instance is MethodInfo ? ((MethodInfo) instance).Name : instance.GetType().FullName);
 			}
 
 			return handle;
@@ -78,7 +78,7 @@ namespace Qyoto
 			if (	QDebug.debugLevel >= DebugLevel.High
 					&& (QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0 ) 
 			{
-				Console.WriteLine("GCHandle.Free 0x{0:x8} -> {1}", (IntPtr) handle, handle.Target.GetType());
+				Console.WriteLine("GCHandle.Free 0x{0:x8} -> {1}", (IntPtr) handle, handle.Target is MethodInfo ? ((MethodInfo) handle.Target).Name : handle.Target.GetType().FullName);
 			}
 
 			handle.SynchronizedFree();
