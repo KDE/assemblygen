@@ -1316,19 +1316,19 @@ QString  WriteInitialization::writeSizePolicy(const DomSizePolicy *sp)
     const QString spName = m_driver->unique(QLatin1String("sizePolicy"));
     m_SizePolicyNameMap.insert(sizePolicyHandle, spName);
 
-    m_output << m_option.dindent << "QSizePolicy " << spName << " = new QSizePolicy";
+    m_output << m_option.dindent << "QSizePolicy " << spName << " = new QSizePolicy(";
     do {
         if (sp->hasElementHSizeType() && sp->hasElementVSizeType()) {
-            m_output << "((QSizePolicy.Policy)(" << sp->elementHSizeType()
+            m_output << "(QSizePolicy.Policy)(" << sp->elementHSizeType()
                 << "), (QSizePolicy.Policy)(" << sp->elementVSizeType() << "));\n";
             break;
         }
         if (sp->hasAttributeHSizeType() && sp->hasAttributeVSizeType()) {
-                m_output << "(QSizePolicy.Policy." << sp->attributeHSizeType() << ", QSizePolicy.Policy."
+                m_output << "QSizePolicy.Policy." << sp->attributeHSizeType() << ", QSizePolicy.Policy."
                 << sp->attributeVSizeType() << ");\n";
             break;
         }
-        m_output << ";\n";
+        m_output << ");\n";
     } while (false);
 
     m_output << m_option.dindent << spName << ".SetHorizontalStretch("
