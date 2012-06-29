@@ -185,7 +185,10 @@ public unsafe class ClassesGenerator {
         // we only need this for real classes
         CodeMemberMethod createProxy = new CodeMemberMethod();
         createProxy.Name = "CreateProxy";
-        createProxy.Attributes = MemberAttributes.Family | MemberAttributes.Final | MemberAttributes.New;
+        createProxy.Attributes = MemberAttributes.Public;
+        if (data.Smoke->inheritanceList[smokeClass->parents] != 0) {
+            createProxy.Attributes |= MemberAttributes.Override;
+        }
         createProxy.Statements.Add(new CodeAssignStatement(
             new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "interceptor"), // left hand side
             new CodeObjectCreateExpression("SmokeInvocation", new CodeTypeOfExpression(type.Name), new CodeThisReferenceExpression()) // right hand side
@@ -201,6 +204,20 @@ public unsafe class ClassesGenerator {
         type.Members.Add(interceptor);
         CodeMemberField smokeObject = new CodeMemberField(typeof(IntPtr), "smokeObject");
         type.Members.Add(smokeObject);
+        type.BaseTypes.Add(new CodeTypeReference("ISmokeObject"));
+        CodeMemberProperty propertySmokeObject = new CodeMemberProperty();
+        propertySmokeObject.Name = "SmokeObject";
+        propertySmokeObject.Type = new CodeTypeReference(typeof(IntPtr));
+        propertySmokeObject.Attributes = MemberAttributes.Public;
+        CodeFieldReferenceExpression smokeObjectReference = new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), smokeObject.Name);
+        propertySmokeObject.GetStatements.Add(new CodeMethodReturnStatement(smokeObjectReference));
+        propertySmokeObject.SetStatements.Add(new CodeAssignStatement(smokeObjectReference, new CodePropertySetValueReferenceExpression()));
+        type.Members.Add(propertySmokeObject);
+        type.BaseTypes.Add(new CodeTypeReference(typeof(IDisposable)));
+        CodeMemberMethod dispose = new CodeMemberMethod();
+        dispose.Name = "Dispose";
+        dispose.Attributes = MemberAttributes.Public;
+        type.Members.Add(dispose);
     }
 
     /*

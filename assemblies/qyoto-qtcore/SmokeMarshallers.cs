@@ -347,22 +347,17 @@ namespace Qyoto {
 			}
 
 			Object instance = ((GCHandle) instancePtr).Target;
-//			Debug.Assert(instance != null);
-
-			try {
-				SmokeClassData data = GetSmokeClassData(instance.GetType());
-				return (IntPtr) data.smokeObjectField.GetValue(instance);
-			} catch {
-				return IntPtr.Zero;
-			}
+            ISmokeObject smokeObject = instance as ISmokeObject;
+            if (smokeObject != null) {
+                return smokeObject.SmokeObject;
+            }
+            return IntPtr.Zero;
 		}
 		
 		public static void SetSmokeObject(IntPtr instancePtr, IntPtr smokeObjectPtr) {
 			Object instance = ((GCHandle) instancePtr).Target;
 // 			Debug.Assert(instance != null);
-
-			SmokeClassData data = GetSmokeClassData(instance.GetType());
-			data.smokeObjectField.SetValue(instance, smokeObjectPtr);
+            ((ISmokeObject) instance).SmokeObject = smokeObjectPtr;
 			return;
 		}
 		
@@ -580,8 +575,6 @@ namespace Qyoto {
 			public string className;
 			public ConstructorInfo constructorInfo;
 			public object[] constructorParamTypes;
-			public MethodInfo proxyCreator;
-			public FieldInfo smokeObjectField;
 		}
 
 		private static Dictionary<Type, SmokeClassData> smokeClassCache = new Dictionary<Type, SmokeClassData> ();
@@ -614,46 +607,15 @@ namespace Qyoto {
 
 			result.constructorInfo = t.GetConstructor(BindingFlags.NonPublic 
 				| BindingFlags.Instance, null, new Type[ ] { typeof( Type ) } , null);
-//			Debug.Assert(	result.constructorInfo != null,
-//							"GetSmokeClassData(\"" + result.className + "\") constructor method missing" );
-
-			Type klass = t;
-			do {
-				result.proxyCreator = klass.GetMethod("CreateProxy", BindingFlags.NonPublic 
-															| BindingFlags.Instance
-															| BindingFlags.DeclaredOnly);
-
-				klass = klass.BaseType;
-			} while (result.proxyCreator == null && klass != typeof(object) && klass != null);
-
-//			Debug.Assert(	result.proxyCreator != null, 
-//							"GetSmokeClassData(\"" + result.className + "\") no CreateProxy() found" );
-
-			result.smokeObjectField = GetPrivateFieldInfo(t, "smokeObject");
 
 			return result;
-		}
-
-		public static FieldInfo GetPrivateFieldInfo(Type type, string name) {
-			Type t = type;
-			FieldInfo fi = null;
-			while (t != typeof(object)) {
-				fi = t.GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.GetField);
-				if (fi != null) return fi;
-				t = t.BaseType;
-			}
-			return null;
 		}
 
 		// The class is not a custom subclass of a Qyoto class, and also is not
 		// a superclass of a Qyoto class, such as a MarshalByRefObject.
 		public static bool IsSmokeClass(Type klass) {
-			try {
-				SmokeClassData data = GetSmokeClassData(klass);
-				return data != null && data.className != null;
-			} catch {
-				return false;
-			}
+			SmokeClassData data = GetSmokeClassData(klass);
+			return data != null && data.className != null;
 		}
 
 		// The C++ class name signature of a Smoke class or interface
@@ -699,8 +661,9 @@ namespace Qyoto {
 			}
 
 			object result = data.constructorInfo.Invoke(data.constructorParamTypes);
-			data.proxyCreator.Invoke(result, null);
-			data.smokeObjectField.SetValue(result, smokeObjectPtr);
+            ISmokeObject smokeObject = (ISmokeObject) result;
+            smokeObject.CreateProxy();
+            smokeObject.SmokeObject = smokeObjectPtr;
 #if DEBUG
 			if ((QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0) {
 				Console.WriteLine("CreateInstance(\"{0}\") constructed {1}", className, result);
@@ -850,8 +813,7 @@ namespace Qyoto {
 		public static void AddIntPtrToList(IntPtr obj, IntPtr ptr) {
 			object list = ((GCHandle) obj).Target;
 			object o = ((GCHandle) ptr).Target;
-			object[] args = { o };
-			list.GetType().GetMethod("Add").Invoke(list, args);
+        	((IList) list).Add(o);
 		}
 
 		public static void AddIntToListInt(IntPtr obj, int i) {
@@ -877,15 +839,13 @@ namespace Qyoto {
 			object d = ((GCHandle) dic).Target;
 			object k = ((GCHandle) key).Target;
 			object v = ((GCHandle) val).Target;
-			object[] args = { k, v };
-			d.GetType().GetMethod("Add").Invoke(d, args);
+        	((IDictionary) d).Add(k, v);
 		}
 
 		public static void AddIntObjectToDictionary(IntPtr dict, int key, IntPtr val) {
 			object d = ((GCHandle) dict).Target;
 			object v = ((GCHandle) val).Target;
-			object[] args = { key, v };
-			d.GetType().GetMethod("Add").Invoke(d, args);
+        	((IDictionary) d).Add(key, v);
 		}
 
 		public static IntPtr DictionaryToQHash(IntPtr dict, int type) {

@@ -530,20 +530,20 @@ public unsafe class MethodsGenerator {
         containingType.Members.Add(cmm);
 
     	if ((method->flags & (uint) Smoke.MethodFlags.mf_dtor) != 0) {
-            CodeMemberMethod dispose = new CodeMemberMethod();
-            dispose.Name = "Dispose";
-            dispose.Attributes = MemberAttributes.Public;
-    	    if (*smoke->inheritanceList + smoke->classes[method->classId].parents == 0 ||
-                new [] { "QXmlStreamAttributes", "QPolygon", "QPolygonF", "QItemSelection" }.Contains(type.Name)) {
-                containingType.BaseTypes.Add(new CodeTypeReference(typeof(IDisposable)));
-    	    } else {
-    	        dispose.Attributes |= MemberAttributes.Override;
-    	    }
+            CodeMemberMethod dispose = (from CodeTypeMember member in containingType.Members
+                                        let methodMember = member as CodeMemberMethod
+                                        where methodMember != null && methodMember.Name == "Dispose"
+                                        select methodMember).FirstOrDefault();
+    	    if (dispose == null) {
+                dispose = new CodeMemberMethod();
+                dispose.Name = "Dispose";
+                dispose.Attributes = MemberAttributes.Public | MemberAttributes.Override;
+                containingType.Members.Add(dispose);
+            }
             dispose.Statements.AddRange(cmm.Statements);
             dispose.Statements.Add(new CodeExpressionStatement(new CodeMethodInvokeExpression(
                 new CodeTypeReferenceExpression("GC"), "SuppressFinalize", new CodeThisReferenceExpression()
             )));
-            containingType.Members.Add(dispose);
         }
         return cmm;
     }

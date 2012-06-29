@@ -26,6 +26,7 @@ set (qyoto_qtcore_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/StreamWrapper.cs
     ${CMAKE_CURRENT_SOURCE_DIR}/QIODeviceWrapper.cs
     ${CMAKE_CURRENT_SOURCE_DIR}/NativeLong.cs
+    ${CMAKE_CURRENT_SOURCE_DIR}/ISmokeObject.cs
 )
 
 GET_LIBRARY_OUTPUT_DIR(library_target_dir)
