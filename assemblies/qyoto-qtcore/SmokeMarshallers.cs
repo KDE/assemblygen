@@ -225,9 +225,6 @@ namespace Qyoto {
 
         [DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void InstallCreateGenericPointer(CreateInstanceFn callback);
-
-		[DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
-		public static extern void InstallTryDispose(FromIntPtr callback);
 #endregion
 		
 #region delegates
@@ -322,7 +319,6 @@ namespace Qyoto {
         private static CreateInstanceFn dBoxFromStackItem = BoxFromStackItem;
         private static GetIntPtr dGenericPointerGetIntPtr = GenericPointerGetIntPtr;
         private static CreateInstanceFn dCreateGenericPointer = CreateGenericPointer;
-        private static FromIntPtr dTryDispose = TryDispose;
 #endregion
 
 #region marshalling functions
@@ -1087,22 +1083,6 @@ namespace Qyoto {
 			object o = Activator.CreateInstance(t, new object[] { ptr });
 			return (IntPtr) GCHandle.Alloc(o);
 		}
-		
-		public static void TryDispose(IntPtr obj) {
-			object o = ((GCHandle) obj).Target;
-			if (o == null) {
-				return;
-			}
-
-			Type t = o.GetType();
-			MethodInfo mi = t.GetMethod("Dispose");
-
-			if (mi == null || IsSmokeClass(mi.DeclaringType)) {
-				return;
-			}
-
-			((IDisposable) o).Dispose();
-		}
 #endregion
 		
 #region Setup
@@ -1161,8 +1141,6 @@ namespace Qyoto {
 			
 			InstallGenericPointerGetIntPtr(dGenericPointerGetIntPtr);
 			InstallCreateGenericPointer(dCreateGenericPointer);
-			
-			InstallTryDispose(dTryDispose);
 		}
 #endregion
 
