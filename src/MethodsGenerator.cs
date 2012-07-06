@@ -530,20 +530,15 @@ public unsafe class MethodsGenerator {
         containingType.Members.Add(cmm);
 
     	if ((method->flags & (uint) Smoke.MethodFlags.mf_dtor) != 0) {
-            CodeMemberMethod dispose = (from CodeTypeMember member in containingType.Members
-                                        let methodMember = member as CodeMemberMethod
-                                        where methodMember != null && methodMember.Name == "Dispose"
-                                        select methodMember).FirstOrDefault();
-    	    if (dispose == null) {
-                dispose = new CodeMemberMethod();
-                dispose.Name = "Dispose";
-                dispose.Attributes = MemberAttributes.Public | MemberAttributes.Override;
-                containingType.Members.Add(dispose);
-            }
+            containingType.BaseTypes.Add(new CodeTypeReference(typeof(IDisposable)));
+            CodeMemberMethod dispose = new CodeMemberMethod();
+            dispose.Name = "Dispose";
+            dispose.Attributes = MemberAttributes.Public | MemberAttributes.New | MemberAttributes.Final;
             dispose.Statements.AddRange(cmm.Statements);
             dispose.Statements.Add(new CodeExpressionStatement(new CodeMethodInvokeExpression(
                 new CodeTypeReferenceExpression("GC"), "SuppressFinalize", new CodeThisReferenceExpression()
             )));
+            containingType.Members.Add(dispose);
         }
         return cmm;
     }

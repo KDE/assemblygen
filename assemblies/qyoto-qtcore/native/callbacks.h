@@ -61,6 +61,7 @@ extern QYOTO_EXPORT OverridenMethodFn GetProperty;
 extern QYOTO_EXPORT SetPropertyFn SetProperty;
 
 extern QYOTO_EXPORT SetIntPtr InvokeDelegate;
+extern QYOTO_EXPORT FromIntPtr TryDispose;
 
 extern QYOTO_EXPORT GetIntPtr IntPtrToCharStarStar;
 extern QYOTO_EXPORT GetCharStarFromIntPtr IntPtrToCharStar;

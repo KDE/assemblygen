@@ -39,6 +39,7 @@ OverridenMethodFn GetProperty;
 SetPropertyFn SetProperty;
 
 SetIntPtr InvokeDelegate;
+FromIntPtr TryDispose;
 
 GetIntPtr ListToPointerList;
 CreateListFn ConstructList;
@@ -206,6 +207,12 @@ Q_DECL_EXPORT void InstallUnboxToStackItem(SetIntPtr callback)
 Q_DECL_EXPORT void InstallBoxFromStackItem (CreateInstanceFn callback)
 {
     BoxFromStackItem = callback;
+}
+
+Q_DECL_EXPORT void
+InstallTryDispose(FromIntPtr callback)
+{
+    TryDispose = callback;
 }
 
 Q_DECL_EXPORT void

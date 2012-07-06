@@ -213,11 +213,6 @@ public unsafe class ClassesGenerator {
         propertySmokeObject.GetStatements.Add(new CodeMethodReturnStatement(smokeObjectReference));
         propertySmokeObject.SetStatements.Add(new CodeAssignStatement(smokeObjectReference, new CodePropertySetValueReferenceExpression()));
         type.Members.Add(propertySmokeObject);
-        type.BaseTypes.Add(new CodeTypeReference(typeof(IDisposable)));
-        CodeMemberMethod dispose = new CodeMemberMethod();
-        dispose.Name = "Dispose";
-        dispose.Attributes = MemberAttributes.Public;
-        type.Members.Add(dispose);
     }
 
     /*
