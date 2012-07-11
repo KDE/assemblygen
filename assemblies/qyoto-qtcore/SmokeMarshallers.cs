@@ -191,7 +191,7 @@ namespace Qyoto {
 		public static extern IntPtr InstallConstructDictionary(ConstructDict callback);
 
         [DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void InstallAddObjectObjectToDictionary(InvokeMethodFn callback);
+		public static extern void InstallAddObjectObjectToDictionary(AddToDictionaryFn callback);
 
         [DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void InstallAddIntObjectToDictionary(AddIntObject callback);
@@ -215,7 +215,7 @@ namespace Qyoto {
 		public static extern void InstallCreateQPair(CreateQPairFn callback);
 
         [DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void InstallUnboxToStackItem(SetIntPtr callback);
+		public static extern void InstallUnboxToStackItem(SetIntPtrType callback);
 
         [DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void InstallBoxFromStackItem(CreateInstanceFn callback);
@@ -238,6 +238,8 @@ namespace Qyoto {
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate void SetIntPtr(IntPtr instance, IntPtr ptr);
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+		public delegate TypeId SetIntPtrType(IntPtr instance, IntPtr ptr);
+		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate void FromIntPtr(IntPtr ptr);
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate void MapPointerFn(IntPtr instance, IntPtr ptr, bool createGlobalReference);
@@ -258,7 +260,9 @@ namespace Qyoto {
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate IntPtr OverridenMethodFn(IntPtr instance, string method);
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-		public delegate void InvokeMethodFn(IntPtr instance, IntPtr method, IntPtr args);
+		public delegate void InvokeMethodFn(IntPtr instance, IntPtr method, IntPtr args, IntPtr	typeIDs);
+		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+		public delegate void AddToDictionaryFn(IntPtr instance, IntPtr method, IntPtr args);
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		public delegate void AddInt(IntPtr obj, int i);
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -304,7 +308,7 @@ namespace Qyoto {
         private static AddInt dAddIntToListInt = AddIntToListInt;
         private static AddUInt dAddUIntToListUInt = AddUIntToListUInt;
         private static ConstructDict dConstructDictionary = ConstructDictionary;
-        private static InvokeMethodFn dAddObjectObjectToDictionary = AddObjectObjectToDictionary;
+		private static AddToDictionaryFn dAddObjectObjectToDictionary = AddObjectObjectToDictionary;
         private static AddIntObject dAddIntObjectToDictionary = AddIntObjectToDictionary;
         private static DictToHash dDictionaryToQHash = DictionaryToQHash;
         private static DictToMap dDictionaryToQMap = DictionaryToQMap;
@@ -318,7 +322,7 @@ namespace Qyoto {
         private static GetIntPtr dQPairGetFirst = QPairGetFirst;
         private static GetIntPtr dQPairGetSecond = QPairGetSecond;
         private static CreateQPairFn dCreateQPair = CreateQPair;
-        private static SetIntPtr dUnboxToStackItem = UnboxToStackItem;
+		private static SetIntPtrType dUnboxToStackItem = UnboxToStackItem;
         private static CreateInstanceFn dBoxFromStackItem = BoxFromStackItem;
         private static GetIntPtr dGenericPointerGetIntPtr = GenericPointerGetIntPtr;
         private static CreateInstanceFn dCreateGenericPointer = CreateGenericPointer;
@@ -933,10 +937,10 @@ namespace Qyoto {
 			return (IntPtr) GCHandle.Alloc(pair);
 		}
 
-		public static unsafe void UnboxToStackItem(object o, StackItem *item) {
+		public static unsafe TypeId UnboxToStackItem(object o, StackItem *item) {
 			if (o == null) {
 				item->s_class = IntPtr.Zero;
-				return;
+				return TypeId.t_class;
 			}
 			Type t = o.GetType();
 
@@ -944,46 +948,64 @@ namespace Qyoto {
 				if (SizeOfNativeLong < sizeof(long)) {
 					int value = Enum.GetUnderlyingType(t) == typeof(long) ? (int) (long) o : (int) o;
 					item->s_int = value;
+					return TypeId.t_int;
 				} else {
 					long value = Enum.GetUnderlyingType(t) == typeof(long) ? (long) o : (int) o;
 					item->s_long = value;
+					return TypeId.t_long;
 				}
 			} else if (t == typeof(int)) {
 				item->s_int = (int) o;
+				return TypeId.t_int;
 			} else if (t == typeof(bool)) {
 				item->s_bool = (bool) o;
+				return TypeId.t_bool;
 			} else if (t == typeof(short)) {
 				item->s_short = (short) o;
+				return TypeId.t_short;
 			} else if (t == typeof(float)) {
 				item->s_float = (float) o;
+				return TypeId.t_float;
 			} else if (t == typeof(double)) {
 				item->s_double = (double) o;
+				return TypeId.t_double;
 			} else if (t == typeof(NativeLong)) {
 				if (SizeOfNativeLong < sizeof(long)) {
 					item->s_int = (int) (NativeLong) o;
+					return TypeId.t_int;
 				} else {
 					item->s_long = (NativeLong) o;
+					return TypeId.t_long;
 				}
 			} else if (t == typeof(ushort)) {
 				item->s_ushort = (ushort) o;
+				return TypeId.t_ushort;
 			} else if (t == typeof(uint)) {
 				item->s_uint = (uint) o;
+				return TypeId.t_uint;
 			} else if (t == typeof(NativeULong)) {
 				if (SizeOfNativeLong < sizeof(long)) {
 					item->s_uint = (uint) (NativeULong) o;
+					return TypeId.t_uint;
 				} else {
 					item->s_ulong = (NativeULong) o;
+					return TypeId.t_ulong;
 				}
 			} else if (t == typeof(long)) {
 				item->s_long = (long) o;
+				return TypeId.t_long;
 			} else if (t == typeof(ulong)) {
 				item->s_ulong = (ulong) o;
+				return TypeId.t_ulong;
 			} else if (t == typeof(sbyte)) {
 				item->s_char = (sbyte) o;
+				return TypeId.t_uchar;
 			} else if (t == typeof(byte)) {
 				item->s_uchar = (byte) o;
+				return TypeId.t_uchar;
 			} else if (t == typeof(char)) {
 				item->s_char = (sbyte) (char) o;
+				return TypeId.t_char;
 			} else {
 #if DEBUG
 				if (o is Delegate) {
@@ -998,14 +1020,65 @@ namespace Qyoto {
 					item->s_class = (IntPtr) GCHandle.Alloc(o);
 				}
 #endif
+				return t == typeof(string) ? TypeId.t_string : TypeId.t_class;
 			}
+			return TypeId.t_class;
 		}
 
-		public static unsafe void UnboxToStackItem(IntPtr obj, IntPtr st) {
+		public static unsafe TypeId UnboxToStackItem(IntPtr obj, IntPtr st) {
 			StackItem *item = (StackItem*) st;
 			object o = ((GCHandle) obj).Target;
 
-			UnboxToStackItem(o, item);
+			return UnboxToStackItem(o, item);
+		}
+
+		public static TypeId GetTypeId(Type t) {
+			if (t.IsEnum) {
+				if (SizeOfNativeLong < sizeof(long)) {
+					return TypeId.t_int;
+				} else {
+					return TypeId.t_long;
+				}
+			} else if (t == typeof(int)) {
+				return TypeId.t_int;
+			} else if (t == typeof(bool)) {
+				return TypeId.t_bool;
+			} else if (t == typeof(short)) {
+				return TypeId.t_short;
+			} else if (t == typeof(float)) {
+				return TypeId.t_float;
+			} else if (t == typeof(double)) {
+				return TypeId.t_double;
+			} else if (t == typeof(NativeLong)) {
+				if (SizeOfNativeLong < sizeof(long)) {
+					return TypeId.t_int;
+				} else {
+					return TypeId.t_long;
+				}
+			} else if (t == typeof(ushort)) {
+				return TypeId.t_ushort;
+			} else if (t == typeof(uint)) {
+				return TypeId.t_uint;
+			} else if (t == typeof(NativeULong)) {
+				if (SizeOfNativeLong < sizeof(long)) {
+					return TypeId.t_uint;
+				} else {
+					return TypeId.t_ulong;
+				}
+			} else if (t == typeof(long)) {
+				return TypeId.t_long;
+			} else if (t == typeof(ulong)) {
+				return TypeId.t_ulong;
+			} else if (t == typeof(sbyte)) {
+				return TypeId.t_uchar;
+			} else if (t == typeof(byte)) {
+				return TypeId.t_uchar;
+			} else if (t == typeof(char)) {
+				return TypeId.t_char;
+			} else {
+				return t == typeof(string) ? TypeId.t_string : TypeId.t_class;
+			}
+			return TypeId.t_class;
 		}
 
 		public static unsafe object BoxFromStackItem(Type t, StackItem *item) {

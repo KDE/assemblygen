@@ -23,13 +23,15 @@
 typedef void * (*NoArgs)();
 typedef void * (*GetIntPtr)(void *);
 typedef void (*SetIntPtr)(void *, void *);
+typedef Smoke::TypeId (*SetIntPtrType)(void *, void *);
 typedef void (*FromIntPtr)(void *);
 typedef void * (*GetIntPtrFromCharStar)(char *);
 typedef void (*SetIntPtrFromCharStar)(void *, const char *);
 typedef char* (*GetCharStarFromIntPtr)(void *);
 typedef void (*MapPointerFn)(void *, void *, bool);
 typedef void * (*OverridenMethodFn)(void *, const char *);
-typedef void (*InvokeMethodFn)(void *, void *, void *);
+typedef void (*InvokeMethodFn)(void *, void *, void *, Smoke::TypeId * typeIDs);
+typedef void (*AddToDictionaryFn)(void *, void *, void *);
 typedef void * (*CreateListFn)(const char *);
 typedef void * (*CreateInstanceFn)(const char *, void *);
 typedef void * (*GetInstanceFn)(void *, bool);
@@ -42,7 +44,6 @@ typedef void * (*DictToHash)(void *, int);
 typedef void * (*ConstructDict)(const char*, const char*);
 typedef void (*SetPropertyFn)(void *, const char*, void *);
 typedef void * (*CreateQPairFn)(void*, void*);
-
 extern QYOTO_EXPORT FromIntPtr FreeGCHandle;
 extern QYOTO_EXPORT CreateInstanceFn CreateInstance;
 extern QYOTO_EXPORT GetInstanceFn GetInstance;
@@ -81,13 +82,13 @@ extern QYOTO_EXPORT SetIntPtr AddIntPtrToList;
 extern QYOTO_EXPORT ConstructDict ConstructDictionary;
 extern QYOTO_EXPORT DictToHash DictionaryToQHash;
 extern QYOTO_EXPORT DictToMap DictionaryToQMap;
-extern QYOTO_EXPORT InvokeMethodFn AddObjectObjectToDictionary;
+extern QYOTO_EXPORT AddToDictionaryFn AddObjectObjectToDictionary;
 
 extern QYOTO_EXPORT GetIntPtr QPairGetFirst;
 extern QYOTO_EXPORT GetIntPtr QPairGetSecond;
 extern QYOTO_EXPORT CreateQPairFn CreateQPair;
 
-extern QYOTO_EXPORT SetIntPtr UnboxToStackItem;
+extern QYOTO_EXPORT SetIntPtrType UnboxToStackItem;
 extern QYOTO_EXPORT CreateInstanceFn BoxFromStackItem;
 
 extern QYOTO_EXPORT GetIntPtr GenericPointerGetIntPtr;

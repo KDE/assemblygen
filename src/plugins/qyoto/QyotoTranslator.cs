@@ -171,6 +171,7 @@ public class QyotoTranslator : ICustomTranslator {
                     return null;
                   }},
         { "QString", (type, data, translator) => (type.PointerDepth > 0) ? "System.Text.StringBuilder" : "System.String" },
+        { "QVariant", (type, data, translator) => new CodeTypeReference(typeof(object)) },
 
         { "QWidget", delegate(Translator.TypeInfo type, GeneratorData data, Translator translator) {
                         unsafe {

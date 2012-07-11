@@ -32,9 +32,10 @@ private:
 	int _cur;
 	Smoke::Index *_args;
 	Smoke::Stack _sp;
+	Smoke::TypeId * _typeIDs;
 	bool _called;
 public:
-	VirtualMethodCall(Smoke *smoke, Smoke::Index meth, Smoke::Stack stack, void * obj, void * overridenMethod);
+	VirtualMethodCall(Smoke *smoke, Smoke::Index meth, Smoke::Stack stack, void * obj, void * overridenMethod, Smoke::TypeId * typeIDs);
 
 	~VirtualMethodCall();
 
@@ -42,6 +43,7 @@ public:
 	inline Marshall::Action action() { return Marshall::ToObject; }
 	inline Smoke::StackItem &item() { return _stack[_cur + 1]; }
 	inline Smoke::StackItem &var() { return _sp[_cur + 1]; }
+	inline Smoke::TypeId typeID() { return _typeIDs[_cur + 1]; }
 	inline const Smoke::Method &method() { return _smoke->methods[_method]; }
 	inline Smoke *smoke() { return _smoke; }
 	inline bool cleanup() { return true; }

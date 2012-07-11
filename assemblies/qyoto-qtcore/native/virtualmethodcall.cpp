@@ -20,9 +20,10 @@
 
 namespace Qyoto {
 
-VirtualMethodCall::VirtualMethodCall(Smoke *smoke, Smoke::Index meth, Smoke::Stack stack, void *obj, void *overridenMethod) :
+VirtualMethodCall::VirtualMethodCall(Smoke *smoke, Smoke::Index meth, Smoke::Stack stack,
+									 void *obj, void *overridenMethod, Smoke::TypeId * typeIDs) :
 	_smoke(smoke), _method(meth), _stack(stack), _obj(obj),
-	 _overridenMethod(overridenMethod), _cur(-1), _sp(0), _called(false) 
+	_overridenMethod(overridenMethod), _cur(-1), _sp(0), _typeIDs(typeIDs), _called(false)
 {
 	_sp = new Smoke::StackItem[method().numArgs + 1];
 	_args = _smoke->argumentList + method().args;
@@ -47,9 +48,9 @@ VirtualMethodCall::callMethod() {
 	if (_called) return;
 	_called = true;
 	
-	(*InvokeMethod)(_obj, _overridenMethod, _sp);
+	(*InvokeMethod)(_obj, _overridenMethod, _sp, _typeIDs);
 	Smoke::StackItem * _retval = _sp;
-	VirtualMethodReturnValue r(_smoke, _method, _stack, _retval);
+	VirtualMethodReturnValue r(_smoke, _method, _stack, _retval, _typeIDs);
 }
 
 void

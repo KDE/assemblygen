@@ -44,6 +44,7 @@ public:
 	inline Marshall::Action action() { return Marshall::FromObject; }
 	inline Smoke::StackItem &item() { return _stack[_cur]; }
 	inline Smoke::StackItem &var() { return _sp[_cur + 1]; }
+    inline Smoke::TypeId typeID() { return Smoke::t_class; }
 
 	void unsupported();
 

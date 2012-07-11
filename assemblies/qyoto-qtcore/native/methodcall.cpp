@@ -20,8 +20,8 @@
 
 namespace Qyoto {
 
-MethodCall::MethodCall(Smoke *smoke, Smoke::Index method, void * target, Smoke::Stack sp, int items) :
-	_cur(-1), _smoke(smoke), _method(method), _target(target), _o(0), _sp(sp), _items(items), _called(false)
+MethodCall::MethodCall(Smoke *smoke, Smoke::Index method, void * target, Smoke::Stack sp, int items, Smoke::TypeId * typeIDs) :
+	_cur(-1), _smoke(smoke), _method(method), _target(target), _o(0), _sp(sp), _items(items), _typeIDs(typeIDs), _called(false)
 {
 	if (!isConstructor() && !isStatic()) {
 		_o = (smokeqyoto_object*) (*GetSmokeObject)(_target);
@@ -104,7 +104,7 @@ void MethodCall::callMethod()
 			free_smokeqyoto_object(_o);
 		}
 	} else {
-		Qyoto::MethodReturnValue r(_smoke, _method, _stack, _retval);
+		Qyoto::MethodReturnValue r(_smoke, _method, _stack, _retval, _typeIDs);
 	}
 }
 

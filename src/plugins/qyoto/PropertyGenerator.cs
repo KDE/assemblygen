@@ -132,13 +132,8 @@ public unsafe class PropertyGenerator {
                 short getterMapId = FindQPropertyGetAccessorMethodMapId(classId, prop, capitalized);
                 if (getterMapId == 0) {
                     Debug.Print("  |--Missing 'get' method for property {0}::{1} - using QObject.Property()", className, prop.Name);
-                    cmp.GetStatements.Add(new CodeMethodReturnStatement(
-                        new CodeMethodInvokeExpression(
-                            new CodeMethodReferenceExpression(new CodeMethodInvokeExpression(new CodeThisReferenceExpression(), "Property", new CodePrimitiveExpression(prop.Name)),
-                                "Value", cmp.Type)
-                            )
-                        )
-                    );
+                    cmp.GetStatements.Add(new CodeMethodReturnStatement(new CodeCastExpression(cmp.Type,
+                        new CodeMethodInvokeExpression(new CodeThisReferenceExpression(), "Property", new CodePrimitiveExpression(prop.Name)))));
                 } else {
                     Smoke.MethodMap* map = data.Smoke->methodMaps + getterMapId;
                     short getterId = map->method;
@@ -184,11 +179,7 @@ public unsafe class PropertyGenerator {
                     Debug.Print("  |--Missing 'set' method for property {0}::{1} - using QObject.SetProperty()", className, prop.Name);
                     cmp.SetStatements.Add(new CodeExpressionStatement(
                         new CodeMethodInvokeExpression(new CodeThisReferenceExpression(), "SetProperty", new CodePrimitiveExpression(prop.Name),
-                            new CodeMethodInvokeExpression(
-                                new CodeMethodReferenceExpression(new CodeTypeReferenceExpression("QVariant"), "FromValue", cmp.Type),
-                                new CodeArgumentReferenceExpression("value")
-                            )
-                        )
+                            new CodeArgumentReferenceExpression("value"))
                     ));
                 } else {
                     Smoke.Method* setter = data.Smoke->methods + setterMethId;

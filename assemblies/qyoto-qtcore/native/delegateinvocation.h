@@ -88,6 +88,7 @@ public:
 	inline Marshall::Action action() { return Marshall::ToObject; }
 	inline Smoke::StackItem &item() { return _stack[_cur]; }
 	inline Smoke::StackItem &var() { return _sp[_cur]; }
+	inline Smoke::TypeId typeID() { return Smoke::t_class; }
 	inline Smoke *smoke() { return type().smoke(); }
 
 	inline bool cleanup() { return true; }

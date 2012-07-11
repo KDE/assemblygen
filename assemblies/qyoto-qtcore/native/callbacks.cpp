@@ -47,7 +47,7 @@ SetIntPtr AddIntPtrToList;
 ConstructDict ConstructDictionary;
 DictToMap DictionaryToQMap;
 DictToHash DictionaryToQHash;
-InvokeMethodFn AddObjectObjectToDictionary;
+AddToDictionaryFn AddObjectObjectToDictionary;
 
 GetIntPtr IntPtrToCharStarStar;
 GetCharStarFromIntPtr IntPtrToCharStar;
@@ -67,7 +67,7 @@ GetIntPtr QPairGetFirst;
 GetIntPtr QPairGetSecond;
 CreateQPairFn CreateQPair;
 
-SetIntPtr UnboxToStackItem;
+SetIntPtrType UnboxToStackItem;
 CreateInstanceFn BoxFromStackItem;
 
 GetIntPtr GenericPointerGetIntPtr;
@@ -144,7 +144,7 @@ Q_DECL_EXPORT void InstallConstructDictionary(ConstructDict callback)
     ConstructDictionary = callback;
 }
 
-Q_DECL_EXPORT void InstallAddObjectObjectToDictionary(InvokeMethodFn callback)
+Q_DECL_EXPORT void InstallAddObjectObjectToDictionary(AddToDictionaryFn callback)
 {
     AddObjectObjectToDictionary = callback;
 }
@@ -199,7 +199,7 @@ Q_DECL_EXPORT void InstallCreateQPair(CreateQPairFn callback)
     CreateQPair = callback;
 }
 
-Q_DECL_EXPORT void InstallUnboxToStackItem(SetIntPtr callback)
+Q_DECL_EXPORT void InstallUnboxToStackItem(SetIntPtrType callback)
 {
     UnboxToStackItem = callback;
 }

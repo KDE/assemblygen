@@ -38,8 +38,9 @@ private:
 	int numItems;
 	Smoke::StackItem * _retval;
 	bool _called;
+    Smoke::TypeId * _typeIDs;
 public:
-	MethodCall(Smoke *smoke, Smoke::Index method, void * target, Smoke::Stack sp, int items);
+	MethodCall(Smoke *smoke, Smoke::Index method, void * target, Smoke::Stack sp, int items, Smoke::TypeId * typeIDs);
 	~MethodCall();
 
 	inline SmokeType type() { return SmokeType(_smoke, _args[_cur]); }
@@ -49,6 +50,7 @@ public:
 		if (_cur < 0) return *_retval;
 		return _sp[_cur + 1];
 	}
+	inline Smoke::TypeId typeID() { return _typeIDs[_cur + 1]; }
 	inline const Smoke::Method &method() { return _smoke->methods[_method]; }
 	inline Smoke *smoke() { return _smoke; }
 	inline bool cleanup() { return true; }

@@ -204,6 +204,9 @@ public unsafe class MethodsGenerator {
             } else if (op[0] == ' ') {
                 // conversion operator
                 explicitConversionType = op.Substring(1);
+                if (explicitConversionType.Contains("QVariant")) {
+                    return null;
+                }
                 try {
                     explicitConversionType = translator.CppToCSharp(explicitConversionType, out isRef).GetStringRepresentation();
                     if (smoke->classes[method->classId].size > 0) {

@@ -28,14 +28,16 @@ private:
 	Smoke::Index _method;
 	Smoke::StackItem * _retval;
 	Smoke::Stack _stack;
+	Smoke::TypeId * _typeIDs;
 public:
-	MethodReturnValue(Smoke *smoke, Smoke::Index method, Smoke::Stack stack, Smoke::StackItem * retval);
+	MethodReturnValue(Smoke *smoke, Smoke::Index method, Smoke::Stack stack, Smoke::StackItem * retval, Smoke::TypeId * typeIDs);
 
 	inline const Smoke::Method &method() { return _smoke->methods[_method]; }
 	inline SmokeType type() { return SmokeType(_smoke, method().ret); }
 	inline Marshall::Action action() { return Marshall::ToObject; }
 	inline Smoke::StackItem &item() { return _stack[0]; }
 	inline Smoke::StackItem &var() { return *_retval; }
+	inline Smoke::TypeId typeID() { return _typeIDs[0]; }
 	inline Smoke *smoke() { return _smoke; }
 	inline bool cleanup() { return false; }
 

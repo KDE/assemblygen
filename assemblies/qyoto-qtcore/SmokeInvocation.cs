@@ -32,6 +32,26 @@ namespace Qyoto {
 		public short index;
 	}
 
+    public enum TypeId {
+        t_voidp,
+        t_bool,
+        t_char,
+        t_uchar,
+        t_short,
+        t_ushort,
+        t_int,
+        t_uint,
+        t_long,
+        t_ulong,
+        t_float,
+        t_double,
+        t_enum,
+        t_class,
+        t_last,      // number of pre-defined types
+        // adding specific types that must be differentiated from System.Object
+        t_string
+    }
+
 	[StructLayout(LayoutKind.Explicit)]
 	unsafe public struct StackItem {
 		[FieldOffset(0)] public void * s_voidp;
@@ -55,7 +75,7 @@ namespace Qyoto {
 		static extern ModuleIndex FindMethodId(string className, string mungedName, string signature);
 		
 		[DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi, EntryPoint="CallSmokeMethod", CallingConvention=CallingConvention.Cdecl)]
-		static extern void CallSmokeMethod(IntPtr smoke, int methodId, IntPtr target, IntPtr sp, int items);
+		static extern void CallSmokeMethod(IntPtr smoke, int methodId, IntPtr target, IntPtr sp, int items, IntPtr typeIDs);
 
 		[DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
 		static extern int QyotoHash(IntPtr obj);
@@ -149,7 +169,7 @@ namespace Qyoto {
 #endif
 		}
 
-		public static void InvokeMethod(IntPtr instanceHandle, IntPtr methodHandle, IntPtr stack) {
+		public static void InvokeMethod(IntPtr instanceHandle, IntPtr methodHandle, IntPtr stack, IntPtr typeIDs) {
 			object instance = ((GCHandle) instanceHandle).Target;
 			MethodInfo method = (MethodInfo) ((GCHandle) methodHandle).Target;
 #if DEBUG
@@ -161,7 +181,6 @@ namespace Qyoto {
 									method.Name );
 			}
 #endif
-
 			unsafe {
 				StackItem * stackPtr = (StackItem*) stack;
 				ParameterInfo[] parameters = method.GetParameters();
@@ -170,8 +189,9 @@ namespace Qyoto {
 				for (int i = 0; i < args.Length; i++) {
 					args[i] = SmokeMarshallers.BoxFromStackItem(parameters[i].ParameterType, stackPtr + i + 1);
 				}
-
 				object returnValue = method.Invoke(instance, args);
+				TypeId* typeIDsPtr = (TypeId*) typeIDs;
+				*typeIDsPtr = SmokeMarshallers.GetTypeId(returnValue == null ? typeof(object) : returnValue.GetType());
 
 				if (method.ReturnType != typeof(void)) {
 					SmokeMarshallers.UnboxToStackItem(returnValue, stackPtr);
@@ -318,45 +338,49 @@ namespace Qyoto {
 			}
 
 			StackItem[] stack = new StackItem[(args.Length / 2) + 1];
+			TypeId[] typeIDs = new TypeId[(args.Length / 2) + 1];
 
 			unsafe {
 				fixed(StackItem * stackPtr = stack) {
-					for (int i = 1, k = 1; i < args.Length; i += 2, k++) {
-						SmokeMarshallers.UnboxToStackItem(args[i], stackPtr + k);
-					}
-
-					object returnValue = null;
-
-					if (instance == null) {
-						CallSmokeMethod(methodId.smoke, (int) methodId.index, (IntPtr) 0, (IntPtr) stackPtr, args.Length / 2);
-					} else {
-#if DEBUG
-						GCHandle instanceHandle = DebugGCHandle.Alloc(instance);
-#else
-						GCHandle instanceHandle = GCHandle.Alloc(instance);
-#endif
-						CallSmokeMethod(methodId.smoke, methodId.index, (IntPtr) instanceHandle, (IntPtr) stackPtr, args.Length / 2);
-#if DEBUG
-						DebugGCHandle.Free(instanceHandle);
-#else
-						instanceHandle.SynchronizedFree();
-#endif
-					}
-					
-					if (returnType != typeof(void)) {
-						returnValue = SmokeMarshallers.BoxFromStackItem(returnType, stackPtr);
-					}
-
-					if (refArgs) {
+					fixed (TypeId * typeIDsPtr = typeIDs) {
+						typeIDs[0] = SmokeMarshallers.GetTypeId(returnType);
 						for (int i = 1, k = 1; i < args.Length; i += 2, k++) {
-							Type t = args[i].GetType();
-							if (t.IsPrimitive || t == typeof(NativeLong) || t == typeof(NativeULong)) {
-								args[i] = SmokeMarshallers.BoxFromStackItem(args[i].GetType(), stackPtr + k);
+							typeIDs[k] = SmokeMarshallers.UnboxToStackItem(args[i], stackPtr + k);
+						}
+
+						object returnValue = null;
+
+						if (instance == null) {
+							CallSmokeMethod(methodId.smoke, (int) methodId.index, (IntPtr) 0, (IntPtr) stackPtr, args.Length / 2, (IntPtr) typeIDsPtr);
+						} else {
+#if DEBUG
+							GCHandle instanceHandle = DebugGCHandle.Alloc(instance);
+#else
+							GCHandle instanceHandle = GCHandle.Alloc(instance);
+#endif
+							CallSmokeMethod(methodId.smoke, methodId.index, (IntPtr) instanceHandle, (IntPtr) stackPtr, args.Length / 2, (IntPtr) typeIDsPtr);
+#if DEBUG
+							DebugGCHandle.Free(instanceHandle);
+#else
+							instanceHandle.SynchronizedFree();
+#endif
+						}
+					
+						if (returnType != typeof(void)) {
+							returnValue = SmokeMarshallers.BoxFromStackItem(returnType, stackPtr);
+						}
+
+						if (refArgs) {
+							for (int i = 1, k = 1; i < args.Length; i += 2, k++) {
+								Type t = args[i].GetType();
+								if (t.IsPrimitive || t == typeof(NativeLong) || t == typeof(NativeULong)) {
+									args[i] = SmokeMarshallers.BoxFromStackItem(args[i].GetType(), stackPtr + k);
+								}
 							}
 						}
-					}
 
-					return returnValue;
+						return returnValue;
+					}
 				}
 			}
 		}

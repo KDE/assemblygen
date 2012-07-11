@@ -40,6 +40,7 @@ public:
 	inline Marshall::Action action() { return Marshall::ToObject; }
 	inline Smoke::StackItem &item() { return _stack[0]; }
 	inline Smoke::StackItem &var() { return *_result; }
+	inline Smoke::TypeId typeID() { return Smoke::t_class; }
 	inline Smoke *smoke() { return type().smoke(); }
 	inline bool cleanup() { return false; }
 	

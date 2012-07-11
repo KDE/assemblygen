@@ -28,15 +28,17 @@ private:
 	Smoke::Index _method;
 	Smoke::Stack _stack;
 	SmokeType _st;
+	Smoke::TypeId * _typeIDs;
 	Smoke::StackItem * _retval;
 public:
-	VirtualMethodReturnValue(Smoke *smoke, Smoke::Index meth, Smoke::Stack stack, Smoke::StackItem * retval);
+	VirtualMethodReturnValue(Smoke *smoke, Smoke::Index meth, Smoke::Stack stack, Smoke::StackItem * retval, Smoke::TypeId * typeIDs);
 
 	inline const Smoke::Method &method() { return _smoke->methods[_method]; }
 	inline SmokeType type() { return _st; }
 	inline Marshall::Action action() { return Marshall::FromObject; }
 	inline Smoke::StackItem &item() { return _stack[0]; }
 	inline Smoke::StackItem &var() { return *_retval; }
+	inline Smoke::TypeId typeID() { return _typeIDs[0]; }
 	inline Smoke *smoke() { return _smoke; }
 	inline bool cleanup() { return false; }
 

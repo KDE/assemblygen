@@ -18,8 +18,9 @@
 
 namespace Qyoto {
 
-MethodReturnValue::MethodReturnValue(Smoke *smoke, Smoke::Index method, Smoke::Stack stack, Smoke::StackItem * retval) :
-	_smoke(smoke), _method(method), _retval(retval), _stack(stack)
+MethodReturnValue::MethodReturnValue(Smoke *smoke, Smoke::Index method, Smoke::Stack stack,
+									 Smoke::StackItem * retval, Smoke::TypeId * typeIDs) :
+	_smoke(smoke), _method(method), _retval(retval), _stack(stack), _typeIDs(typeIDs)
 {
 	Marshall::HandlerFn fn = getMarshallFn(type());
 	(*fn)(this);

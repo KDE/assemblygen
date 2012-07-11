@@ -817,21 +817,21 @@ static void marshall_ucharP(Marshall *m) {
 	}
 }
 
+static QString* GetQStringFromPtr(Marshall *m) {
+	if (m->var().s_voidp != 0) {
+		if (m->type().isConst()) {
+			return (QString *) (*IntPtrToQString)(m->var().s_voidp);
+		}
+		return (QString *) (*StringBuilderToQString)(m->var().s_voidp);
+	}
+	return new QString();
+}
+
 static void marshall_QString(Marshall *m) {
 	switch(m->action()) {
 	case Marshall::FromObject:
 	{
-		QString* s = 0;
-		if (m->var().s_voidp != 0) {
-			if (m->type().isConst()) {
-				s = (QString *) (*IntPtrToQString)(m->var().s_voidp);
-			} else {
-				s = (QString *) (*StringBuilderToQString)(m->var().s_voidp);
-			}
-		} else {
-			s = new QString();
-		}
-		
+		QString* s = GetQStringFromPtr(m);
 		m->item().s_voidp = s;
 	    m->next();
 		
@@ -1074,13 +1074,131 @@ static void marshall_charP_array(Marshall *m) {
 
 }
 
-static void marshal_function_pointer(Marshall *m) {
+static void marshall_function_pointer(Marshall *m) {
     switch (m->action()) {
         case Marshall::FromObject:
             m->item().s_voidp = m->var().s_voidp;
             break;
         case Marshall::ToObject:
             m->var().s_voidp = m->item().s_voidp;
+            break;
+    }
+}
+
+static void marshall_QVariant(Marshall *m) {
+	QVariant* variant;
+    switch (m->action()) {
+        case Marshall::FromObject:
+			switch (m->typeID()) {
+				case Smoke::t_bool:
+                    variant = new QVariant(m->var().s_bool);
+                    break;
+                case Smoke::t_char:
+                    variant = new QVariant(m->var().s_char);
+                    break;
+                case Smoke::t_double:
+                    variant = new QVariant(m->var().s_double);
+                    break;
+                case Smoke::t_enum:
+                    variant = new QVariant((qlonglong) m->var().s_enum);
+                    break;
+                case Smoke::t_float:
+                    variant = new QVariant(m->var().s_float);
+                    break;
+				case Smoke::t_int:
+					variant = new QVariant(m->var().s_int);
+                    break;
+                case Smoke::t_long:
+                    variant = new QVariant((qlonglong) m->var().s_long);
+                    break;
+                case Smoke::t_short:
+                    variant = new QVariant(m->var().s_short);
+                    break;
+                case Smoke::t_uchar:
+                    variant = new QVariant(m->var().s_uchar);
+                    break;
+                case Smoke::t_uint:
+                    variant = new QVariant(m->var().s_uint);
+                    break;
+                case Smoke::t_ulong:
+                    variant = new QVariant((qulonglong) m->var().s_ulong);
+                    break;
+                case Smoke::t_ushort:
+                    variant = new QVariant(m->var().s_ushort);
+                    break;
+				case Smoke::t_class:
+				case Smoke::t_voidp:
+					if (m->var().s_voidp == 0) {
+						variant = new QVariant();
+					} else {
+						variant = new QVariant(QMetaType::type("System.Object"), m->var().s_voidp);
+					}
+					break;
+				case 15: // string, added to TypeId in Qyoto only
+					QString* string = GetQStringFromPtr(m);
+					variant = new QVariant(*string);
+					delete string;
+					break;
+			}
+			m->item().s_voidp = variant;
+			m->next();
+			if (m->cleanup() && variant) {
+				delete variant;
+			}
+            break;
+		case Marshall::ToObject:
+			marshall_basetype(m);
+//			variant = (QVariant*) m->item().s_voidp;
+//			switch (variant->type()) {
+//				case QVariant::Bool:
+//					t << "s_bool \n";
+//					t.flush();
+//					f.close();
+//					m->var().s_bool = variant->value<bool>();
+//					break;
+//				case QVariant::Char:
+//					t << "s_char \n";
+//					t.flush();
+//					f.close();
+//					m->var().s_char = variant->value<char>();
+//					break;
+//				case QVariant::Double:
+//					t << "s_double \n";
+//					t.flush();
+//					f.close();
+//					m->var().s_double = variant->value<double>();
+//					break;
+//				case QVariant::Int:
+//					t << "s_int=" << variant->value<int>() << "\n";
+//					t.flush();
+//					f.close();
+//					m->var().s_voidp = QMetaType::construct(variant->type(), variant->constData());
+//					break;
+//				case QVariant::LongLong:
+//					t << "s_long \n";
+//					t.flush();
+//					f.close();
+//					m->var().s_long = variant->value<qlonglong>();
+//					break;
+//				case QVariant::UInt:
+//					t << "s_uint \n";
+//					t.flush();
+//					f.close();
+//					m->var().s_uint = variant->value<uint>();
+//					break;
+//				case QVariant::ULongLong:
+//					t << "s_ulong \n";
+//					t.flush();
+//					f.close();
+//					m->var().s_ulong = variant->value<qulonglong>();
+//					break;
+//				default:
+//					t << "s_voidp \n";
+//					t.flush();
+//					f.close();
+//					m->var().s_voidp = QMetaType::construct(variant->type(), variant->constData());
+//					break;
+//			}
             break;
     }
 }
@@ -1491,6 +1609,9 @@ void qyoto_install_handlers(TypeHandler *h) {
 }
 
 Marshall::HandlerFn getMarshallFn(const SmokeType &type) {
+	if (type.name() &&
+		(strcmp(type.name(), "const QVariant&") == 0 || strcmp(type.name(), "QVariant") == 0))
+        return marshall_QVariant;
 	if (type.elem())
 		return marshall_basetype;
 	if (!type.name())
@@ -1507,7 +1628,7 @@ Marshall::HandlerFn getMarshallFn(const SmokeType &type) {
     QRegExp regexFunction("^[^(]+\\(\\*\\)\\([^)]*\\)$");
     int pos = regexFunction.indexIn(type.name());
     if (pos > -1) {
-        return marshal_function_pointer;
+        return marshall_function_pointer;
     }
 
 	return marshall_unknown;
