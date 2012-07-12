@@ -149,9 +149,6 @@ namespace Qyoto {
 		public static extern void InstallIntPtrFromCharStar(GetIntPtrFromString callback);
 
         [DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-		public static extern void InstallIntPtrToQString(GetIntPtr callback);
-
-        [DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void InstallIntPtrFromQString(GetIntPtr callback);
 
         [DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
@@ -295,7 +292,6 @@ namespace Qyoto {
         private static GetIntPtr dIntPtrToCharStarStar = IntPtrToCharStarStar;
         private static GetStringFromIntPtr dIntPtrToString = IntPtrToString;
         private static GetIntPtrFromString dIntPtrFromString = IntPtrFromString;
-        private static GetIntPtr dIntPtrToQString = IntPtrToQString;
         private static GetIntPtr dIntPtrFromQString = IntPtrFromQString;
         private static GetIntPtr dStringBuilderToQString = StringBuilderToQString;
         private static SetIntPtrFromCharStar dStringBuilderFromQString = StringBuilderFromQString;
@@ -338,11 +334,13 @@ namespace Qyoto {
 				Console.WriteLine("In FreeGCHandle(IntPtr): handle == 0 - This should not happen!");
 				return;
 			}
+			if (handle is GCHandle) {
 #if DEBUG
-			DebugGCHandle.Free((GCHandle) handle);
+				DebugGCHandle.Free((GCHandle) handle);
 #else
-			((GCHandle) handle).SynchronizedFree();
+				((GCHandle) handle).SynchronizedFree();
 #endif
+			}
 		}
 		
 		public static IntPtr GetSmokeObject(IntPtr instancePtr) {
@@ -686,29 +684,17 @@ namespace Qyoto {
 		}
 
 		public static string IntPtrToString(IntPtr ptr) {
-			string temp = (string) ((GCHandle) ptr).Target;
-			return temp;
+			string value = Marshal.PtrToStringAuto(ptr);
+			Marshal.FreeHGlobal(ptr);
+			return value;
 		}
 
 		public static IntPtr IntPtrFromString(string str) {
-#if DEBUG
-			return (IntPtr) DebugGCHandle.Alloc(string.Copy(str));
-#else
-			return (IntPtr) GCHandle.Alloc(string.Copy(str));
-#endif
-		}
-
-		public static IntPtr IntPtrToQString(IntPtr ptr) {
-			string temp = (string) ((GCHandle) ptr).Target;
-			return StringToQString(temp);
+			return Marshal.StringToHGlobalAuto(str);
 		}
 
 		public static IntPtr IntPtrFromQString(IntPtr ptr) {
-#if DEBUG
-			return (IntPtr) DebugGCHandle.Alloc(StringFromQString(ptr));
-#else
-			return (IntPtr) GCHandle.Alloc(StringFromQString(ptr));
-#endif
+			return Marshal.StringToHGlobalAuto(StringFromQString(ptr));
 		}
 
 		public static IntPtr StringBuilderToQString(IntPtr ptr) {
@@ -1014,6 +1000,11 @@ namespace Qyoto {
 					item->s_class = (IntPtr) DebugGCHandle.Alloc(o);
 				}
 #else
+				string text = o as string;
+				if (text != null) {
+					item->s_class = Marshal.StringToHGlobalAuto(text);
+					return TypeId.t_string;
+				}
 				if (o is Delegate) {
 					item->s_class = Marshal.GetFunctionPointerForDelegate((Delegate) o);
 				} else {
@@ -1124,6 +1115,11 @@ namespace Qyoto {
 				if (typeof(Delegate).IsAssignableFrom(t)) {
 					return Marshal.GetDelegateForFunctionPointer(item->s_class, t);
 				}
+				if (t == typeof(string)) {
+					string value = Marshal.PtrToStringAuto(item->s_class);
+					Marshal.FreeHGlobal(item->s_class);
+					return value;
+				}
 				// the StackItem contains a GCHandle to an object
 				GCHandle handle = (GCHandle) item->s_class;
 				object ret = handle.Target;
@@ -1195,7 +1191,6 @@ namespace Qyoto {
 			InstallIntPtrToCharStarStar(dIntPtrToCharStarStar);
 			InstallIntPtrToCharStar(dIntPtrToString);
 			InstallIntPtrFromCharStar(dIntPtrFromString);
-			InstallIntPtrToQString(dIntPtrToQString);
 			InstallIntPtrFromQString(dIntPtrFromQString);
 			InstallStringBuilderToQString(dStringBuilderToQString);
 			InstallStringBuilderFromQString(dStringBuilderFromQString);

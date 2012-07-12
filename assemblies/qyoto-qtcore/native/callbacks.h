@@ -69,7 +69,6 @@ extern QYOTO_EXPORT GetCharStarFromIntPtr IntPtrToCharStar;
 extern QYOTO_EXPORT GetIntPtrFromCharStar IntPtrFromCharStar;
 extern QYOTO_EXPORT const ushort *StringFromQString(QString* str);
 extern QYOTO_EXPORT QString *StringFromQString(const ushort *str);
-extern QYOTO_EXPORT GetIntPtr IntPtrToQString;
 extern QYOTO_EXPORT GetIntPtr IntPtrFromQString;
 extern QYOTO_EXPORT GetIntPtr StringBuilderToQString;
 extern QYOTO_EXPORT SetIntPtrFromCharStar StringBuilderFromQString;

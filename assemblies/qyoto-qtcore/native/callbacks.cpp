@@ -52,7 +52,6 @@ AddToDictionaryFn AddObjectObjectToDictionary;
 GetIntPtr IntPtrToCharStarStar;
 GetCharStarFromIntPtr IntPtrToCharStar;
 GetIntPtrFromCharStar IntPtrFromCharStar;
-GetIntPtr IntPtrToQString;
 GetIntPtr IntPtrFromQString;
 GetIntPtr StringBuilderToQString;
 SetIntPtrFromCharStar StringBuilderFromQString;
@@ -87,11 +86,6 @@ Q_DECL_EXPORT void InstallIntPtrToCharStar(GetCharStarFromIntPtr callback)
 Q_DECL_EXPORT void InstallIntPtrFromCharStar(GetIntPtrFromCharStar callback)
 {
     IntPtrFromCharStar = callback;
-}
-
-Q_DECL_EXPORT void InstallIntPtrToQString(GetIntPtr callback)
-{
-    IntPtrToQString = callback;
 }
 
 Q_DECL_EXPORT void InstallIntPtrFromQString(GetIntPtr callback)

@@ -817,43 +817,31 @@ static void marshall_ucharP(Marshall *m) {
 	}
 }
 
-static QString* GetQStringFromPtr(Marshall *m) {
-	if (m->var().s_voidp != 0) {
-		if (m->type().isConst()) {
-			return (QString *) (*IntPtrToQString)(m->var().s_voidp);
-		}
-		return (QString *) (*StringBuilderToQString)(m->var().s_voidp);
-	}
-	return new QString();
-}
-
 static void marshall_QString(Marshall *m) {
 	switch(m->action()) {
 	case Marshall::FromObject:
 	{
-		QString* s = GetQStringFromPtr(m);
+		void* s = StringToQString((ushort*) m->var().s_voidp);
 		m->item().s_voidp = s;
 	    m->next();
 		
-		if (!m->type().isConst() && m->var().s_voidp != 0 && s != 0) {
-			(*StringBuilderFromQString)(m->var().s_voidp, (const char *) s->toUtf8());
-		}
+//		if (!m->type().isConst() && m->var().s_voidp != 0 && s != 0) {
+//			(*StringBuilderFromQString)(m->var().s_voidp, (const char *) s->toUtf8());
+//		}
 	    
 		if (s && m->cleanup()) {
-			delete s;
+			delete (QString*) s;
 		}
-
-		if (m->var().s_voidp != 0) (*FreeGCHandle)(m->var().s_voidp);
 	}
 	break;
-      case Marshall::ToObject:
+	case Marshall::ToObject:
 	{
 	    QString *s = (QString*)m->item().s_voidp;
 	    if (s) {
 			if (s->isNull()) {
 				m->var().s_voidp = 0;
 			} else {
-				m->var().s_class = (*IntPtrFromQString)(s);
+				m->var().s_class = (void*) StringFromQString(m->item().s_voidp);
 			}
 
 			if (m->type().isStack())
@@ -1135,7 +1123,7 @@ static void marshall_QVariant(Marshall *m) {
 					}
 					break;
 				case 15: // string, added to TypeId in Qyoto only
-					QString* string = GetQStringFromPtr(m);
+					QString* string = (QString*) StringToQString((ushort*) m->var().s_voidp);
 					variant = new QVariant(*string);
 					delete string;
 					break;
