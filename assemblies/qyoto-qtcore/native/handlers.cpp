@@ -1135,58 +1135,49 @@ static void marshall_QVariant(Marshall *m) {
 			}
             break;
 		case Marshall::ToObject:
-			marshall_basetype(m);
-//			variant = (QVariant*) m->item().s_voidp;
-//			switch (variant->type()) {
-//				case QVariant::Bool:
-//					t << "s_bool \n";
-//					t.flush();
-//					f.close();
-//					m->var().s_bool = variant->value<bool>();
-//					break;
-//				case QVariant::Char:
-//					t << "s_char \n";
-//					t.flush();
-//					f.close();
-//					m->var().s_char = variant->value<char>();
-//					break;
-//				case QVariant::Double:
-//					t << "s_double \n";
-//					t.flush();
-//					f.close();
-//					m->var().s_double = variant->value<double>();
-//					break;
-//				case QVariant::Int:
-//					t << "s_int=" << variant->value<int>() << "\n";
-//					t.flush();
-//					f.close();
-//					m->var().s_voidp = QMetaType::construct(variant->type(), variant->constData());
-//					break;
-//				case QVariant::LongLong:
-//					t << "s_long \n";
-//					t.flush();
-//					f.close();
-//					m->var().s_long = variant->value<qlonglong>();
-//					break;
-//				case QVariant::UInt:
-//					t << "s_uint \n";
-//					t.flush();
-//					f.close();
-//					m->var().s_uint = variant->value<uint>();
-//					break;
-//				case QVariant::ULongLong:
-//					t << "s_ulong \n";
-//					t.flush();
-//					f.close();
-//					m->var().s_ulong = variant->value<qulonglong>();
-//					break;
-//				default:
-//					t << "s_voidp \n";
-//					t.flush();
-//					f.close();
-//					m->var().s_voidp = QMetaType::construct(variant->type(), variant->constData());
-//					break;
-//			}
+			variant = (QVariant*) m->item().s_voidp;
+			switch (variant->type()) {
+				case QVariant::Bool:
+					m->var().s_bool = variant->value<bool>();
+					*m->typeIDs() = Smoke::t_bool;
+					break;
+				case QVariant::Char:
+					m->var().s_char = variant->value<char>();
+					*m->typeIDs() = Smoke::t_char;
+					break;
+				case QVariant::Double:
+					m->var().s_double = variant->value<double>();
+					*m->typeIDs() = Smoke::t_double;
+					break;
+				case QVariant::Int:
+					m->var().s_int = variant->value<int>();
+					*m->typeIDs() = Smoke::t_int;
+					break;
+				case QVariant::LongLong:
+					m->var().s_long = variant->value<qlonglong>();
+					*m->typeIDs() = Smoke::t_long;
+					break;
+				case QVariant::UInt:
+					m->var().s_uint = variant->value<uint>();
+					*m->typeIDs() = Smoke::t_uint;
+					break;
+				case QVariant::ULongLong:
+					m->var().s_ulong = variant->value<qulonglong>();
+					*m->typeIDs() = Smoke::t_ulong;
+					break;
+				case QVariant::String:
+				{
+					QString* s = new QString(variant->value<QString>());
+					m->var().s_voidp = (void*) StringFromQString((void*) s);
+					delete s;
+					*m->typeIDs() = (Smoke::TypeId) 15;
+					break;
+				}
+				default:
+					m->var().s_voidp = QMetaType::construct(QMetaType::type("System.Object"), variant->constData());
+					*m->typeIDs() = Smoke::t_voidp;
+					break;
+			}
             break;
     }
 }

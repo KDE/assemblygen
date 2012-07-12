@@ -45,6 +45,7 @@ public:
 	inline Smoke::StackItem &var() { return _sp[_cur]; }
 	inline Smoke *smoke() { return type().smoke(); }
     inline Smoke::TypeId typeID() { return Smoke::t_class; }
+	inline Smoke::TypeId* typeIDs() { return 0; }
 
 	inline bool cleanup() { return true; }
 	void unsupported();

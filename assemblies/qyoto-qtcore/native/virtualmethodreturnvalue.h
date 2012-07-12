@@ -39,6 +39,7 @@ public:
 	inline Smoke::StackItem &item() { return _stack[0]; }
 	inline Smoke::StackItem &var() { return *_retval; }
 	inline Smoke::TypeId typeID() { return _typeIDs[0]; }
+	inline Smoke::TypeId* typeIDs() { return _typeIDs; }
 	inline Smoke *smoke() { return _smoke; }
 	inline bool cleanup() { return false; }
 

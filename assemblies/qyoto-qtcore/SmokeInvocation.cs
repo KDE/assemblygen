@@ -187,7 +187,7 @@ namespace Qyoto {
 				object[] args = new object[parameters.Length];
 
 				for (int i = 0; i < args.Length; i++) {
-					args[i] = SmokeMarshallers.BoxFromStackItem(parameters[i].ParameterType, stackPtr + i + 1);
+					args[i] = SmokeMarshallers.BoxFromStackItem(parameters[i].ParameterType, 0, stackPtr + i + 1);
 				}
 				object returnValue = method.Invoke(instance, args);
 				TypeId* typeIDsPtr = (TypeId*) typeIDs;
@@ -218,7 +218,7 @@ namespace Qyoto {
 			unsafe {
 				StackItem* stackPtr = (StackItem*) stack;
 				for (int i = 0; i < args.Length; i++) {
-					args[i] = SmokeMarshallers.BoxFromStackItem(parameters[i].ParameterType, stackPtr + i);
+					args[i] = SmokeMarshallers.BoxFromStackItem(parameters[i].ParameterType, 0, stackPtr + i);
 				}
 
 				object returnValue = slot.Invoke(qobj, args);
@@ -237,7 +237,7 @@ namespace Qyoto {
 			object[] args = new object[parameters.Length];
 			StackItem* stackPtr = (StackItem*) stack;
 			for (int i = 0; i < args.Length; i++) {
-				args[i] = SmokeMarshallers.BoxFromStackItem(parameters[i].ParameterType, stackPtr + i);
+				args[i] = SmokeMarshallers.BoxFromStackItem(parameters[i].ParameterType, 0, stackPtr + i);
 			}
 			d.DynamicInvoke(args);
 		}
@@ -343,7 +343,7 @@ namespace Qyoto {
 			unsafe {
 				fixed(StackItem * stackPtr = stack) {
 					fixed (TypeId * typeIDsPtr = typeIDs) {
-						typeIDs[0] = SmokeMarshallers.GetTypeId(returnType);
+						typeIDs[0] = 0;
 						for (int i = 1, k = 1; i < args.Length; i += 2, k++) {
 							typeIDs[k] = SmokeMarshallers.UnboxToStackItem(args[i], stackPtr + k);
 						}
@@ -367,14 +367,14 @@ namespace Qyoto {
 						}
 					
 						if (returnType != typeof(void)) {
-							returnValue = SmokeMarshallers.BoxFromStackItem(returnType, stackPtr);
+							returnValue = SmokeMarshallers.BoxFromStackItem(returnType, (int) typeIDs[0], stackPtr);
 						}
 
 						if (refArgs) {
 							for (int i = 1, k = 1; i < args.Length; i += 2, k++) {
 								Type t = args[i].GetType();
 								if (t.IsPrimitive || t == typeof(NativeLong) || t == typeof(NativeULong)) {
-									args[i] = SmokeMarshallers.BoxFromStackItem(args[i].GetType(), stackPtr + k);
+									args[i] = SmokeMarshallers.BoxFromStackItem(args[i].GetType(), (int) typeIDs[i], stackPtr + k);
 								}
 							}
 						}
@@ -442,7 +442,7 @@ namespace Qyoto {
 					SignalEmit(signalEntry.signature, signalEntry.type, (IntPtr) instanceHandle, (IntPtr) stackPtr, callMessage.ArgCount);
 
 					if (returnType != typeof(void)) {
-						returnValue.ReturnValue = SmokeMarshallers.BoxFromStackItem(returnType, stackPtr);
+						returnValue.ReturnValue = SmokeMarshallers.BoxFromStackItem(returnType, 0, stackPtr);
 					}
 
 					returnMessage = returnValue;

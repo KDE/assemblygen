@@ -51,6 +51,7 @@ public:
 		return _sp[_cur + 1];
 	}
 	inline Smoke::TypeId typeID() { return _typeIDs[_cur + 1]; }
+	inline Smoke::TypeId* typeIDs() { return _typeIDs; }
 	inline const Smoke::Method &method() { return _smoke->methods[_method]; }
 	inline Smoke *smoke() { return _smoke; }
 	inline bool cleanup() { return true; }

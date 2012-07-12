@@ -1072,66 +1072,110 @@ namespace Qyoto {
 			return TypeId.t_class;
 		}
 
-		public static unsafe object BoxFromStackItem(Type t, StackItem *item) {
+		public static unsafe object BoxFromStackItem(Type t, int typeID, StackItem *item) {
 			if (t.IsByRef) {
 				t = t.GetElementType();
 			}
 
-			if (t.IsEnum) {
-				if (SizeOfNativeLong < sizeof(long)) {
-					return Enum.ToObject(t, item->s_int);
-				} else {
-					return Enum.ToObject(t, item->s_long);
+			if (typeID == 0) {
+				if (t.IsEnum) {
+					if (SizeOfNativeLong < sizeof(long)) {
+						return Enum.ToObject(t, item->s_int);
+					} else {
+						return Enum.ToObject(t, item->s_long);
+					}
+				} else if (t == typeof(int)) {
+					return item->s_int;
+				} else if (t == typeof(bool)) {
+					return item->s_bool;
+				} else if (t == typeof(short)) {
+					return item->s_short;
+				} else if (t == typeof(float)) {
+					return item->s_float;
+				} else if (t == typeof(double)) {
+					return item->s_double;
+				} else if (t == typeof(NativeLong)) {
+					return new NativeLong((SizeOfNativeLong < sizeof(long))? item->s_int : item->s_long);
+				} else if (t == typeof(ushort)) {
+					return item->s_ushort;
+				} else if (t == typeof(uint)) {
+					return item->s_uint;
+				} else if (t == typeof(NativeULong)) {
+					return new NativeULong((SizeOfNativeLong < sizeof(long))? item->s_uint : item->s_ulong);
+				} else if (t == typeof(long)) {
+					return item->s_long;
+				} else if (t == typeof(ulong)) {
+					return item->s_ulong;
+				} else if (t == typeof(sbyte)) {
+					return item->s_char;
+				} else if (t == typeof(byte)) {
+					return item->s_uchar;
+				} else if (t == typeof(char)) {
+					return (char) item->s_char;
+				} else if (item->s_class != IntPtr.Zero) {
+					if (typeof(Delegate).IsAssignableFrom(t)) {
+						return Marshal.GetDelegateForFunctionPointer(item->s_class, t);
+					}
+					if (t == typeof(string)) {
+						string value = Marshal.PtrToStringAuto(item->s_class);
+						Marshal.FreeHGlobal(item->s_class);
+						return value;
+					}
+					// the StackItem contains a GCHandle to an object
+					GCHandle handle = (GCHandle) item->s_class;
+					object ret = handle.Target;
+#if DEBUG
+					DebugGCHandle.Free(handle);
+#else
+					handle.SynchronizedFree();
+#endif
+					return ret;
 				}
-			} else if (t == typeof(int)) {
-				return item->s_int;
-			} else if (t == typeof(bool)) {
-				return item->s_bool;
-			} else if (t == typeof(short)) {
-				return item->s_short;
-			} else if (t == typeof(float)) {
-				return item->s_float;
-			} else if (t == typeof(double)) {
-				return item->s_double;
-			} else if (t == typeof(NativeLong)) {
-				return new NativeLong((SizeOfNativeLong < sizeof(long))? item->s_int : item->s_long);
-			} else if (t == typeof(ushort)) {
-				return item->s_ushort;
-			} else if (t == typeof(uint)) {
-				return item->s_uint;
-			} else if (t == typeof(NativeULong)) {
-				return new NativeULong((SizeOfNativeLong < sizeof(long))? item->s_uint : item->s_ulong);
-			} else if (t == typeof(long)) {
-				return item->s_long;
-			} else if (t == typeof(ulong)) {
-				return item->s_ulong;
-			} else if (t == typeof(sbyte)) {
-				return item->s_char;
-			} else if (t == typeof(byte)) {
-				return item->s_uchar;
-			} else if (t == typeof(char)) {
-				return (char) item->s_char;
-			} else if (item->s_class != IntPtr.Zero) {
-				if (typeof(Delegate).IsAssignableFrom(t)) {
-					return Marshal.GetDelegateForFunctionPointer(item->s_class, t);
-				}
-				if (t == typeof(string)) {
+				return null;
+			}
+
+			return GetByTypeID(typeID, item);
+		}
+
+		private static unsafe object GetByTypeID(int typeID, StackItem *item) {
+			switch ((TypeId) typeID) {
+				case TypeId.t_bool:
+					return item->s_bool;
+				case TypeId.t_char:
+					return (char) item->s_char;
+				case TypeId.t_uchar:
+					return item->s_uchar;
+				case TypeId.t_short:
+					return item->s_short;
+				case TypeId.t_ushort:
+					return item->s_ushort;
+				case TypeId.t_enum:
+				case TypeId.t_int:
+					return item->s_int;
+				case TypeId.t_uint:
+					return item->s_uint;
+				case TypeId.t_long:
+					return item->s_long;
+				case TypeId.t_ulong:
+					return item->s_ulong;
+				case TypeId.t_float:
+					return item->s_float;
+				case TypeId.t_double:
+					return item->s_double;
+				case TypeId.t_string:
 					string value = Marshal.PtrToStringAuto(item->s_class);
 					Marshal.FreeHGlobal(item->s_class);
 					return value;
-				}
-				// the StackItem contains a GCHandle to an object
-				GCHandle handle = (GCHandle) item->s_class;
-				object ret = handle.Target;
+				default:
+					GCHandle handle = (GCHandle) item->s_class;
+					object ret = handle.Target;
 #if DEBUG
-				DebugGCHandle.Free(handle);
+					DebugGCHandle.Free(handle);
 #else
-				handle.SynchronizedFree();
+					handle.SynchronizedFree();
 #endif
-				return ret;
+					return ret;
 			}
-
-			return null;
 		}
 
 		public static unsafe IntPtr BoxFromStackItem(string type, IntPtr st) {
@@ -1139,7 +1183,7 @@ namespace Qyoto {
 			if (t == null) return IntPtr.Zero;
 			StackItem *item = (StackItem*) st;
 
-			object box = BoxFromStackItem(t, item);
+			object box = BoxFromStackItem(t, 0, item);
 
 			if (box == null) return IntPtr.Zero;
 			return (IntPtr) GCHandle.Alloc(box);
