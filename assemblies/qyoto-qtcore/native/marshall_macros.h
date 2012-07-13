@@ -77,7 +77,8 @@ void marshall_ItemList(Marshall *m) {
 				void * obj = (*GetInstance)(p, true);
 				if (obj == 0) {
 					smokeqyoto_object * o = alloc_smokeqyoto_object(false, ix.smoke, ix.index, p);
-					obj = (*CreateInstance)(qyoto_resolve_classname(o), o);
+					QByteArray className(qyoto_resolve_classname(o));
+					obj = (*CreateInstance)(className.append(", qyoto-").append(o->smoke->moduleName()).data(), o);
 				}
 				(*AddIntPtrToList)(al, obj);
 				(*FreeGCHandle)(obj);

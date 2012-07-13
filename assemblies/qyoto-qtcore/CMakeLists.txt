@@ -16,7 +16,6 @@ set (qyoto_qtcore_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/QSizeFExtras.cs
     ${CMAKE_CURRENT_SOURCE_DIR}/QtExtras.cs
     ${CMAKE_CURRENT_SOURCE_DIR}/QUrlExtras.cs
-    ${CMAKE_CURRENT_SOURCE_DIR}/QVariantExtras.cs
     ${CMAKE_CURRENT_SOURCE_DIR}/Qyoto.cs
     ${CMAKE_CURRENT_SOURCE_DIR}/QyotoMetaData.cs
     ${CMAKE_CURRENT_SOURCE_DIR}/QEventArgs.cs

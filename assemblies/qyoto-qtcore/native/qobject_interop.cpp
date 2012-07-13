@@ -196,7 +196,8 @@ qyoto_qt_metacast(void* obj, char* target)
     }
 
     smokeqyoto_object* to = alloc_smokeqyoto_object(false, mi.smoke, mi.index, ret);
-    void *instance = (*CreateInstance)(qyoto_resolve_classname(to), to);
+	QByteArray className(qyoto_resolve_classname(to));
+	void *instance = (*CreateInstance)(className.append(", qyoto-").append(to->smoke->moduleName()).data(), to);
     mapPointer(instance, to, to->classId, 0);
 #ifdef DEBUG
     printf("qyoto_qt_metacast: created new instance of type %s (%p)\n", target, to->ptr);
@@ -320,7 +321,7 @@ qyoto_make_metaObject(const char* parentClassName, void* parentMeta, const char*
                                                         meta );
 
     // create wrapper C# instance
-    return (*CreateInstance)("Qyoto.QMetaObject", m);
+	return (*CreateInstance)("Qyoto.QMetaObject, qyoto-qtcore", m);
 }
 
 }

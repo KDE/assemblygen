@@ -52,7 +52,8 @@ QVariantValue(char * typeName, void * variant)
     Smoke::ModuleIndex id = o->smoke->findClass(typeName);
     if (!id.smoke) return value;  // class not found in smoke, so it's probably just a GCHandle
     smokeqyoto_object  * vo = alloc_smokeqyoto_object(true, id.smoke, id.index, value);
-    return (*CreateInstance)(qyoto_resolve_classname(vo), vo);
+	QByteArray className(qyoto_resolve_classname(vo));
+	return (*CreateInstance)(className.append(", qyoto-").append(vo->smoke->moduleName()).data(), vo);
 }
 
 Q_DECL_EXPORT void *

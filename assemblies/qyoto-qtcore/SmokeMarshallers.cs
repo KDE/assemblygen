@@ -643,14 +643,12 @@ namespace Qyoto {
 		// calls to SmokeInvocation.Invoke() is called.
 		public static IntPtr CreateInstance(string className, IntPtr smokeObjectPtr) {
 			SmokeClassData data = null;
-			foreach(Assembly a in AppDomain.CurrentDomain.GetAssemblies()) {
-				Type t = a.GetType(className);
-				if (t != null) {
-					if (t.IsAbstract) {
-						return CreateInstance(className + "Internal", smokeObjectPtr);
-					}
-					data = GetSmokeClassData(t);
+			Type t = Type.GetType(className);
+			if (t != null) {
+				if (t.IsAbstract) {
+					return CreateInstance(className + "Internal", smokeObjectPtr);
 				}
+				data = GetSmokeClassData(t);
 			}
 
 			if (data == null) {

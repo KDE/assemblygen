@@ -647,7 +647,8 @@ marshall_basetype(Marshall *m)
 		}
 
 		smokeqyoto_object  * o = alloc_smokeqyoto_object(false, m->smoke(), m->type().classId(), p);
-		const char * classname = qyoto_resolve_classname(o);
+		QByteArray className(qyoto_resolve_classname(o));
+		const char * classname = className.append(", qyoto-").append(o->smoke->moduleName()).data();
 
 		if((m->type().isConst() && m->type().isRef()) || (m->type().isStack() && m->cleanup())) {
 			p = construct_copy( o );
@@ -656,7 +657,7 @@ marshall_basetype(Marshall *m)
 				o->allocated = true;
 		    }
 		}
-		
+
 		obj = (*CreateInstance)(classname, o);
 		if (do_debug & qtdb_calls) {
 			printf("allocating %s %p -> %p\n", classname, o->ptr, (void*)obj);
