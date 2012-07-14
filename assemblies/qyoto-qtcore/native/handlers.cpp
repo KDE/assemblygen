@@ -1168,6 +1168,10 @@ static void marshall_QVariant(Marshall *m) {
 					m->var().s_ulong = variant->value<qulonglong>();
 					*m->typeIDs() = Smoke::t_ulong;
 					break;
+				case QMetaType::Float:
+					m->var().s_float = variant->value<float>();
+					*m->typeIDs() = Smoke::t_float;
+					break;
 				case QVariant::String:
 				{
 					QString* s = new QString(variant->value<QString>());
@@ -1541,6 +1545,8 @@ Q_DECL_EXPORT TypeHandler Qyoto_handlers[] = {
     { "QString", marshall_QString },
     { "QString*", marshall_QString },
     { "QString&", marshall_QString },
+	{ "QVariant", marshall_QVariant },
+	{ "QVariant&", marshall_QVariant },
     { "QVariantList&", marshall_QVariantList },
     { "QVector<QLineF>", marshall_QLineFVector },
     { "QVector<QLineF>&", marshall_QLineFVector },
@@ -1591,11 +1597,6 @@ void qyoto_install_handlers(TypeHandler *h) {
 }
 
 Marshall::HandlerFn getMarshallFn(const SmokeType &type) {
-	if (type.name() &&
-		(strcmp(type.name(), "const QVariant&") == 0 || strcmp(type.name(), "QVariant") == 0))
-        return marshall_QVariant;
-	if (type.elem())
-		return marshall_basetype;
 	if (!type.name())
 		return marshall_void;
 	TypeHandler *h = qyoto_type_handlers[type.name()];
@@ -1606,6 +1607,8 @@ Marshall::HandlerFn getMarshallFn(const SmokeType &type) {
 	if(h != 0) {
 		return h->fn;
 	}
+	if (type.elem())
+		return marshall_basetype;
 
     QRegExp regexFunction("^[^(]+\\(\\*\\)\\([^)]*\\)$");
     int pos = regexFunction.indexIn(type.name());
