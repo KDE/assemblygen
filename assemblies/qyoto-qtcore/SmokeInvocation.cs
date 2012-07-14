@@ -252,6 +252,7 @@ namespace Qyoto {
 				return;
 			Qyoto.Init_qyoto_qtcore();
 			SmokeMarshallers.SetUp();
+			QMetaType.RegisterType<object>();
 			// not set when mono is embedded
 			if (AppDomain.CurrentDomain.SetupInformation.ConfigurationFile == null) {
 				PropertyInfo pi = typeof(AppDomain).GetProperty("SetupInformationNoCopy", BindingFlags.NonPublic | BindingFlags.Instance);
