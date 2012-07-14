@@ -667,7 +667,9 @@ marshall_basetype(Marshall *m)
 		    o->allocated = true;
 		}
 		// Keep a mapping of the pointer so that it is only wrapped once
-		mapPointer(obj, o, o->classId, 0);
+		if (m->shouldMapPointer()) {
+			mapPointer(obj, o, o->classId, 0);
+		}
 		
 		m->var().s_class = obj;
 	}

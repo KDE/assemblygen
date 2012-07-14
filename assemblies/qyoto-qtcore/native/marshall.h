@@ -24,6 +24,8 @@ public:
 	virtual Smoke::TypeId* typeIDs() = 0;
     virtual void unsupported() = 0;
     virtual Smoke *smoke() = 0;
+	inline virtual bool shouldMapPointer() { return true; }
+
     /**
      * For return-values, next() does nothing.
      * For FromObject, next() calls the method and returns.

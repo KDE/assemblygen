@@ -47,6 +47,7 @@ public:
 	inline Smoke::TypeId* typeIDs() { return _typeIDs; }
 	inline const Smoke::Method &method() { return _smoke->methods[_method]; }
 	inline Smoke *smoke() { return _smoke; }
+	inline bool shouldMapPointer() { return false; }
 	inline bool cleanup() { return true; }
 
 	void unsupported();
