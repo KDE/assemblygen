@@ -498,7 +498,29 @@ void WriteInitialization::acceptWidget(DomWidget *node)
         }
     }
 
-    writeProperties(varName, className, node->elementProperty());
+	const DomPropertyMap attributes = propertyMap(node->elementAttribute());
+
+	QStringList headers;
+	headers << "horizontalHeader";
+	headers << "verticalHeader";
+	QStringList properties;
+	properties << "Visible";
+	properties << "CascadingSectionResizes";
+	properties << "DefaultSectionSize";
+	properties << "HighlightSections";
+	properties << "MinimumSectionSize";
+	properties << "ShowSortIndicator";
+	properties << "StretchLastSection";
+	DomPropertyList headerProperies = node->elementProperty();
+	foreach (QString header, headers) {
+		foreach (QString property, properties) {
+			if (DomProperty* domProperty = attributes.value(header + property)) {
+				domProperty->setAttributeName(header + "." + property);
+				headerProperies << domProperty;
+			}
+		}
+	}
+	writeProperties(varName, className, headerProperies);
 
     if (m_uic->customWidgetsInfo()->extends(className, QLatin1String("QMenu")) && parentWidget.size()) {
         initializeMenu(node, parentWidget);
@@ -518,8 +540,6 @@ void WriteInitialization::acceptWidget(DomWidget *node)
     m_layoutChain.pop();
     m_widgetChain.pop();
     m_layoutWidget = false;
-
-    const DomPropertyMap attributes = propertyMap(node->elementAttribute());
 
     QString title = QLatin1String("Page");
     if (const DomProperty *ptitle = attributes.value(QLatin1String("title"))) {
