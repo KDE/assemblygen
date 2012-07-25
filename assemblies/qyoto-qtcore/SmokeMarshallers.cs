@@ -646,7 +646,7 @@ namespace Qyoto {
 			Type t = Type.GetType(className);
 			if (t != null) {
 				if (t.IsAbstract) {
-					return CreateInstance(className + "Internal", smokeObjectPtr);
+					return CreateInstance(className.Substring(0, className.IndexOf(',')) + "Internal" + className.Substring(className.IndexOf(',')), smokeObjectPtr);
 				}
 				data = GetSmokeClassData(t);
 			}
