@@ -30,6 +30,9 @@ MethodCall::MethodCall(Smoke *smoke, Smoke::Index method, void * target, Smoke::
 					&& (!_o->allocated || IsContainedInstance(_o)
 					    || _o->smoke->isDerivedFrom(_o->smoke->className(_o->classId), "QCoreApplication")) )
 			{
+				unmapPointer(_o, _o->classId, 0);
+				(*SetSmokeObject)(_target, 0);
+				free_smokeqyoto_object(_o);
 				_called = true;
 			}
 		} else {
