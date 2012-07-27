@@ -375,7 +375,7 @@ namespace Qyoto {
 							for (int i = 1, k = 1; i < args.Length; i += 2, k++) {
 								Type t = args[i].GetType();
 								if (t.IsPrimitive || t == typeof(NativeLong) || t == typeof(NativeULong)) {
-									args[i] = SmokeMarshallers.BoxFromStackItem(args[i].GetType(), (int) typeIDs[i], stackPtr + k);
+									args[i] = SmokeMarshallers.BoxFromStackItem(args[i].GetType(), (int) typeIDs[k], stackPtr + k);
 								}
 							}
 						}
