@@ -1116,19 +1116,20 @@ static void marshall_QVariant(Marshall *m) {
                     break;
                 case Smoke::t_ushort:
                     variant = new QVariant(m->var().s_ushort);
-                    break;
-				case Smoke::t_class:
-				case Smoke::t_voidp:
+					break;
+				case 15: // string, added to TypeId in Qyoto only
+				{
+					QString* string = (QString*) StringToQString((ushort*) m->var().s_voidp);
+					variant = new QVariant(*string);
+					delete string;
+					break;
+				}
+				default:
 					if (m->var().s_voidp == 0) {
 						variant = new QVariant();
 					} else {
 						variant = new QVariant(QMetaType::type("System.Object"), m->var().s_voidp);
 					}
-					break;
-				case 15: // string, added to TypeId in Qyoto only
-					QString* string = (QString*) StringToQString((ushort*) m->var().s_voidp);
-					variant = new QVariant(*string);
-					delete string;
 					break;
 			}
 			m->item().s_voidp = variant;
@@ -1180,8 +1181,16 @@ static void marshall_QVariant(Marshall *m) {
 					*m->typeIDs() = (Smoke::TypeId) 15;
 					break;
 				}
+				case QVariant::Invalid:
+					m->var().s_voidp = 0;
+					*m->typeIDs() = Smoke::t_voidp;
+					break;
 				default:
-					m->var().s_voidp = QMetaType::construct(QMetaType::type("System.Object"), variant->constData());
+					if (variant->constData() == 0) {
+						m->var().s_voidp = 0;
+					} else {
+						m->var().s_voidp = QMetaType::construct(QMetaType::type("System.Object"), variant->constData());
+					}
 					*m->typeIDs() = Smoke::t_voidp;
 					break;
 			}
