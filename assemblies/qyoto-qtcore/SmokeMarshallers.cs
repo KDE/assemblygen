@@ -48,7 +48,7 @@ namespace Qyoto {
 		[DllImport("qyoto-qtcore-native", CharSet=CharSet.Unicode, CallingConvention=CallingConvention.Cdecl)]
 		public static extern string StringFromQString(IntPtr ptr);
 		
-		[DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
+		[DllImport("qyoto-qtcore-native", CharSet=CharSet.Unicode, CallingConvention=CallingConvention.Cdecl)]
 		public static extern IntPtr StringArrayToQStringList(int length, string[] strArray);
 		/** Marshalling functions end **/
 		

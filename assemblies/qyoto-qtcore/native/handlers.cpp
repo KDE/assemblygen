@@ -429,7 +429,7 @@ StringArrayToQStringList(int length, char ** strArray)
 	QStringList * result = new QStringList();
 	
 	for (int i = 0; i < length; i++) {
-		(*result) << QString::fromUtf8(strArray[i]);
+		(*result) << QString::fromUtf16((ushort*) strArray[i]);
 	}
 	return (void*) result;
 }
