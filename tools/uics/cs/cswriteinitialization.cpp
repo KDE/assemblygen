@@ -1936,10 +1936,10 @@ void WriteInitialization::initializeTreeWidget(DomWidget *w)
         DomProperty *icon = properties.value(QLatin1String("icon"));
 
         QString txt = trCall(text->elementString());
-        m_refreshOut << m_option.dindent << varName << ".HeaderItem().SetText(" << i << ", " << txt << ");\n";
+		m_refreshOut << m_option.dindent << varName << ".HeaderItem.SetText(" << i << ", " << txt << ");\n";
 
         if (icon != 0 && icon->elementIconSet()) {
-            m_output << m_option.dindent << varName << ".HeaderItem().SetIcon("
+			m_output << m_option.dindent << varName << ".HeaderItem.SetIcon("
                    << i << ", " << pixCall(icon) << ");\n";
         }
     }
