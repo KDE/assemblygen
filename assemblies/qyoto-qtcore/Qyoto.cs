@@ -360,7 +360,7 @@ namespace Qyoto
                                                  // painters
                                                  "QStylePainter", "Q3Painter", "QPainter",
                                                  // model items
-                                                 "QListWidgetItem", "QListWidgetItem", "QTableWidgetItem", "QStandardItem"
+                                                 "QListWidgetItem", "QTreeWidgetItem", "QTableWidgetItem", "QStandardItem"
                                              };
 			// pointer types
 			if (   type.IsSubclassOf(typeof(QObject)) || nonQObjectClasses.Contains(typeString))
