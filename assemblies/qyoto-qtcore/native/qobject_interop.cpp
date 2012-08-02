@@ -81,12 +81,19 @@ cs_qFindChildren_helper(const QObject *parent, const QString &name, const QRegEx
     for (int i = 0; i < children.size(); ++i) {
         obj = children.at(i);
         if (mo.cast(obj)) {
-            if (re) {
-                if (re->indexIn(obj->objectName()) != -1)
-                    list->append((*GetInstance)(obj, true));
-            } else {
-                if (name.isNull() || obj->objectName() == name)
-                    list->append((*GetInstance)(obj, true));
+            if ((re && re->indexIn(obj->objectName()) != -1) || name.isNull() || obj->objectName() == name) {
+                void* instance = (*GetInstance)(obj, true);
+                if (!instance) {
+                    Smoke::ModuleIndex id = Smoke::findClass(obj->metaObject()->className());
+                    if (!id.smoke) {
+                        id = Smoke::findClass(mo.className());
+                    }
+                    smokeqyoto_object* o = alloc_smokeqyoto_object(false, id.smoke, id.index, obj);
+                    QByteArray className(qyoto_resolve_classname(o));
+                    const char * classname = className.append(", qyoto-").append(o->smoke->moduleName()).data();
+                    instance = (*CreateInstance)(classname, o);
+                }
+                list->append(instance);
             }
         }
         cs_qFindChildren_helper(obj, name, re, mo, list);

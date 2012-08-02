@@ -1186,10 +1186,10 @@ static void marshall_QVariant(Marshall *m) {
 					*m->typeIDs() = Smoke::t_voidp;
 					break;
 				default:
-					if (variant->constData() == 0) {
+					if (variant->data() == 0) {
 						m->var().s_voidp = 0;
 					} else {
-						m->var().s_voidp = QMetaType::construct(QMetaType::type("System.Object"), variant->constData());
+						m->var().s_voidp = variant->data();
 					}
 					*m->typeIDs() = Smoke::t_voidp;
 					break;
