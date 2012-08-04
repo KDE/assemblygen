@@ -205,6 +205,9 @@ qyoto_qt_metacast(void* obj, char* target)
     smokeqyoto_object* to = alloc_smokeqyoto_object(false, mi.smoke, mi.index, ret);
 	QByteArray className(qyoto_resolve_classname(to));
 	void *instance = (*CreateInstance)(className.append(", qyoto-").append(to->smoke->moduleName()).data(), to);
+    if (to->smoke->isDerivedFrom(to->smoke->className(to->classId), "QObject")) {
+        QObject::connect((QObject*) ret, SIGNAL(destroyed()), &objectUnmapper, SLOT(objectDestroyed()));
+    }
     mapPointer(instance, to, to->classId, 0);
 #ifdef DEBUG
     printf("qyoto_qt_metacast: created new instance of type %s (%p)\n", target, to->ptr);

@@ -35,6 +35,7 @@ int do_debug = qtdb_none;
 // modules
 QHash<Smoke*, QyotoModule> qyoto_modules;
 bool application_terminated = false;
+ObjectUnmapper objectUnmapper;
 
 extern "C" {
 

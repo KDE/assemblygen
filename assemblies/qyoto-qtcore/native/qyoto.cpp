@@ -60,6 +60,19 @@
 
 #include <qtcore_smoke.h>
 
+void ObjectUnmapper::objectDestroyed()
+{
+    void* qyotoObj = (*GetInstance)(sender(), true);
+    if (qyotoObj) {
+        smokeqyoto_object* o = (smokeqyoto_object*) (*GetSmokeObject)(qyotoObj);
+        if (o != 0 && o->ptr != 0) {
+            unmapPointer(o, o->classId, 0);
+            (*SetSmokeObject)(qyotoObj, 0);
+            free_smokeqyoto_object(o);
+        }
+    }
+}
+
 extern bool qRegisterResourceData(int, const unsigned char *, const unsigned char *, const unsigned char *);
 extern bool qUnregisterResourceData(int, const unsigned char *, const unsigned char *, const unsigned char *);
 
