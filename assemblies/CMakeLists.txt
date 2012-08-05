@@ -7,7 +7,7 @@ if (ENABLE_QYOTO_PLUGIN)
     add_subdirectory(qyoto-qtcore)
     if (QT_QTDBUS_LIBRARY)
         # Not always present (e.g. Windows).
-        add_subdirectory(qyoto-qtdbus)
+        #add_subdirectory(qyoto-qtdbus)
     endif (QT_QTDBUS_LIBRARY)
     add_subdirectory(qyoto-qtgui)
     add_subdirectory(qyoto-qtnetwork)
