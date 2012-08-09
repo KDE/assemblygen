@@ -20,6 +20,7 @@ namespace Qyoto {
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.Diagnostics;
+	using System.Linq.Expressions;
 	using System.Reflection;
 	using System.Runtime.Remoting.Proxies;
 	using System.Runtime.InteropServices;
@@ -327,6 +328,8 @@ namespace Qyoto {
 
 #region marshalling functions
 
+		private delegate object Constructor(Type t);
+		
 		public static int SizeOfNativeLong = SizeOfLong();
 
 		public static void FreeGCHandle(IntPtr handle) {
@@ -575,14 +578,14 @@ namespace Qyoto {
 
 		private class SmokeClassData {
 			public string className;
-			public ConstructorInfo constructorInfo;
+			public Constructor constructor;
 			public object[] constructorParamTypes;
 		}
 
 		private static Dictionary<Type, SmokeClassData> smokeClassCache = new Dictionary<Type, SmokeClassData> ();
-		
+
 		private static SmokeClassData GetSmokeClassData(Type t) {
-			SmokeClassData result = null;
+			SmokeClassData result;
 
 			if (smokeClassCache.TryGetValue(t, out result)) {
 				return result;
@@ -599,16 +602,18 @@ namespace Qyoto {
 			result.className = className;
 			smokeClassCache[t] = result;
 
-			if (t.IsInterface) {
+			if (t.IsInterface || t.IsAbstract) {
 				return result;
 			}
 
-			Type[] paramTypes = new Type[1];
-			paramTypes[0] = typeof(Type);
-			result.constructorParamTypes = new object[] { paramTypes[0] };
-
-			result.constructorInfo = t.GetConstructor(BindingFlags.NonPublic 
-				| BindingFlags.Instance, null, new Type[ ] { typeof( Type ) } , null);
+			ConstructorInfo ctor = t.GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(Type) }, null);
+			if (ctor == null) {
+				return result;
+			}
+			ParameterExpression parameterExpression = Expression.Parameter(typeof(Type), "arg");
+			NewExpression newExp = Expression.New(ctor, parameterExpression);
+			Expression<Constructor> lambda = Expression.Lambda<Constructor>(newExp, parameterExpression);
+			result.constructor = lambda.Compile();
 
 			return result;
 		}
@@ -660,7 +665,7 @@ namespace Qyoto {
 				Console.Error.WriteLine("CreateInstance() ** Missing class ** {0}", className);
 			}
 
-			object result = data.constructorInfo.Invoke(data.constructorParamTypes);
+			object result = data.constructor(t);
             ISmokeObject smokeObject = (ISmokeObject) result;
             smokeObject.CreateProxy();
             smokeObject.SmokeObject = smokeObjectPtr;
