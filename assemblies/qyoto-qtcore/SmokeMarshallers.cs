@@ -181,6 +181,9 @@ namespace Qyoto {
 
         [DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void InstallAddIntPtrToList(SetIntPtr callback);
+        
+		[DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void InstallAddStringToList(SetIntPtr callback);
 
         [DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
 		public static extern void InstallAddIntToListInt(AddInt callback);
@@ -300,8 +303,9 @@ namespace Qyoto {
         private static GetIntPtr dStringListToQStringList = StringListToQStringList;
         private static GetIntPtr dListToPointerList = ListToPointerList;
         private static GetIntPtr dListIntToQListInt = ListIntToQListInt;
-        private static GetIntPtr dListUIntToQListQRgb = ListUIntToQListQRgb;
-        private static SetIntPtr dAddIntPtrToList = AddIntPtrToList;
+		private static GetIntPtr dListUIntToQListQRgb = ListUIntToQListQRgb;
+		private static SetIntPtr dAddIntPtrToList = AddIntPtrToList;
+		private static SetIntPtr dAddStringToList = AddStringToList;
         private static AddInt dAddIntToListInt = AddIntToListInt;
         private static AddUInt dAddUIntToListUInt = AddUIntToListUInt;
         private static ConstructDict dConstructDictionary = ConstructDictionary;
@@ -806,6 +810,13 @@ namespace Qyoto {
 		public static void AddIntPtrToList(IntPtr obj, IntPtr ptr) {
 			object list = ((GCHandle) obj).Target;
 			object o = ((GCHandle) ptr).Target;
+			((IList) list).Add(o);
+		}
+
+		public static void AddStringToList(IntPtr obj, IntPtr ptr) {
+			object list = ((GCHandle) obj).Target;
+			string o = Marshal.PtrToStringAuto(ptr);
+			Marshal.FreeHGlobal(ptr);
         	((IList) list).Add(o);
 		}
 
@@ -1247,6 +1258,7 @@ namespace Qyoto {
 			InstallListIntToQListInt(dListIntToQListInt);
 			InstallListUIntToQListQRgb(dListUIntToQListQRgb);
 			InstallAddIntPtrToList(dAddIntPtrToList);
+			InstallAddStringToList(dAddStringToList);
 			InstallAddIntToListInt(dAddIntToListInt);
 			InstallAddUIntToListUInt(dAddUIntToListUInt);
 

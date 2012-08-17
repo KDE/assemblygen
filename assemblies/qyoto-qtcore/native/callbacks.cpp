@@ -44,6 +44,7 @@ FromIntPtr TryDispose;
 GetIntPtr ListToPointerList;
 CreateListFn ConstructList;
 SetIntPtr AddIntPtrToList;
+SetIntPtr AddStringToList;
 ConstructDict ConstructDictionary;
 DictToMap DictionaryToQMap;
 DictToHash DictionaryToQHash;
@@ -126,6 +127,11 @@ Q_DECL_EXPORT void InstallConstructList(CreateListFn callback)
 Q_DECL_EXPORT void InstallAddIntPtrToList(SetIntPtr callback)
 {
     AddIntPtrToList = callback;
+}
+
+Q_DECL_EXPORT void InstallAddStringToList(SetIntPtr callback)
+{
+    AddStringToList = callback;
 }
 
 Q_DECL_EXPORT void InstallAddIntToListInt(AddInt callback)

@@ -77,6 +77,7 @@ extern QYOTO_EXPORT GetIntPtr StringListToQStringList;
 extern QYOTO_EXPORT GetIntPtr ListToPointerList;
 extern QYOTO_EXPORT CreateListFn ConstructList;
 extern QYOTO_EXPORT SetIntPtr AddIntPtrToList;
+extern QYOTO_EXPORT SetIntPtr AddStringToList;
 
 extern QYOTO_EXPORT ConstructDict ConstructDictionary;
 extern QYOTO_EXPORT DictToHash DictionaryToQHash;

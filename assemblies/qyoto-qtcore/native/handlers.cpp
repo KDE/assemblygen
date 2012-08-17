@@ -1387,8 +1387,8 @@ void marshall_QStringList(Marshall *m) {
 		}
 
 		void* al = (*ConstructList)("System.String");
-		for (int i = 0; i < stringlist->count(); i++) {
-			(*AddIntPtrToList)(al, (*IntPtrFromCharStar)((char*) (*stringlist)[i].toLatin1().constData()));
+        for (int i = 0; i < stringlist->count(); i++) {
+            (*AddStringToList)(al, (void*) StringFromQString((void*) &(*stringlist)[i]));
 		}
 		m->var().s_voidp = al;
 		m->next();
