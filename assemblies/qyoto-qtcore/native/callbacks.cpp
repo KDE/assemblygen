@@ -19,6 +19,7 @@
 #include "qyoto_p.h"
 
 FromIntPtr FreeGCHandle;
+FromIntPtr FreeString;
 CreateInstanceFn CreateInstance;
 GetInstanceFn GetInstance;
 GetIntPtr GetSmokeObject;
@@ -225,6 +226,12 @@ Q_DECL_EXPORT void
 InstallFreeGCHandle(FromIntPtr callback)
 {
     FreeGCHandle = callback;
+}
+
+Q_DECL_EXPORT void
+InstallFreeString(FromIntPtr callback)
+{
+    FreeString = callback;
 }
 
 Q_DECL_EXPORT void

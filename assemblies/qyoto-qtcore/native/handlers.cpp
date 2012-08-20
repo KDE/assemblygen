@@ -768,14 +768,14 @@ static void marshall_charP(Marshall *m) {
 	{
 		if (!m->type().isConst()) {
 			m->item().s_voidp = (*GenericPointerGetIntPtr)(m->var().s_class);
-			(*FreeGCHandle)(m->var().s_voidp);
+            (*FreeString)(m->var().s_voidp);
 			return;
 		}
 		if (m->var().s_class == 0) {
 			m->item().s_voidp = 0;
 		} else {
 			m->item().s_voidp = (*IntPtrToCharStar)(m->var().s_class);
-			(*FreeGCHandle)(m->var().s_voidp);
+            (*FreeString)(m->var().s_voidp);
 		}
 	}
 	break;
@@ -806,7 +806,7 @@ static void marshall_ucharP(Marshall *m) {
 	case Marshall::FromObject:
 	{
 		m->item().s_voidp = (*GenericPointerGetIntPtr)(m->var().s_class);
-		(*FreeGCHandle)(m->var().s_voidp);
+        (*FreeString)(m->var().s_voidp);
 	}
 	break;
 

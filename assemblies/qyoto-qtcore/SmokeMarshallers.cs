@@ -104,6 +104,9 @@ namespace Qyoto {
 		[DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
 		public static extern void InstallFreeGCHandle(FromIntPtr callback);
 		
+		[DllImport("qyoto-qtcore-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+		public static extern void InstallFreeString(FromIntPtr callback);
+
 		[DllImport("qyoto-qtcore-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
 		public static extern void InstallGetSmokeObject(GetIntPtr callback);
 		
@@ -286,7 +289,8 @@ namespace Qyoto {
 		
 #region delegate fields
         private static FromIntPtr dFreeGCHandle = FreeGCHandle;
-        private static GetIntPtr dGetSmokeObject = GetSmokeObject;
+		private static FromIntPtr dFreeString = FreeString;
+		private static GetIntPtr dGetSmokeObject = GetSmokeObject;
         private static SetIntPtr dSetSmokeObject = SetSmokeObject;
         private static SetIntPtr dAddGlobalRef = AddGlobalRef;
         private static SetIntPtr dRemoveGlobalRef = RemoveGlobalRef;
@@ -341,15 +345,17 @@ namespace Qyoto {
 				Console.WriteLine("In FreeGCHandle(IntPtr): handle == 0 - This should not happen!");
 				return;
 			}
-			if (handle is GCHandle) {
 #if DEBUG
-				DebugGCHandle.Free((GCHandle) handle);
+			DebugGCHandle.Free((GCHandle) handle);
 #else
-				((GCHandle) handle).SynchronizedFree();
+			((GCHandle) handle).SynchronizedFree();
 #endif
-			}
 		}
-		
+
+		public static void FreeString(IntPtr ptr) {
+			Marshal.FreeHGlobal(ptr);
+		}
+
 		public static IntPtr GetSmokeObject(IntPtr instancePtr) {
 			if (instancePtr == IntPtr.Zero) {
 				return IntPtr.Zero;
@@ -691,9 +697,7 @@ namespace Qyoto {
 		}
 
 		public static string IntPtrToString(IntPtr ptr) {
-			string value = Marshal.PtrToStringAuto(ptr);
-			Marshal.FreeHGlobal(ptr);
-			return value;
+			return Marshal.PtrToStringAuto(ptr);
 		}
 
 		public static IntPtr IntPtrFromString(string str) {
@@ -1236,6 +1240,7 @@ namespace Qyoto {
 		public static void SetUp() {
             
 			InstallFreeGCHandle(dFreeGCHandle);
+			InstallFreeString(dFreeString);
 
 			InstallGetSmokeObject(dGetSmokeObject);
 			InstallSetSmokeObject(dSetSmokeObject);

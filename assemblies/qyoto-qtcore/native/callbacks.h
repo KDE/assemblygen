@@ -45,6 +45,7 @@ typedef void * (*ConstructDict)(const char*, const char*);
 typedef void (*SetPropertyFn)(void *, const char*, void *);
 typedef void * (*CreateQPairFn)(void*, void*);
 extern QYOTO_EXPORT FromIntPtr FreeGCHandle;
+extern QYOTO_EXPORT FromIntPtr FreeString;
 extern QYOTO_EXPORT CreateInstanceFn CreateInstance;
 extern QYOTO_EXPORT GetInstanceFn GetInstance;
 extern QYOTO_EXPORT GetIntPtr GetSmokeObject;
