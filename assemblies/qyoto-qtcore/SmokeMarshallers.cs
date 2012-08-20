@@ -26,16 +26,6 @@ namespace Qyoto {
 	using System.Runtime.InteropServices;
 	using System.Text;
 
-	public static class GCHandleExtensions {
-		static object HandleLock = new object();
-
-		public static void SynchronizedFree(this GCHandle handle) {
-			lock (HandleLock) {
-				handle.Free();
-			}
-		}
-	}
-
 	public class SmokeMarshallers : object {
 		
 #region C++ functions
@@ -348,7 +338,7 @@ namespace Qyoto {
 #if DEBUG
 			DebugGCHandle.Free((GCHandle) handle);
 #else
-			((GCHandle) handle).SynchronizedFree();
+			((GCHandle) handle).Free();
 #endif
 		}
 
@@ -1145,7 +1135,7 @@ namespace Qyoto {
 #if DEBUG
 					DebugGCHandle.Free(handle);
 #else
-					handle.SynchronizedFree();
+					handle.Free();
 #endif
 					return ret;
 				}
@@ -1190,7 +1180,7 @@ namespace Qyoto {
 #if DEBUG
 					DebugGCHandle.Free(handle);
 #else
-					handle.SynchronizedFree();
+					handle.Free();
 #endif
 					return ret;
 			}

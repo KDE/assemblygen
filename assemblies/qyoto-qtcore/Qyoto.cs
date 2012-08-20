@@ -81,7 +81,7 @@ namespace Qyoto
 				Console.WriteLine("GCHandle.Free 0x{0:x8} -> {1}", (IntPtr) handle, handle.Target is MethodInfo ? ((MethodInfo) handle.Target).Name : handle.Target.GetType().FullName);
 			}
 
-			handle.SynchronizedFree();
+			handle.Free();
 		}
 	}
 
@@ -631,7 +631,7 @@ namespace Qyoto
 #if DEBUG
 			DebugGCHandle.Free((GCHandle) metaObject);
 #else
-			((GCHandle) metaObject).SynchronizedFree();
+			((GCHandle) metaObject).Free();
 #endif
 			metaObjects.Add(t, res);
 			return res;
