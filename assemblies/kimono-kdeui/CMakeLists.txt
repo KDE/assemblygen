@@ -20,7 +20,7 @@ set_property(TARGET kimono-kdeui PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/kimon
 set_property(TARGET kimono-kdeui PROPERTY _assembly_type dll)
 
 GET_LIBRARY_OUTPUT_DIR(library_target_dir)
-FILE(WRITE ${library_target_dir}/kimono-kdeui.dll.config "<configuration><dllmap dll=\"kimono-kdeui-native\" target=\"libkimono-kdeui-native.so.2\"/></configuration>")
+
 
 install_assembly(kimono-kdeui DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
 

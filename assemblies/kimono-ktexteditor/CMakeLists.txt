@@ -19,7 +19,7 @@ set_property(TARGET kimono-ktexteditor PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}
 set_property(TARGET kimono-ktexteditor PROPERTY _assembly_type dll)
 
 GET_LIBRARY_OUTPUT_DIR(library_target_dir)
-FILE(WRITE ${library_target_dir}/kimono-ktexteditor.dll.config "<configuration><dllmap dll=\"kimono-ktexteditor-native\" target=\"libkimono-ktexteditor-native.so.2\"/></configuration>")
+
 
 install_assembly(kimono-ktexteditor DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
 

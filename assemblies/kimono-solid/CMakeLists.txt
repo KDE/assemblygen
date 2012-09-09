@@ -18,7 +18,7 @@ set_property(TARGET kimono-solid PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/kimon
 set_property(TARGET kimono-solid PROPERTY _assembly_type dll)
 
 GET_LIBRARY_OUTPUT_DIR(library_target_dir)
-FILE(WRITE ${library_target_dir}/kimono-solid.dll.config "<configuration><dllmap dll=\"kimono-solid-native\" target=\"libkimono-solid-native.so.2\"/></configuration>")
+
 
 install_assembly(kimono-solid DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
 

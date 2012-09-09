@@ -26,7 +26,7 @@ add_dependencies(qyoto-qtuitools assemblygen QyotoGenerator qyoto-qtcore qyoto-q
 set_property(TARGET qyoto-qtuitools PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/qyoto-qtuitools.dll)
 set_property(TARGET qyoto-qtuitools PROPERTY _assembly_type dll)
 
-FILE(WRITE ${library_target_dir}/qyoto-qtuitools.dll.config "<configuration><dllmap dll=\"qyoto-qtuitools-native\" target=\"libqyoto-qtuitools-native.so.2\"/></configuration>")
+
 
 install_assembly(qyoto-qtuitools DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
 

@@ -18,7 +18,7 @@ set_property(TARGET kimono-kparts PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/kimo
 set_property(TARGET kimono-kparts PROPERTY _assembly_type dll)
 
 GET_LIBRARY_OUTPUT_DIR(library_target_dir)
-FILE(WRITE ${library_target_dir}/kimono-kparts.dll.config "<configuration><dllmap dll=\"kimono-kparts-native\" target=\"libkimono-kparts-native.so.2\"/></configuration>")
+
 
 install_assembly(kimono-kparts DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
 

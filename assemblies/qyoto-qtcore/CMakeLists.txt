@@ -53,7 +53,7 @@ add_dependencies(qyoto-qtcore assemblygen QyotoGenerator)
 set_property(TARGET qyoto-qtcore PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/qyoto-qtcore.dll)
 set_property(TARGET qyoto-qtcore PROPERTY _assembly_type dll)
 
-FILE(WRITE ${library_target_dir}/qyoto-qtcore.dll.config "<configuration><dllmap dll=\"qyoto-qtcore-native\" target=\"libqyoto-qtcore-native.so.2\"/></configuration>")
+
 
 install_assembly(qyoto-qtcore DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
 

@@ -25,7 +25,7 @@ add_dependencies(qyoto-phonon assemblygen QyotoGenerator qyoto-qtcore qyoto-qtgu
 set_property(TARGET qyoto-phonon PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/qyoto-phonon.dll)
 set_property(TARGET qyoto-phonon PROPERTY _assembly_type dll)
 
-FILE(WRITE ${library_target_dir}/qyoto-phonon.dll.config "<configuration><dllmap dll=\"qyoto-phonon-native\" target=\"libqyoto-phonon-native.so.2\"/></configuration>")
+
 
 install_assembly(qyoto-phonon DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
 

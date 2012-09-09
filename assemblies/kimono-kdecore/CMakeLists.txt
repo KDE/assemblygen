@@ -22,7 +22,7 @@ set_property(TARGET kimono-kdecore PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/kim
 set_property(TARGET kimono-kdecore PROPERTY _assembly_type dll)
 
 GET_LIBRARY_OUTPUT_DIR(library_target_dir)
-FILE(WRITE ${library_target_dir}/kimono-kdecore.dll.config "<configuration><dllmap dll=\"kimono-kdecore-native\" target=\"libkimono-kdecore-native.so.2\"/></configuration>")
+
 
 install_assembly(kimono-kdecore DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
 

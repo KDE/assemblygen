@@ -18,7 +18,7 @@ set_property(TARGET kimono-plasma PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/kimo
 set_property(TARGET kimono-plasma PROPERTY _assembly_type dll)
 
 GET_LIBRARY_OUTPUT_DIR(library_target_dir)
-FILE(WRITE ${library_target_dir}/kimono-plasma.dll.config "<configuration><dllmap dll=\"kimono-plasma-native\" target=\"libkimono-plasma-native.so.2\"/></configuration>")
+
 
 install_assembly(kimono-plasma DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
 

@@ -31,7 +31,7 @@ add_dependencies(qyoto-qtdbus assemblygen QyotoGenerator qyoto-qtcore)
 set_property(TARGET qyoto-qtdbus PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/qyoto-qtdbus.dll)
 set_property(TARGET qyoto-qtdbus PROPERTY _assembly_type dll)
 
-FILE(WRITE ${library_target_dir}/qyoto-qtdbus.dll.config "<configuration><dllmap dll=\"qyoto-qtdbus-native\" target=\"libqyoto-qtdbus-native.so.2\"/></configuration>")
+
 
 install_assembly(qyoto-qtdbus DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
 

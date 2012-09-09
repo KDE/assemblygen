@@ -26,7 +26,7 @@ add_dependencies(qyoto-qtopengl assemblygen QyotoGenerator qyoto-qtcore qyoto-qt
 set_property(TARGET qyoto-qtopengl PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/qyoto-qtopengl.dll)
 set_property(TARGET qyoto-qtopengl PROPERTY _assembly_type dll)
 
-FILE(WRITE ${library_target_dir}/qyoto-qtopengl.dll.config "<configuration><dllmap dll=\"qyoto-qtopengl-native\" target=\"libqyoto-qtopengl-native.so.2\"/></configuration>")
+
 
 install_assembly(qyoto-qtopengl DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
 

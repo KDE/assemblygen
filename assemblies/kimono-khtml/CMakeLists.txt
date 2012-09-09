@@ -19,7 +19,7 @@ set_property(TARGET kimono-khtml PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/kimon
 set_property(TARGET kimono-khtml PROPERTY _assembly_type dll)
 
 GET_LIBRARY_OUTPUT_DIR(library_target_dir)
-FILE(WRITE ${library_target_dir}/kimono-khtml.dll.config "<configuration><dllmap dll=\"kimono-khtml-native\" target=\"libkimono-khtml-native.so.2\"/></configuration>")
+
 
 install_assembly(kimono-khtml DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
 

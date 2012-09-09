@@ -26,7 +26,7 @@ add_dependencies(qyoto-qtwebkit assemblygen QyotoGenerator qyoto-qtcore qyoto-qt
 set_property(TARGET qyoto-qtwebkit PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/qyoto-qtwebkit.dll)
 set_property(TARGET qyoto-qtwebkit PROPERTY _assembly_type dll)
 
-FILE(WRITE ${library_target_dir}/qyoto-qtwebkit.dll.config "<configuration><dllmap dll=\"qyoto-qtwebkit-native\" target=\"libqyoto-qtwebkit-native.so.2\"/></configuration>")
+
 
 install_assembly(qyoto-qtwebkit DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
 

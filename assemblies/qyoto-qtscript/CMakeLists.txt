@@ -26,7 +26,7 @@ add_dependencies(qyoto-qtscript assemblygen QyotoGenerator qyoto-qtcore)
 set_property(TARGET qyoto-qtscript PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/qyoto-qtscript.dll)
 set_property(TARGET qyoto-qtscript PROPERTY _assembly_type dll)
 
-FILE(WRITE ${library_target_dir}/qyoto-qtscript.dll.config "<configuration><dllmap dll=\"qyoto-qtscript-native\" target=\"libqyoto-qtscript-native.so.2\"/></configuration>")
+
 
 install_assembly(qyoto-qtscript DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
 

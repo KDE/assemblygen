@@ -26,7 +26,7 @@ add_dependencies(qyoto-qtsvg assemblygen QyotoGenerator qyoto-qtcore qyoto-qtgui
 set_property(TARGET qyoto-qtsvg PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/qyoto-qtsvg.dll)
 set_property(TARGET qyoto-qtsvg PROPERTY _assembly_type dll)
 
-FILE(WRITE ${library_target_dir}/qyoto-qtsvg.dll.config "<configuration><dllmap dll=\"qyoto-qtsvg-native\" target=\"libqyoto-qtsvg-native.so.2\"/></configuration>")
+
 
 install_assembly(qyoto-qtsvg DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
 

@@ -26,7 +26,7 @@ add_dependencies(qyoto-qtsql assemblygen QyotoGenerator qyoto-qtcore qyoto-qtgui
 set_property(TARGET qyoto-qtsql PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/qyoto-qtsql.dll)
 set_property(TARGET qyoto-qtsql PROPERTY _assembly_type dll)
 
-FILE(WRITE ${library_target_dir}/qyoto-qtsql.dll.config "<configuration><dllmap dll=\"qyoto-qtsql-native\" target=\"libqyoto-qtsql-native.so.2\"/></configuration>")
+
 
 install_assembly(qyoto-qtsql DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
 

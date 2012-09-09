@@ -26,7 +26,7 @@ add_dependencies(qyoto-qtxml assemblygen QyotoGenerator qyoto-qtcore)
 set_property(TARGET qyoto-qtxml PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/qyoto-qtxml.dll)
 set_property(TARGET qyoto-qtxml PROPERTY _assembly_type dll)
 
-FILE(WRITE ${library_target_dir}/qyoto-qtxml.dll.config "<configuration><dllmap dll=\"qyoto-qtxml-native\" target=\"libqyoto-qtxml-native.so.2\"/></configuration>")
+
 
 install_assembly(qyoto-qtxml DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
 

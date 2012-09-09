@@ -39,7 +39,7 @@ add_dependencies(qyoto-qtgui assemblygen QyotoGenerator qyoto-qtcore)
 set_property(TARGET qyoto-qtgui PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/qyoto-qtgui.dll)
 set_property(TARGET qyoto-qtgui PROPERTY _assembly_type dll)
 
-FILE(WRITE ${library_target_dir}/qyoto-qtgui.dll.config "<configuration><dllmap dll=\"qyoto-qtgui-native\" target=\"libqyoto-qtgui-native.so.2\"/></configuration>")
+
 
 install_assembly(qyoto-qtgui DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
 

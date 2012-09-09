@@ -21,7 +21,7 @@ set_property(TARGET kimono-kio PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/kimono-
 set_property(TARGET kimono-kio PROPERTY _assembly_type dll)
 
 GET_LIBRARY_OUTPUT_DIR(library_target_dir)
-FILE(WRITE ${library_target_dir}/kimono-kio.dll.config "<configuration><dllmap dll=\"kimono-kio-native\" target=\"libkimono-kio-native.so.2\"/></configuration>")
+
 
 install_assembly(kimono-kio DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
 

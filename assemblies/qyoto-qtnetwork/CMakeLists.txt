@@ -26,7 +26,7 @@ add_dependencies(qyoto-qtnetwork assemblygen QyotoGenerator qyoto-qtcore)
 set_property(TARGET qyoto-qtnetwork PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/qyoto-qtnetwork.dll)
 set_property(TARGET qyoto-qtnetwork PROPERTY _assembly_type dll)
 
-FILE(WRITE ${library_target_dir}/qyoto-qtnetwork.dll.config "<configuration><dllmap dll=\"qyoto-qtnetwork-native\" target=\"libqyoto-qtnetwork-native.so.2\"/></configuration>")
+
 
 install_assembly(qyoto-qtnetwork DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
 
