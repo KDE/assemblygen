@@ -19,10 +19,8 @@ namespace Qyoto {
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
-	using System.Diagnostics;
 	using System.Linq.Expressions;
 	using System.Reflection;
-	using System.Runtime.Remoting.Proxies;
 	using System.Runtime.InteropServices;
 	using System.Text;
 
@@ -363,34 +361,29 @@ namespace Qyoto {
 			Object instance = ((GCHandle) instancePtr).Target;
 // 			Debug.Assert(instance != null);
             ((ISmokeObject) instance).SmokeObject = smokeObjectPtr;
-			return;
 		}
 		
-		public static IntPtr GetProperty(IntPtr obj, string propertyName) {
-			object o = ((GCHandle) obj).Target;
-			Type t = o.GetType();
-			PropertyInfo pi = t.GetProperty(propertyName, BindingFlags.Public | BindingFlags.NonPublic |
-									BindingFlags.Instance | BindingFlags.Static);
-			
-			MethodInfo fromValue = typeof(QVariant).GetMethod("FromValue", BindingFlags.Public | BindingFlags.Static);
-			if (fromValue == null) throw new Exception("Couldn't find QVariant.FromValue<T> method");
-			fromValue = fromValue.MakeGenericMethod( new Type[]{ pi.PropertyType } );
+		public static IntPtr GetProperty(IntPtr obj, string propertyName)
+		{
+		    object o = ((GCHandle) obj).Target;
+		    Type t = o.GetType();
+		    PropertyInfo pi = t.GetProperty(propertyName, BindingFlags.Public | BindingFlags.NonPublic |
+		                                                  BindingFlags.Instance | BindingFlags.Static);
 
-			if (pi != null) {
-				object value = pi.GetValue(o, null);
-				object[] args = { value };
-				QVariant variant = (QVariant) fromValue.Invoke(null, args);
+		    MethodInfo fromValue = typeof(QVariant).GetMethod("FromValue", BindingFlags.Public | BindingFlags.Static);
+		    if (fromValue == null) throw new Exception("Couldn't find QVariant.FromValue<T> method");
+		    fromValue = fromValue.MakeGenericMethod(new[] {pi.PropertyType});
+		    object value = pi.GetValue(o, null);
+		    object[] args = {value};
+		    QVariant variant = (QVariant) fromValue.Invoke(null, args);
 #if DEBUG
-				return (IntPtr) DebugGCHandle.Alloc(variant);
+		    return (IntPtr) DebugGCHandle.Alloc(variant);
 #else
 				return (IntPtr) GCHandle.Alloc(variant);
 #endif
-			}
-			
-			return (IntPtr) 0;
 		}
-		
-		public static void SetProperty(IntPtr obj, string propertyName, IntPtr variant) {
+
+	    public static void SetProperty(IntPtr obj, string propertyName, IntPtr variant) {
 			object o = ((GCHandle) obj).Target;
 			Type t = o.GetType();
 			object v = ((GCHandle) variant).Target;
@@ -433,8 +426,7 @@ namespace Qyoto {
 		}
 
 		public static void RemoveGlobalRef(IntPtr instancePtr, IntPtr ptr) {
-			Object instance = ((GCHandle) instancePtr).Target;
-			lock (globalReferenceMap) {
+		    lock (globalReferenceMap) {
 				if (globalReferenceMap.ContainsKey(ptr)) {
 #if DEBUG
 					if ((QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0) {
@@ -499,13 +491,12 @@ namespace Qyoto {
 		// If 'allInstances' is false then only return a result if the instance a custom subclass
 		// of a Qyoto class and therefore could have custom slots or overriden methods
 		public static IntPtr GetInstance(IntPtr ptr, bool allInstances) {
-			WeakReference weakRef;
-			object strongRef;
-			lock (pointerMap) {
-				if (!pointerMap.TryGetValue(ptr, out weakRef)) {
+		    lock (pointerMap) {
+			    WeakReference weakRef;
+			    if (!pointerMap.TryGetValue(ptr, out weakRef)) {
 #if DEBUG
-					if (	(QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0
-							&& QDebug.debugLevel >= DebugLevel.Extensive ) 
+					if ((QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0
+						&& QDebug.debugLevel >= DebugLevel.Extensive ) 
 					{
 						Console.WriteLine("GetInstance() pointerMap[0x{0:x8}] == null", (int) ptr);
 					}
@@ -515,8 +506,8 @@ namespace Qyoto {
 
 				if (weakRef != null && weakRef.IsAlive) {
 #if DEBUG
-					if (	(QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0
-							&& QDebug.debugLevel >= DebugLevel.Extensive ) 
+					if ((QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0
+						&& QDebug.debugLevel >= DebugLevel.Extensive ) 
 					{
 						Console.WriteLine("GetInstance() weakRef.IsAlive 0x{0:x8} -> {1}", (int) ptr, weakRef.Target is MethodInfo ? ((MethodInfo) weakRef.Target).Name : weakRef.Target.ToString());
 					}
@@ -531,35 +522,36 @@ namespace Qyoto {
 					GCHandle instanceHandle = GCHandle.Alloc(weakRef.Target);
 #endif
 					return (IntPtr) instanceHandle;
-				} else if (Environment.HasShutdownStarted && globalReferenceMap.TryGetValue(ptr, out strongRef)) {
+				}
+			    object strongRef;
+			    if (Environment.HasShutdownStarted && globalReferenceMap.TryGetValue(ptr, out strongRef)) {
 #if DEBUG
-					if (	(QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0
-							&& QDebug.debugLevel >= DebugLevel.Extensive ) 
-					{
-						Console.WriteLine("GetInstance() strongRef 0x{0:x8} -> {1}", (int) ptr, strongRef);
-					}
+			        if (	(QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0
+			            	&& QDebug.debugLevel >= DebugLevel.Extensive ) 
+			        {
+			            Console.WriteLine("GetInstance() strongRef 0x{0:x8} -> {1}", (int) ptr, strongRef);
+			        }
 #endif
-					if (!allInstances && IsSmokeClass(strongRef.GetType())) {
-						return IntPtr.Zero;
-					} 
+			        if (!allInstances && IsSmokeClass(strongRef.GetType())) {
+			            return IntPtr.Zero;
+			        } 
 
 #if DEBUG
-					GCHandle instanceHandle = DebugGCHandle.Alloc(strongRef);
+			        GCHandle instanceHandle = DebugGCHandle.Alloc(strongRef);
 #else
 					GCHandle instanceHandle = GCHandle.Alloc(strongRef);
 #endif
-					return (IntPtr) instanceHandle;
-				} else {
+			        return (IntPtr) instanceHandle;
+			    }
 #if DEBUG
-					if (	(QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0
-							&& QDebug.debugLevel >= DebugLevel.Extensive ) 
-					{
-						Console.WriteLine("GetInstance() weakRef dead ptr: 0x{0:x8}", (int) ptr);
-					}
+			    if (	(QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0
+			        	&& QDebug.debugLevel >= DebugLevel.Extensive ) 
+			    {
+			        Console.WriteLine("GetInstance() weakRef dead ptr: 0x{0:x8}", (int) ptr);
+			    }
 #endif
-					pointerMap.Remove(ptr);
-					return IntPtr.Zero;
-				}
+			    pointerMap.Remove(ptr);
+			    return IntPtr.Zero;
 			}
 		}
 
@@ -579,10 +571,9 @@ namespace Qyoto {
 		private class SmokeClassData {
 			public string className;
 			public Constructor constructor;
-			public object[] constructorParamTypes;
 		}
 
-		private static Dictionary<Type, SmokeClassData> smokeClassCache = new Dictionary<Type, SmokeClassData> ();
+		private static readonly Dictionary<Type, SmokeClassData> smokeClassCache = new Dictionary<Type, SmokeClassData> ();
 
 		private static SmokeClassData GetSmokeClassData(Type t) {
 			SmokeClassData result;
@@ -687,57 +678,56 @@ namespace Qyoto {
 		}
 
 		public static string IntPtrToString(IntPtr ptr) {
-			return Marshal.PtrToStringAuto(ptr);
+			return Marshal.PtrToStringUni(ptr);
 		}
 
 		public static IntPtr IntPtrFromString(string str) {
-			return Marshal.StringToHGlobalAuto(str);
+			return Marshal.StringToHGlobalUni(str);
 		}
 
 		public static IntPtr IntPtrFromQString(IntPtr ptr) {
-			return Marshal.StringToHGlobalAuto(StringFromQString(ptr));
+			return Marshal.StringToHGlobalUni(StringFromQString(ptr));
 		}
 
 		public static IntPtr StringBuilderToQString(IntPtr ptr) {
-			object obj = (object) ((GCHandle) ptr).Target;
-			if (obj.GetType() == typeof(StringBuilder)) {
-				return StringToQString(((StringBuilder) obj).ToString());
-			} else {
-				return StringToQString((string) obj);
+			object obj = ((GCHandle) ptr).Target;
+			if (obj is StringBuilder) {
+				return StringToQString(obj.ToString());
 			}
+		    return StringToQString((string) obj);
 		}
 
 		public static void StringBuilderFromQString(IntPtr ptr, string str) {
-			object obj = (object) ((GCHandle) ptr).Target;
-			if (obj.GetType() == typeof(StringBuilder)) {
-				StringBuilder temp = (StringBuilder) obj;
-				temp.Remove(0, temp.Length);
-				temp.Append(str);
-			}
+			object obj = ((GCHandle) ptr).Target;
+		    StringBuilder temp = obj as StringBuilder;
+		    if (temp != null) {
+		        temp.Remove(0, temp.Length);
+		        temp.Append(str);
+		    }
 		}
 
 		public static IntPtr StringListToQStringList(IntPtr ptr) {
 			List<string> sl = (List<string>) ((GCHandle) ptr).Target;
-			string[] s = (string[]) sl.ToArray();
+			string[] s = sl.ToArray();
 			return StringArrayToQStringList(s.Length, s);
 		}
 
 		public static IntPtr ListIntToQListInt(IntPtr ptr) {
 			List<int> il = (List<int>) ((GCHandle) ptr).Target;
-			IntPtr QList = ConstructQListInt();
+			IntPtr qList = ConstructQListInt();
 			foreach (int i in il) {
-				AddIntToQList(QList, i);
+				AddIntToQList(qList, i);
 			}
-			return QList;
+			return qList;
 		}
 		
 		public static IntPtr ListUIntToQListQRgb(IntPtr ptr) {
 			List<uint> il = (List<uint>) ((GCHandle) ptr).Target;
-			IntPtr QList = ConstructQListQRgb();
+			IntPtr qList = ConstructQListQRgb();
 			foreach (uint i in il) {
-				AddUIntToQListQRgb(QList, i);
+				AddUIntToQListQRgb(qList, i);
 			}
-			return QList;
+			return qList;
 		}
 
 		public static void AddUIntToListUInt(IntPtr ptr, uint i) {
@@ -809,7 +799,7 @@ namespace Qyoto {
 
 		public static void AddStringToList(IntPtr obj, IntPtr ptr) {
 			object list = ((GCHandle) obj).Target;
-			string o = Marshal.PtrToStringAuto(ptr);
+			string o = Marshal.PtrToStringUni(ptr);
 			Marshal.FreeHGlobal(ptr);
         	((IList) list).Add(o);
 		}
@@ -926,8 +916,8 @@ namespace Qyoto {
 			Type t = typeof(QPair<,>);
 			object firstObject = ((GCHandle) first).Target;
 			object secondObject = ((GCHandle) second).Target;
-			t = t.MakeGenericType(new Type[] { firstObject.GetType(), secondObject.GetType() });
-			object pair = Activator.CreateInstance(t, new object[] { firstObject, secondObject });
+			t = t.MakeGenericType(new[] { firstObject.GetType(), secondObject.GetType() });
+			object pair = Activator.CreateInstance(t, new[] { firstObject, secondObject });
 			return (IntPtr) GCHandle.Alloc(pair);
 		}
 
@@ -948,80 +938,86 @@ namespace Qyoto {
 					item->s_long = value;
 					return TypeId.t_long;
 				}
-			} else if (t == typeof(int)) {
-				item->s_int = (int) o;
-				return TypeId.t_int;
-			} else if (t == typeof(bool)) {
-				item->s_bool = (bool) o;
-				return TypeId.t_bool;
-			} else if (t == typeof(short)) {
-				item->s_short = (short) o;
-				return TypeId.t_short;
-			} else if (t == typeof(float)) {
-				item->s_float = (float) o;
-				return TypeId.t_float;
-			} else if (t == typeof(double)) {
-				item->s_double = (double) o;
-				return TypeId.t_double;
-			} else if (t == typeof(NativeLong)) {
-				if (SizeOfNativeLong < sizeof(long)) {
-					item->s_int = (int) (NativeLong) o;
-					return TypeId.t_int;
-				} else {
-					item->s_long = (NativeLong) o;
-					return TypeId.t_long;
-				}
-			} else if (t == typeof(ushort)) {
-				item->s_ushort = (ushort) o;
-				return TypeId.t_ushort;
-			} else if (t == typeof(uint)) {
-				item->s_uint = (uint) o;
-				return TypeId.t_uint;
-			} else if (t == typeof(NativeULong)) {
-				if (SizeOfNativeLong < sizeof(long)) {
-					item->s_uint = (uint) (NativeULong) o;
-					return TypeId.t_uint;
-				} else {
-					item->s_ulong = (NativeULong) o;
-					return TypeId.t_ulong;
-				}
-			} else if (t == typeof(long)) {
-				item->s_long = (long) o;
-				return TypeId.t_long;
-			} else if (t == typeof(ulong)) {
-				item->s_ulong = (ulong) o;
-				return TypeId.t_ulong;
-			} else if (t == typeof(sbyte)) {
-				item->s_char = (sbyte) o;
-				return TypeId.t_uchar;
-			} else if (t == typeof(byte)) {
-				item->s_uchar = (byte) o;
-				return TypeId.t_uchar;
-			} else if (t == typeof(char)) {
-				item->s_char = (sbyte) (char) o;
-				return TypeId.t_char;
+			}
+		    if (t == typeof(int)) {
+		        item->s_int = (int) o;
+		        return TypeId.t_int;
+		    }
+		    if (t == typeof(bool)) {
+		        item->s_bool = (bool) o;
+		        return TypeId.t_bool;
+		    }
+		    if (t == typeof(short)) {
+		        item->s_short = (short) o;
+		        return TypeId.t_short;
+		    }
+		    if (t == typeof(float)) {
+		        item->s_float = (float) o;
+		        return TypeId.t_float;
+		    }
+		    if (t == typeof(double)) {
+		        item->s_double = (double) o;
+		        return TypeId.t_double;
+		    }
+		    if (t == typeof(NativeLong)) {
+		        if (SizeOfNativeLong < sizeof(long)) {
+		            item->s_int = (int) (NativeLong) o;
+		            return TypeId.t_int;
+		        }
+		        item->s_long = (NativeLong) o;
+		        return TypeId.t_long;
+		    }
+		    if (t == typeof(ushort)) {
+		        item->s_ushort = (ushort) o;
+		        return TypeId.t_ushort;
+		    }
+		    if (t == typeof(uint)) {
+		        item->s_uint = (uint) o;
+		        return TypeId.t_uint;
+		    }
+		    if (t == typeof(NativeULong)) {
+		        if (SizeOfNativeLong < sizeof(long)) {
+		            item->s_uint = (uint) (NativeULong) o;
+		            return TypeId.t_uint;
+		        }
+		        item->s_ulong = (NativeULong) o;
+		        return TypeId.t_ulong;
+		    }
+		    if (t == typeof(long)) {
+		        item->s_long = (long) o;
+		        return TypeId.t_long;
+		    }
+		    if (t == typeof(ulong)) {
+		        item->s_ulong = (ulong) o;
+		        return TypeId.t_ulong;
+		    }
+		    if (t == typeof(sbyte)) {
+		        item->s_char = (sbyte) o;
+		        return TypeId.t_uchar;
+		    }
+		    if (t == typeof(byte)) {
+		        item->s_uchar = (byte) o;
+		        return TypeId.t_uchar;
+		    }
+		    if (t == typeof(char)) {
+		        item->s_char = (sbyte) (char) o;
+		        return TypeId.t_char;
+		    }
+			string text = o as string;
+			if (text != null) {
+				item->s_class = Marshal.StringToHGlobalUni(text);
+				return TypeId.t_string;
+			}
+			if (o is Delegate) {
+				item->s_class = Marshal.GetFunctionPointerForDelegate((Delegate) o);
 			} else {
 #if DEBUG
-				if (o is Delegate) {
-					item->s_class = Marshal.GetFunctionPointerForDelegate((Delegate) o);
-				} else {
-					item->s_class = (IntPtr) DebugGCHandle.Alloc(o);
-				}
+				item->s_class = (IntPtr) DebugGCHandle.Alloc(o);
 #else
-				string text = o as string;
-				if (text != null) {
-					item->s_class = Marshal.StringToHGlobalAuto(text);
-					return TypeId.t_string;
-				}
-				if (o is Delegate) {
-					item->s_class = Marshal.GetFunctionPointerForDelegate((Delegate) o);
-				} else {
-					item->s_class = (IntPtr) GCHandle.Alloc(o);
-				}
+				item->s_class = (IntPtr) GCHandle.Alloc(o);
 #endif
-				return t == typeof(string) ? TypeId.t_string : TypeId.t_class;
 			}
-			return TypeId.t_class;
+		    return t == typeof(string) ? TypeId.t_string : TypeId.t_class;
 		}
 
 		public static unsafe TypeId UnboxToStackItem(IntPtr obj, IntPtr st) {
@@ -1033,51 +1029,60 @@ namespace Qyoto {
 
 		public static TypeId GetTypeId(Type t) {
 			if (t.IsEnum) {
-				if (SizeOfNativeLong < sizeof(long)) {
+			    if (SizeOfNativeLong < sizeof(long)) {
 					return TypeId.t_int;
-				} else {
-					return TypeId.t_long;
 				}
-			} else if (t == typeof(int)) {
-				return TypeId.t_int;
-			} else if (t == typeof(bool)) {
-				return TypeId.t_bool;
-			} else if (t == typeof(short)) {
-				return TypeId.t_short;
-			} else if (t == typeof(float)) {
-				return TypeId.t_float;
-			} else if (t == typeof(double)) {
-				return TypeId.t_double;
-			} else if (t == typeof(NativeLong)) {
-				if (SizeOfNativeLong < sizeof(long)) {
-					return TypeId.t_int;
-				} else {
-					return TypeId.t_long;
-				}
-			} else if (t == typeof(ushort)) {
-				return TypeId.t_ushort;
-			} else if (t == typeof(uint)) {
-				return TypeId.t_uint;
-			} else if (t == typeof(NativeULong)) {
-				if (SizeOfNativeLong < sizeof(long)) {
-					return TypeId.t_uint;
-				} else {
-					return TypeId.t_ulong;
-				}
-			} else if (t == typeof(long)) {
-				return TypeId.t_long;
-			} else if (t == typeof(ulong)) {
-				return TypeId.t_ulong;
-			} else if (t == typeof(sbyte)) {
-				return TypeId.t_uchar;
-			} else if (t == typeof(byte)) {
-				return TypeId.t_uchar;
-			} else if (t == typeof(char)) {
-				return TypeId.t_char;
-			} else {
-				return t == typeof(string) ? TypeId.t_string : TypeId.t_class;
+			    return TypeId.t_long;
 			}
-			return TypeId.t_class;
+		    if (t == typeof(int)) {
+		        return TypeId.t_int;
+		    }
+		    if (t == typeof(bool)) {
+		        return TypeId.t_bool;
+		    }
+		    if (t == typeof(short)) {
+		        return TypeId.t_short;
+		    }
+		    if (t == typeof(float)) {
+		        return TypeId.t_float;
+		    }
+		    if (t == typeof(double)) {
+		        return TypeId.t_double;
+		    }
+		    if (t == typeof(NativeLong)) {
+		        if (SizeOfNativeLong < sizeof(long)) {
+		            return TypeId.t_int;
+		        }
+		        return TypeId.t_long;
+		    }
+		    if (t == typeof(ushort)) {
+		        return TypeId.t_ushort;
+		    }
+		    if (t == typeof(uint)) {
+		        return TypeId.t_uint;
+		    }
+		    if (t == typeof(NativeULong)) {
+		        if (SizeOfNativeLong < sizeof(long)) {
+		            return TypeId.t_uint;
+		        }
+		        return TypeId.t_ulong;
+		    }
+		    if (t == typeof(long)) {
+		        return TypeId.t_long;
+		    }
+		    if (t == typeof(ulong)) {
+		        return TypeId.t_ulong;
+		    }
+		    if (t == typeof(sbyte)) {
+		        return TypeId.t_uchar;
+		    }
+		    if (t == typeof(byte)) {
+		        return TypeId.t_uchar;
+		    }
+		    if (t == typeof(char)) {
+		        return TypeId.t_char;
+		    }
+		    return t == typeof(string) ? TypeId.t_string : TypeId.t_class;
 		}
 
 		public static unsafe object BoxFromStackItem(Type t, int typeID, StackItem *item) {
@@ -1087,59 +1092,73 @@ namespace Qyoto {
 
 			if (typeID == 0) {
 				if (t.IsEnum) {
-					if (SizeOfNativeLong < sizeof(long)) {
+				    if (SizeOfNativeLong < sizeof(long)) {
 						return Enum.ToObject(t, item->s_int);
-					} else {
-						return Enum.ToObject(t, item->s_long);
 					}
-				} else if (t == typeof(int)) {
-					return item->s_int;
-				} else if (t == typeof(bool)) {
-					return item->s_bool;
-				} else if (t == typeof(short)) {
-					return item->s_short;
-				} else if (t == typeof(float)) {
-					return item->s_float;
-				} else if (t == typeof(double)) {
-					return item->s_double;
-				} else if (t == typeof(NativeLong)) {
-					return new NativeLong((SizeOfNativeLong < sizeof(long))? item->s_int : item->s_long);
-				} else if (t == typeof(ushort)) {
-					return item->s_ushort;
-				} else if (t == typeof(uint)) {
-					return item->s_uint;
-				} else if (t == typeof(NativeULong)) {
-					return new NativeULong((SizeOfNativeLong < sizeof(long))? item->s_uint : item->s_ulong);
-				} else if (t == typeof(long)) {
-					return item->s_long;
-				} else if (t == typeof(ulong)) {
-					return item->s_ulong;
-				} else if (t == typeof(sbyte)) {
-					return item->s_char;
-				} else if (t == typeof(byte)) {
-					return item->s_uchar;
-				} else if (t == typeof(char)) {
-					return (char) item->s_char;
-				} else if (item->s_class != IntPtr.Zero) {
-					if (typeof(Delegate).IsAssignableFrom(t)) {
-						return Marshal.GetDelegateForFunctionPointer(item->s_class, t);
-					}
-					if (t == typeof(string)) {
-						string value = Marshal.PtrToStringAuto(item->s_class);
-						Marshal.FreeHGlobal(item->s_class);
-						return value;
-					}
-					// the StackItem contains a GCHandle to an object
-					GCHandle handle = (GCHandle) item->s_class;
-					object ret = handle.Target;
+				    return Enum.ToObject(t, item->s_long);
+				}
+			    if (t == typeof(int)) {
+			        return item->s_int;
+			    }
+			    if (t == typeof(bool)) {
+			        return item->s_bool;
+			    }
+			    if (t == typeof(short)) {
+			        return item->s_short;
+			    }
+			    if (t == typeof(float)) {
+			        return item->s_float;
+			    }
+			    if (t == typeof(double)) {
+			        return item->s_double;
+			    }
+			    if (t == typeof(NativeLong)) {
+			        return new NativeLong((SizeOfNativeLong < sizeof(long))? item->s_int : item->s_long);
+			    }
+			    if (t == typeof(ushort)) {
+			        return item->s_ushort;
+			    }
+			    if (t == typeof(uint)) {
+			        return item->s_uint;
+			    }
+			    if (t == typeof(NativeULong)) {
+			        return new NativeULong((SizeOfNativeLong < sizeof(long))? item->s_uint : item->s_ulong);
+			    }
+			    if (t == typeof(long)) {
+			        return item->s_long;
+			    }
+			    if (t == typeof(ulong)) {
+			        return item->s_ulong;
+			    }
+			    if (t == typeof(sbyte)) {
+			        return item->s_char;
+			    }
+			    if (t == typeof(byte)) {
+			        return item->s_uchar;
+			    }
+			    if (t == typeof(char)) {
+			        return (char) item->s_char;
+			    }
+			    if (item->s_class != IntPtr.Zero) {
+			        if (typeof(Delegate).IsAssignableFrom(t)) {
+			            return Marshal.GetDelegateForFunctionPointer(item->s_class, t);
+			        }
+			        if (t == typeof(string)) {
+			            string value = Marshal.PtrToStringUni(item->s_class);
+			            Marshal.FreeHGlobal(item->s_class);
+			            return value;
+			        }
+			        // the StackItem contains a GCHandle to an object
+			        GCHandle handle = (GCHandle) item->s_class;
+			        object ret = handle.Target;
 #if DEBUG
-					DebugGCHandle.Free(handle);
+			        DebugGCHandle.Free(handle);
 #else
 					handle.Free();
 #endif
-					return ret;
-				}
-				return null;
+			        return ret;
+			    }
+			    return null;
 			}
 
 			return GetByTypeID(typeID, item);
@@ -1171,7 +1190,7 @@ namespace Qyoto {
 				case TypeId.t_double:
 					return item->s_double;
 				case TypeId.t_string:
-					string value = Marshal.PtrToStringAuto(item->s_class);
+					string value = Marshal.PtrToStringUni(item->s_class);
 					Marshal.FreeHGlobal(item->s_class);
 					return value;
 				default:
@@ -1204,7 +1223,7 @@ namespace Qyoto {
 		
 		public static IntPtr CreateGenericPointer(string type, IntPtr ptr) {
 			Type t = typeof(Pointer<>);
-			t = t.MakeGenericType( new Type[] { Type.GetType(type) } );
+			t = t.MakeGenericType( new[] { Type.GetType(type) } );
 			object o = Activator.CreateInstance(t, new object[] { ptr });
 			return (IntPtr) GCHandle.Alloc(o);
 		}
