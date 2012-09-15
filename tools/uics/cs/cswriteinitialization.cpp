@@ -1094,6 +1094,8 @@ void WriteInitialization::writeProperties(const QString &varName,
                     csname = "Shadow";
                 } else if (csname == "FrameShape") {
                     csname = "Shape";
+                } else if (csname == "FirstDayOfWeek") {
+                    csname = "DayOfWeek";
                 }
                 propertyValue = parts[0] + QLatin1String(".") + csname + QLatin1String(".") + parts[1];
             }
@@ -1119,6 +1121,9 @@ void WriteInitialization::writeProperties(const QString &varName,
                     QStringList parts = enums.at(i).split("::");
                     if (i > 0) {
                         qyotoValue += QLatin1String(" | ");
+                    }
+                    if (parts[0] == "QWizard" && csname == "Option") {
+                        csname = "WizardOption";
                     }
                     qyotoValue += parts[0] + QLatin1String(".") + csname + QLatin1String(".") + parts[1];
                 }
