@@ -929,7 +929,7 @@ namespace Qyoto {
 			Type t = o.GetType();
 
 			if (t.IsEnum) {
-				if (SizeOfNativeLong < sizeof(long)) {
+				if (SizeOfNativeLong <= sizeof(long)) {
 					int value = Enum.GetUnderlyingType(t) == typeof(long) ? (int) (long) o : (int) o;
 					item->s_int = value;
 					return TypeId.t_int;
@@ -960,7 +960,7 @@ namespace Qyoto {
 		        return TypeId.t_double;
 		    }
 		    if (t == typeof(NativeLong)) {
-		        if (SizeOfNativeLong < sizeof(long)) {
+		        if (SizeOfNativeLong <= sizeof(long)) {
 		            item->s_int = (int) (NativeLong) o;
 		            return TypeId.t_int;
 		        }
@@ -976,7 +976,7 @@ namespace Qyoto {
 		        return TypeId.t_uint;
 		    }
 		    if (t == typeof(NativeULong)) {
-		        if (SizeOfNativeLong < sizeof(long)) {
+		        if (SizeOfNativeLong <= sizeof(long)) {
 		            item->s_uint = (uint) (NativeULong) o;
 		            return TypeId.t_uint;
 		        }
@@ -1029,12 +1029,9 @@ namespace Qyoto {
 
 		public static TypeId GetTypeId(Type t) {
 			if (t.IsEnum) {
-			    if (SizeOfNativeLong < sizeof(long)) {
-					return TypeId.t_int;
-				}
-			    return TypeId.t_long;
+				return SizeOfNativeLong <= sizeof(long) ? TypeId.t_int : TypeId.t_long;
 			}
-		    if (t == typeof(int)) {
+			if (t == typeof(int)) {
 		        return TypeId.t_int;
 		    }
 		    if (t == typeof(bool)) {
@@ -1050,24 +1047,18 @@ namespace Qyoto {
 		        return TypeId.t_double;
 		    }
 		    if (t == typeof(NativeLong)) {
-		        if (SizeOfNativeLong < sizeof(long)) {
-		            return TypeId.t_int;
-		        }
-		        return TypeId.t_long;
+		    	return SizeOfNativeLong <= sizeof(long) ? TypeId.t_int : TypeId.t_long;
 		    }
-		    if (t == typeof(ushort)) {
+			if (t == typeof(ushort)) {
 		        return TypeId.t_ushort;
 		    }
 		    if (t == typeof(uint)) {
 		        return TypeId.t_uint;
 		    }
 		    if (t == typeof(NativeULong)) {
-		        if (SizeOfNativeLong < sizeof(long)) {
-		            return TypeId.t_uint;
-		        }
-		        return TypeId.t_ulong;
+		    	return SizeOfNativeLong <= sizeof(long) ? TypeId.t_uint : TypeId.t_ulong;
 		    }
-		    if (t == typeof(long)) {
+			if (t == typeof(long)) {
 		        return TypeId.t_long;
 		    }
 		    if (t == typeof(ulong)) {
@@ -1092,12 +1083,9 @@ namespace Qyoto {
 
 			if (typeID == 0) {
 				if (t.IsEnum) {
-				    if (SizeOfNativeLong < sizeof(long)) {
-						return Enum.ToObject(t, item->s_int);
-					}
-				    return Enum.ToObject(t, item->s_long);
+					return Enum.ToObject(t, SizeOfNativeLong <= sizeof(long) ? item->s_int : item->s_long);
 				}
-			    if (t == typeof(int)) {
+				if (t == typeof(int)) {
 			        return item->s_int;
 			    }
 			    if (t == typeof(bool)) {
@@ -1113,7 +1101,7 @@ namespace Qyoto {
 			        return item->s_double;
 			    }
 			    if (t == typeof(NativeLong)) {
-			        return new NativeLong((SizeOfNativeLong < sizeof(long))? item->s_int : item->s_long);
+			        return new NativeLong((SizeOfNativeLong <= sizeof(long))? item->s_int : item->s_long);
 			    }
 			    if (t == typeof(ushort)) {
 			        return item->s_ushort;
@@ -1122,7 +1110,7 @@ namespace Qyoto {
 			        return item->s_uint;
 			    }
 			    if (t == typeof(NativeULong)) {
-			        return new NativeULong((SizeOfNativeLong < sizeof(long))? item->s_uint : item->s_ulong);
+			        return new NativeULong((SizeOfNativeLong <= sizeof(long))? item->s_uint : item->s_ulong);
 			    }
 			    if (t == typeof(long)) {
 			        return item->s_long;
