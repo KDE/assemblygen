@@ -4,6 +4,8 @@ find_package(Qt4 COMPONENTS QtDBus)
 find_package(Smoke COMPONENTS Phonon)
 
 if (ENABLE_QYOTO_PLUGIN)
+	execute_process(COMMAND ${QT_QMAKE_EXECUTABLE} -query QT_INSTALL_DOCS OUTPUT_VARIABLE DOCUMENTATION_PATH)
+	STRING(REGEX REPLACE "(\r?\n)+$" "" DOCUMENTATION_PATH "${DOCUMENTATION_PATH}")
     add_subdirectory(qyoto-qtcore)
     if (QT_QTDBUS_LIBRARY)
         # Not always present (e.g. Windows).

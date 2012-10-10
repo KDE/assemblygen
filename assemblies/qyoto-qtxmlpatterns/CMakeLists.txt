@@ -7,7 +7,7 @@ set (ASSEMBLYGEN_ARGS
 	${LIBRARY_OUTPUT_PATH}/assemblygen.exe
 	-unsafe -out:qyoto-qtxmlpatterns.dll -r:qyoto-qtcore.dll -r:qyoto-qtnetwork.dll
 	-plugins:QyotoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
-	-code-file:qyoto-qtxmlpatterns.cs \"-keyfile:${KEYFILE}\"
+	-code-file:qyoto-qtxmlpatterns.cs -docs:"${DOCUMENTATION_PATH}" \"-keyfile:${KEYFILE}\"
 	${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtxmlpatterns${CMAKE_SHARED_LIBRARY_SUFFIX}
 	${qyoto_qtxmlpatterns_SRC}
 	WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
@@ -29,5 +29,6 @@ set_property(TARGET qyoto-qtxmlpatterns PROPERTY _assembly_type dll)
 
 
 install_assembly(qyoto-qtxmlpatterns DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
+install(FILES ${LIBRARY_OUTPUT_PATH}/qyoto-qtxmlpatterns.xml DESTINATION share/qyoto)
 
 add_subdirectory(native)

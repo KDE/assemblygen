@@ -34,7 +34,8 @@ set (ASSEMBLYGEN_ARGS
 	${LIBRARY_OUTPUT_PATH}/assemblygen.exe
 	-unsafe -out:qyoto-qtcore.dll -global-class:Qt
 	-plugins:QyotoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
-	-code-file:qyoto-qtcore.cs \"-keyfile:${KEYFILE}\"
+	-code-file:qyoto-qtcore.cs -docs:"${DOCUMENTATION_PATH}" 
+	\"-keyfile:${KEYFILE}\"
 	${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtcore${CMAKE_SHARED_LIBRARY_SUFFIX}
 	${qyoto_qtcore_SRC}
 	WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
@@ -56,5 +57,6 @@ set_property(TARGET qyoto-qtcore PROPERTY _assembly_type dll)
 
 
 install_assembly(qyoto-qtcore DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
+install(FILES ${LIBRARY_OUTPUT_PATH}/qyoto-qtcore.xml DESTINATION share/qyoto)
 
 add_subdirectory(native)

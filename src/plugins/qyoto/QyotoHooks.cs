@@ -19,31 +19,32 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Collections;
 using System.Runtime.InteropServices;
 using System.CodeDom;
+using System.Text.RegularExpressions;
 
-public unsafe class QyotoHooks : IHookProvider {
+public unsafe class QyotoHooks : IHookProvider
+{
 
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet=CharSet.Ansi)]
-    delegate void AddSignal(string signature, string name, string returnType, IntPtr metaMethod);
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+	delegate void AddSignal(string signature, string name, string returnType, IntPtr metaMethod);
 
-    [DllImport("qyotogenerator-native", CallingConvention=CallingConvention.Cdecl)]
-    static extern void GetSignals(Smoke* smoke, void *klass, AddSignal addSignalFn);
+	[DllImport("qyotogenerator-native", CallingConvention = CallingConvention.Cdecl)]
+	static extern void GetSignals(Smoke* smoke, void* klass, AddSignal addSignalFn);
 
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet=CharSet.Ansi)]
-    delegate void AddParameter(string type, string name);
+	[UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+	delegate void AddParameter(string type, string name);
 
-    [DllImport("qyotogenerator-native", CallingConvention=CallingConvention.Cdecl)]
-    static extern void GetMetaMethodParameters(IntPtr metaMethod, AddParameter addParamFn);
+	[DllImport("qyotogenerator-native", CallingConvention = CallingConvention.Cdecl)]
+	static extern void GetMetaMethodParameters(IntPtr metaMethod, AddParameter addParamFn);
 
-    static string qObjectDummyCtorCode =
+	static string qObjectDummyCtorCode =
 "            try {\n" +
 "                Type proxyInterface = Qyoto.GetSignalsInterface(GetType());\n" +
 "                SignalInvocation realProxy = new SignalInvocation(proxyInterface, this);\n" +
@@ -53,169 +54,205 @@ public unsafe class QyotoHooks : IHookProvider {
 "                Console.WriteLine(\"Could not retrieve signal interface: {0}\", e);\n" +
 "            }";
 
-    public void RegisterHooks() {
-        ClassesGenerator.PreMembersHooks += PreMembersHook;
-        ClassesGenerator.PostMembersHooks += PostMembersHook;
-        ClassesGenerator.SupportingMethodsHooks += SupportingMethodsHook;
-        ClassesGenerator.PreClassesHook += PreClassesHook;
+	public void RegisterHooks()
+	{
+		ClassesGenerator.PreMembersHooks += PreMembersHook;
+		ClassesGenerator.PostMembersHooks += PostMembersHook;
+		ClassesGenerator.SupportingMethodsHooks += SupportingMethodsHook;
+		ClassesGenerator.PreClassesHook += PreClassesHook;
 		ClassesGenerator.PostClassesHook += PostClassesHook;
 		MethodsGenerator.PostMethodBodyHooks += this.PostMethodBodyHooks;
-        Console.WriteLine("Registered Qyoto hooks.");
-    }
+		Console.WriteLine("Registered Qyoto hooks.");
+	}
 
-    public Translator Translator { get; set; }
-    public GeneratorData Data { get; set; }
-    private readonly Dictionary<string, CodeMemberMethod> eventMethods = new Dictionary<string, CodeMemberMethod>();
+	public Translator Translator { get; set; }
+	public GeneratorData Data { get; set; }
+	private readonly Dictionary<string, CodeMemberMethod> eventMethods = new Dictionary<string, CodeMemberMethod>();
+	private readonly Dictionary<CodeTypeDeclaration, string> documentation = new Dictionary<CodeTypeDeclaration, string>();
 
-    public void PreMembersHook(Smoke *smoke, Smoke.Class *klass, CodeTypeDeclaration type) {
-        if (type.Name == "QObject") {
-            // Add 'Qt' base class
-            type.BaseTypes.Add(new CodeTypeReference("Qt"));
+	public void PreMembersHook(Smoke* smoke, Smoke.Class* klass, CodeTypeDeclaration type)
+	{
+		if (type.Name == "QObject")
+		{
+			// Add 'Qt' base class
+			type.BaseTypes.Add(new CodeTypeReference("Qt"));
 
-            // add the Q_EMIT field
-            CodeMemberField Q_EMIT = new CodeMemberField(typeof(object), "Q_EMIT");
-            Q_EMIT.Attributes = MemberAttributes.Family;
-            Q_EMIT.InitExpression = new CodePrimitiveExpression(null);
-            type.Members.Add(Q_EMIT);
-        }
-    }
+			// add the Q_EMIT field
+			CodeMemberField Q_EMIT = new CodeMemberField(typeof(object), "Q_EMIT");
+			Q_EMIT.Attributes = MemberAttributes.Family;
+			Q_EMIT.InitExpression = new CodePrimitiveExpression(null);
+			type.Members.Add(Q_EMIT);
+		}
+	}
 
-    public void PostMembersHook(Smoke *smoke, Smoke.Class *klass, CodeTypeDeclaration type) {
-        if (Util.IsQObject(klass)) {
-            CodeMemberProperty emit = new CodeMemberProperty();
-            emit.Name = "Emit";
-            emit.Attributes = MemberAttributes.Family | MemberAttributes.New | MemberAttributes.Final;
-            emit.HasGet = true;
-            emit.HasSet = false;
+	public void PostMembersHook(Smoke* smoke, Smoke.Class* klass, CodeTypeDeclaration type)
+	{
+		if (Util.IsQObject(klass))
+		{
+			CodeMemberProperty emit = new CodeMemberProperty();
+			emit.Name = "Emit";
+			emit.Attributes = MemberAttributes.Family | MemberAttributes.New | MemberAttributes.Final;
+			emit.HasGet = true;
+			emit.HasSet = false;
 
-            string signalsIfaceName = "I" + type.Name + "Signals";
-            CodeTypeReference returnType = new CodeTypeReference(signalsIfaceName);
-            emit.Type = returnType;
+			string signalsIfaceName = "I" + type.Name + "Signals";
+			CodeTypeReference returnType = new CodeTypeReference(signalsIfaceName);
+			emit.Type = returnType;
 
-            emit.GetStatements.Add(new CodeMethodReturnStatement(new CodeCastExpression(
-                returnType,
-                new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "Q_EMIT")
-            )));
+			emit.GetStatements.Add(new CodeMethodReturnStatement(new CodeCastExpression(
+				returnType,
+				new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "Q_EMIT")
+			)));
 
-            type.Members.Add(emit);
+			type.Members.Add(emit);
 
-            string className = ByteArrayManager.GetString(klass->className);
-            int colon = className.LastIndexOf("::");
-            string prefix = (colon != -1) ? className.Substring(0, colon) : string.Empty;
+			string className = ByteArrayManager.GetString(klass->className);
+			int colon = className.LastIndexOf("::");
+			string prefix = (colon != -1) ? className.Substring(0, colon) : string.Empty;
 
-            IList typeCollection = Data.GetTypeCollection(prefix);
-            CodeTypeDeclaration ifaceDecl = new CodeTypeDeclaration(signalsIfaceName);
-            ifaceDecl.IsInterface = true;
+			IList typeCollection = Data.GetTypeCollection(prefix);
+			CodeTypeDeclaration ifaceDecl = new CodeTypeDeclaration(signalsIfaceName);
+			ifaceDecl.IsInterface = true;
 
-            if (className != "QObject") {
-                string parentClassName = ByteArrayManager.GetString(smoke->classes[smoke->inheritanceList[klass->parents]].className);
-                colon = parentClassName.LastIndexOf("::");
-                prefix = (colon != -1) ? parentClassName.Substring(0, colon) : string.Empty;
-                if (colon != -1) {
-                    parentClassName = parentClassName.Substring(colon + 2);
-                }
+			if (className != "QObject")
+			{
+				string parentClassName = ByteArrayManager.GetString(smoke->classes[smoke->inheritanceList[klass->parents]].className);
+				colon = parentClassName.LastIndexOf("::");
+				prefix = (colon != -1) ? parentClassName.Substring(0, colon) : string.Empty;
+				if (colon != -1)
+				{
+					parentClassName = parentClassName.Substring(colon + 2);
+				}
 
-                string parentInterface = (prefix != string.Empty) ? prefix.Replace("::", ".") + "." : string.Empty;
-                parentInterface += "I" + parentClassName + "Signals";
+				string parentInterface = (prefix != string.Empty) ? prefix.Replace("::", ".") + "." : string.Empty;
+				parentInterface += "I" + parentClassName + "Signals";
 
-                ifaceDecl.BaseTypes.Add(new CodeTypeReference(parentInterface));
-            }
-            Dictionary<CodeSnippetTypeMember, CodeMemberMethod> signalEvents = new Dictionary<CodeSnippetTypeMember, CodeMemberMethod>();
-            GetSignals(smoke, klass, delegate(string signature, string name, string typeName, IntPtr metaMethod) {
-                CodeMemberMethod signal = new CodeMemberMethod();
-                signal.Attributes = MemberAttributes.Abstract;
+				ifaceDecl.BaseTypes.Add(new CodeTypeReference(parentInterface));
+			}
+			Dictionary<CodeSnippetTypeMember, CodeMemberMethod> signalEvents = new Dictionary<CodeSnippetTypeMember, CodeMemberMethod>();
+			GetSignals(smoke, klass, delegate(string signature, string name, string typeName, IntPtr metaMethod)
+			{
+				CodeMemberMethod signal = new CodeMemberMethod();
+				signal.Attributes = MemberAttributes.Abstract;
 
-                // capitalize the first letter
-                StringBuilder builder = new StringBuilder(name);
-                builder[0] = char.ToUpper(builder[0]);
-                string tmp = builder.ToString();
+				// capitalize the first letter
+				StringBuilder builder = new StringBuilder(name);
+				builder[0] = char.ToUpper(builder[0]);
+				string tmp = builder.ToString();
 
-                signal.Name = tmp;
-                bool isRef;
-                try {
-                    if (typeName == string.Empty)
-                        signal.ReturnType = new CodeTypeReference(typeof(void));
-                    else
-                        signal.ReturnType = Translator.CppToCSharp(typeName, out isRef);
-                } catch (NotSupportedException) {
-                    Debug.Print("  |--Won't wrap signal {0}::{1}", className, signature);
-                    return;
-                }
+				signal.Name = tmp;
+				bool isRef;
+				try
+				{
+					if (typeName == string.Empty)
+						signal.ReturnType = new CodeTypeReference(typeof(void));
+					else
+						signal.ReturnType = Translator.CppToCSharp(typeName, out isRef);
+				}
+				catch (NotSupportedException)
+				{
+					Debug.Print("  |--Won't wrap signal {0}::{1}", className, signature);
+					return;
+				}
 
-                CodeAttributeDeclaration attr = new CodeAttributeDeclaration("Q_SIGNAL",
-                    new CodeAttributeArgument(new CodePrimitiveExpression(signature)));
-                signal.CustomAttributes.Add(attr);
+				CodeAttributeDeclaration attr = new CodeAttributeDeclaration("Q_SIGNAL",
+					new CodeAttributeArgument(new CodePrimitiveExpression(signature)));
+				signal.CustomAttributes.Add(attr);
 
-                int argNum = 1;
-                StringBuilder fullNameBuilder = new StringBuilder("Slot");
-                GetMetaMethodParameters(metaMethod, delegate(string paramType, string paramName) {
-                    if (paramName == string.Empty) {
-                        paramName = "arg" + argNum.ToString();
-                    }
-                    argNum++;
+				int argNum = 1;
+				StringBuilder fullNameBuilder = new StringBuilder("Slot");
+				GetMetaMethodParameters(metaMethod, delegate(string paramType, string paramName)
+				{
+					if (paramName == string.Empty)
+					{
+						paramName = "arg" + argNum.ToString();
+					}
+					argNum++;
 
-                    CodeParameterDeclarationExpression param;
-                    try {
-                        short id = smoke->idType(paramType);
-                        CodeTypeReference paramTypeRef;
-                        if (id > 0) {
-                            paramTypeRef = Translator.CppToCSharp(smoke->types + id, out isRef);
-                        } else {
-                            if (!paramType.Contains("::")) {
-                                id = smoke->idType(className + "::" + paramType);
-                                if (id > 0) {
-                                    paramTypeRef = Translator.CppToCSharp(smoke->types + id, out isRef);
-                                } else {
-                                    paramTypeRef = Translator.CppToCSharp(paramType, out isRef);
-                                }
-                            } else {
-                                paramTypeRef = Translator.CppToCSharp (paramType, out isRef);                                
-                            }
-                        }
-                        param = new CodeParameterDeclarationExpression(paramTypeRef, paramName);
-                    } catch (NotSupportedException) {
-                        Debug.Print("  |--Won't wrap signal {0}::{1}", className, signature);
-                        return;
-                    }
-                    if (isRef) {
-                        param.Direction = FieldDirection.Ref;
-                    }
-                    signal.Parameters.Add(param);
-                    if (argNum == 2) {
-                        fullNameBuilder.Append ('<');
-                    }
-                    fullNameBuilder.Append (param.Type.BaseType);
-                    fullNameBuilder.Append (',');
-                });
-                if (fullNameBuilder[fullNameBuilder.Length - 1] == ',') {
-                    fullNameBuilder[fullNameBuilder.Length - 1] = '>';
-                }
-                ifaceDecl.Members.Add (signal);
-                CodeSnippetTypeMember signalEvent = new CodeSnippetTypeMember();
-                signalEvent.Name = signal.Name;
-                CodeSnippetTypeMember existing = signalEvents.Keys.FirstOrDefault(m => m.Name == signal.Name);
-                if (existing != null) {
-                    CodeSnippetTypeMember signalEventToUse;
-                    CodeMemberMethod signalToUse;
-                    if (signal.Parameters.Count == 0) {
-                        signalEventToUse = existing;
-                        signalToUse = signalEvents[existing];
-                    } else {
-                        signalEventToUse = signalEvent;
-                        signalToUse = signal;
-                    }
-                    string suffix = signalToUse.Parameters.Cast<CodeParameterDeclarationExpression>().Last().Name;
-                    if (suffix.StartsWith("arg") && suffix.Length > 3 && char.IsDigit(suffix[3])) {
-                        string lastType = signalToUse.Parameters.Cast<CodeParameterDeclarationExpression>().Last().Type.BaseType;
-                        suffix = lastType.Substring(lastType.LastIndexOf('.') + 1);
-                    } else {
-                        StringBuilder lastParamBuilder = new StringBuilder(suffix);
-                        lastParamBuilder[0] = char.ToUpper(lastParamBuilder[0]);
-                        suffix = lastParamBuilder.ToString();
-                    }
-                    signalEventToUse.Text = signalEventToUse.Text.Replace(signalEventToUse.Name, signalEventToUse.Name += suffix);
-                }
-                signalEvent.Text = string.Format(@"
+					CodeParameterDeclarationExpression param;
+					try
+					{
+						short id = smoke->idType(paramType);
+						CodeTypeReference paramTypeRef;
+						if (id > 0)
+						{
+							paramTypeRef = Translator.CppToCSharp(smoke->types + id, out isRef);
+						}
+						else
+						{
+							if (!paramType.Contains("::"))
+							{
+								id = smoke->idType(className + "::" + paramType);
+								if (id > 0)
+								{
+									paramTypeRef = Translator.CppToCSharp(smoke->types + id, out isRef);
+								}
+								else
+								{
+									paramTypeRef = Translator.CppToCSharp(paramType, out isRef);
+								}
+							}
+							else
+							{
+								paramTypeRef = Translator.CppToCSharp(paramType, out isRef);
+							}
+						}
+						param = new CodeParameterDeclarationExpression(paramTypeRef, paramName);
+					}
+					catch (NotSupportedException)
+					{
+						Debug.Print("  |--Won't wrap signal {0}::{1}", className, signature);
+						return;
+					}
+					if (isRef)
+					{
+						param.Direction = FieldDirection.Ref;
+					}
+					signal.Parameters.Add(param);
+					if (argNum == 2)
+					{
+						fullNameBuilder.Append('<');
+					}
+					fullNameBuilder.Append(param.Type.BaseType);
+					fullNameBuilder.Append(',');
+				});
+				if (fullNameBuilder[fullNameBuilder.Length - 1] == ',')
+				{
+					fullNameBuilder[fullNameBuilder.Length - 1] = '>';
+				}
+				ifaceDecl.Members.Add(signal);
+				CodeSnippetTypeMember signalEvent = new CodeSnippetTypeMember();
+				signalEvent.Name = signal.Name;
+				CodeSnippetTypeMember existing = signalEvents.Keys.FirstOrDefault(m => m.Name == signal.Name);
+				if (existing != null)
+				{
+					CodeSnippetTypeMember signalEventToUse;
+					CodeMemberMethod signalToUse;
+					if (signal.Parameters.Count == 0)
+					{
+						signalEventToUse = existing;
+						signalToUse = signalEvents[existing];
+					}
+					else
+					{
+						signalEventToUse = signalEvent;
+						signalToUse = signal;
+					}
+					string suffix = signalToUse.Parameters.Cast<CodeParameterDeclarationExpression>().Last().Name;
+					if (suffix.StartsWith("arg") && suffix.Length > 3 && char.IsDigit(suffix[3]))
+					{
+						string lastType = signalToUse.Parameters.Cast<CodeParameterDeclarationExpression>().Last().Type.BaseType;
+						suffix = lastType.Substring(lastType.LastIndexOf('.') + 1);
+					}
+					else
+					{
+						StringBuilder lastParamBuilder = new StringBuilder(suffix);
+						lastParamBuilder[0] = char.ToUpper(lastParamBuilder[0]);
+						suffix = lastParamBuilder.ToString();
+					}
+					signalEventToUse.Text = signalEventToUse.Text.Replace(signalEventToUse.Name, signalEventToUse.Name += suffix);
+				}
+				signalEvent.Text = string.Format(@"
         public event {0} {1}
 		{{
 			add
@@ -227,84 +264,140 @@ public unsafe class QyotoHooks : IHookProvider {
                 QObject.Disconnect(this, Qt.SIGNAL(""{2}""), (QObject) value.Target, Qt.SLOT(value.Method.Name + ""{3}""));
 			}}
 		}}", fullNameBuilder, signalEvent.Name, signature, signature.Substring(signature.IndexOf('(')));
-                signalEvents.Add(signalEvent, signal);
-            });
+				signalEvents.Add(signalEvent, signal);
+			});
 
-            typeCollection.Add(ifaceDecl);
-            foreach (KeyValuePair<CodeSnippetTypeMember, CodeMemberMethod> signalEvent in signalEvents) {
-                CodeSnippetTypeMember implementation = signalEvent.Key;
-                foreach (CodeTypeMember current in from CodeTypeMember member in type.Members
-                                                   where member.Name == implementation.Name
-                                                   select member) {
-                    current.Name = "On" + current.Name;
-                }
-                type.Members.Add(signalEvent.Key);
-            }
-        }
-    }
+			typeCollection.Add(ifaceDecl);
+			foreach (KeyValuePair<CodeSnippetTypeMember, CodeMemberMethod> signalEvent in signalEvents)
+			{
+				CodeSnippetTypeMember implementation = signalEvent.Key;
+				foreach (CodeTypeMember current in from CodeTypeMember member in type.Members
+												   where member.Name == implementation.Name
+												   select member)
+				{
+					current.Name = "On" + current.Name;
+				}
+				type.Members.Add(signalEvent.Key);
+			}
+		}
+	}
 
-    public void SupportingMethodsHook(Smoke *smoke, Smoke.Method *method, CodeMemberMethod cmm, CodeTypeDeclaration type) {
-        if (type.Name == "QObject" && cmm is CodeConstructor) {
-            cmm.Statements.Add(new CodeSnippetStatement(qObjectDummyCtorCode));
-        }
-    }
+	public void SupportingMethodsHook(Smoke* smoke, Smoke.Method* method, CodeMemberMethod cmm, CodeTypeDeclaration type)
+	{
+		if (type.Name == "QObject" && cmm is CodeConstructor)
+		{
+			cmm.Statements.Add(new CodeSnippetStatement(qObjectDummyCtorCode));
+		}
+	}
 
-    public void PreClassesHook() {
-        PropertyGenerator pg = new PropertyGenerator(Data, Translator);
-        pg.Run();
-    }
+	public void PreClassesHook()
+	{
+		string htmlDocs = Path.Combine(Data.Docs, "html");
+		if (Directory.Exists(htmlDocs))
+		{
+			foreach (KeyValuePair<IntPtr, CodeTypeDeclaration> codeTypeDeclaration in Data.SmokeTypeMap)
+			{
+				CodeTypeDeclaration type = codeTypeDeclaration.Value;
+				string classDocs = Path.Combine(htmlDocs, type.Name.ToLowerInvariant() + ".html");
+				if (File.Exists(classDocs))
+				{
+					string docs = StripTags(File.ReadAllText(classDocs));
+					documentation[codeTypeDeclaration.Value] = StripTags(docs);
+					Match match = Regex.Match(docs, "(The " + type.Name + ".+)More...");
+					if (match.Success)
+					{
+						codeTypeDeclaration.Value.Comments.Add(new CodeCommentStatement("<summary>", true));
+						codeTypeDeclaration.Value.Comments.Add(new CodeCommentStatement(match.Groups[1].Value, true));
+						codeTypeDeclaration.Value.Comments.Add(new CodeCommentStatement("</summary>", true));
+					}
+				}
+			}
+		}
+		PropertyGenerator pg = new PropertyGenerator(Data, Translator);
+		pg.Run();
+	}
 
-    void PostClassesHook () {
-        if (!Data.CSharpTypeMap.ContainsKey("QAbstractScrollArea")) {
-            return;
-        }
-        CodeTypeDeclaration typeQAbstractScrollArea = Data.CSharpTypeMap ["QAbstractScrollArea"];
-        foreach (KeyValuePair<string, CodeMemberMethod> eventMethod in eventMethods.Where(e => !typeQAbstractScrollArea.Members.Contains(e.Value))) {
-            GenerateEvent(eventMethod.Value, eventMethod.Key, typeQAbstractScrollArea, false);
-        }
-    }
+	void PostClassesHook()
+	{
+		if (!Data.CSharpTypeMap.ContainsKey("QAbstractScrollArea"))
+		{
+			return;
+		}
+		CodeTypeDeclaration typeQAbstractScrollArea = Data.CSharpTypeMap["QAbstractScrollArea"];
+		foreach (KeyValuePair<string, CodeMemberMethod> eventMethod in eventMethods.Where(e => !typeQAbstractScrollArea.Members.Contains(e.Value)))
+		{
+			GenerateEvent(eventMethod.Value, eventMethod.Key, typeQAbstractScrollArea, false);
+		}
+	}
 
 	private void PostMethodBodyHooks(Smoke* smoke, Smoke.Method* smokeMethod, CodeMemberMethod cmm, CodeTypeDeclaration type)
 	{
-	    GenerateEvent(cmm, cmm.Name, type, true);
+		GenerateEvent(cmm, cmm.Name, type, true);
 	}
 
-    private void GenerateEvent(CodeMemberMethod cmm, string name, CodeTypeDeclaration type, bool isVirtual)
-    {
-        if (!name.EndsWith("Event") ||
-            (type.Name == "QCoreApplication" && (name == "PostEvent" || name == "SendEvent")))
-        {
-            return;
-        }
-        string paramType;
-        // TODO: add support for IQGraphicsItem
-        if (cmm.Parameters.Count == 1 && (paramType = cmm.Parameters[0].Type.BaseType).EndsWith("Event") &&
-            (cmm.Attributes & MemberAttributes.Override) == 0 &&
-            !new[]
+	private static string StripTags(string source)
+	{
+		char[] array = new char[source.Length];
+		int arrayIndex = 0;
+		bool inside = false;
+
+		foreach (char @let in source)
+		{
+			if (@let == '<')
+			{
+				inside = true;
+				continue;
+			}
+			if (@let == '>')
+			{
+				inside = false;
+				continue;
+			}
+			if (!inside)
+			{
+				array[arrayIndex] = @let;
+				arrayIndex++;
+			}
+		}
+		return new string(array, 0, arrayIndex);
+	}
+
+	private void GenerateEvent(CodeMemberMethod cmm, string name, CodeTypeDeclaration type, bool isVirtual)
+	{
+		if (!name.EndsWith("Event") ||
+			(type.Name == "QCoreApplication" && (name == "PostEvent" || name == "SendEvent")))
+		{
+			return;
+		}
+		string paramType;
+		// TODO: add support for IQGraphicsItem
+		if (cmm.Parameters.Count == 1 && (paramType = cmm.Parameters[0].Type.BaseType).EndsWith("Event") &&
+			(cmm.Attributes & MemberAttributes.Override) == 0 &&
+			!new[]
                  {
                      "QGraphicsItem", "QGraphicsObject", "QGraphicsTextItem",
                      "QGraphicsProxyWidget", "QGraphicsWidget", "QGraphicsLayout",
                      "QGraphicsScene"
                  }.Contains(type.Name))
-        {
-            if (!this.HasField(type, "eventFilters"))
-            {
-                CodeSnippetTypeMember eventFilters = new CodeSnippetTypeMember();
-                eventFilters.Name = "eventFilters";
-                eventFilters.Text = "protected readonly List<QEventHandler> eventFilters = new List<QEventHandler>();";
-                type.Members.Add(eventFilters);
-            }
-            CodeSnippetTypeMember codeMemberEvent = new CodeSnippetTypeMember();
-            codeMemberEvent.Name = name.Substring(0, name.IndexOf("Event"));
-            if (
-                new[] {"", "Custom", "Widget", "Show", "Hide", "Close", "Move", "Resize", "Viewport"}.Contains(
-                    codeMemberEvent.Name))
-            {
-                codeMemberEvent.Name += "Event";
-            }
-            codeMemberEvent.Text =
-                string.Format(
-                    @"
+		{
+			if (!this.HasField(type, "eventFilters"))
+			{
+				CodeSnippetTypeMember eventFilters = new CodeSnippetTypeMember();
+				eventFilters.Name = "eventFilters";
+				eventFilters.Text = "protected readonly List<QEventHandler> eventFilters = new List<QEventHandler>();";
+				type.Members.Add(eventFilters);
+			}
+			CodeSnippetTypeMember codeMemberEvent = new CodeSnippetTypeMember();
+			codeMemberEvent.Name = name.Substring(0, name.IndexOf("Event"));
+			if (
+				new[] { "", "Custom", "Widget", "Show", "Hide", "Close", "Move", "Resize", "Viewport" }.Contains(
+					codeMemberEvent.Name))
+			{
+				codeMemberEvent.Name += "Event";
+			}
+			codeMemberEvent.Text =
+				string.Format(
+					@"
 		public {0} event EventHandler<QEventArgs<{1}>> {2}
 		{{
 			add
@@ -336,36 +429,42 @@ public unsafe class QyotoHooks : IHookProvider {
 			}}
 		}}
 				",
-                 isVirtual ? "virtual" : "override", paramType, codeMemberEvent.Name, GetEventTypes (name), isVirtual ? string.Empty : ".Viewport");
-            codeMemberEvent.Attributes = (codeMemberEvent.Attributes & ~MemberAttributes.AccessMask) |
-                                         MemberAttributes.Public;
-            type.Members.Add(codeMemberEvent);
-            if (isVirtual && InheritsQWidget(type)) {
-                eventMethods[cmm.Name] = cmm;
-            }
-        }
-        if (isVirtual && !cmm.Name.StartsWith("~")) {
-            cmm.Name = "On" + cmm.Name;
-        }
-    }
+				 isVirtual ? "virtual" : "override", paramType, codeMemberEvent.Name, GetEventTypes(name), isVirtual ? string.Empty : ".Viewport");
+			codeMemberEvent.Attributes = (codeMemberEvent.Attributes & ~MemberAttributes.AccessMask) |
+										 MemberAttributes.Public;
+			type.Members.Add(codeMemberEvent);
+			if (isVirtual && InheritsQWidget(type))
+			{
+				eventMethods[cmm.Name] = cmm;
+			}
+		}
+		if (isVirtual && !cmm.Name.StartsWith("~"))
+		{
+			cmm.Name = "On" + cmm.Name;
+		}
+	}
 
-    private bool InheritsQWidget(CodeTypeDeclaration type)
-    {
-        if (type.Name == "QWidget") {
-            return true;
-        }
-        foreach (CodeTypeReference baseType in type.BaseTypes) {
-            if (baseType.BaseType == "QWidget") {
-                return true;
-            }
-            if (Data.CSharpTypeMap.ContainsKey(baseType.BaseType) && this.InheritsQWidget(Data.CSharpTypeMap[baseType.BaseType])) {
-                return true;
-            }
-        }
-        return false;
-    }
+	private bool InheritsQWidget(CodeTypeDeclaration type)
+	{
+		if (type.Name == "QWidget")
+		{
+			return true;
+		}
+		foreach (CodeTypeReference baseType in type.BaseTypes)
+		{
+			if (baseType.BaseType == "QWidget")
+			{
+				return true;
+			}
+			if (Data.CSharpTypeMap.ContainsKey(baseType.BaseType) && this.InheritsQWidget(Data.CSharpTypeMap[baseType.BaseType]))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
 
-    private bool HasField(CodeTypeDeclaration containingType, string field)
+	private bool HasField(CodeTypeDeclaration containingType, string field)
 	{
 		return containingType.Members.Cast<CodeTypeMember>().Any(m => m.Name == field) ||
 			   containingType.BaseTypes.Cast<CodeTypeReference>().Any(

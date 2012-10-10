@@ -7,7 +7,7 @@ set (ASSEMBLYGEN_ARGS
 	${LIBRARY_OUTPUT_PATH}/assemblygen.exe
 	-unsafe -out:qyoto-qtnetwork.dll -r:qyoto-qtcore.dll
 	-plugins:QyotoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
-	-code-file:qyoto-qtnetwork.cs \"-keyfile:${KEYFILE}\"
+	-code-file:qyoto-qtnetwork.cs -docs:"${DOCUMENTATION_PATH}" \"-keyfile:${KEYFILE}\"
 	${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtnetwork${CMAKE_SHARED_LIBRARY_SUFFIX}
 	${qyoto_qtnetwork_SRC}
 	WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
@@ -29,5 +29,6 @@ set_property(TARGET qyoto-qtnetwork PROPERTY _assembly_type dll)
 
 
 install_assembly(qyoto-qtnetwork DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
+install(FILES ${LIBRARY_OUTPUT_PATH}/qyoto-qtnetwork.xml DESTINATION share/qyoto)
 
 add_subdirectory(native)

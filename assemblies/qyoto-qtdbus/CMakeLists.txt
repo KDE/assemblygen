@@ -12,7 +12,7 @@ set (ASSEMBLYGEN_ARGS
 	${LIBRARY_OUTPUT_PATH}/assemblygen.exe
 	-unsafe -out:qyoto-qtdbus.dll -r:qyoto-qtcore.dll
 	-plugins:QyotoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
-	-code-file:qyoto-qtdbus.cs \"-keyfile:${KEYFILE}\"
+	-code-file:qyoto-qtdbus.cs -docs:"${DOCUMENTATION_PATH}" \"-keyfile:${KEYFILE}\"
 	${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtdbus${CMAKE_SHARED_LIBRARY_SUFFIX}
 	${qyoto_qtdbus_SRC}
 	WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
@@ -34,5 +34,6 @@ set_property(TARGET qyoto-qtdbus PROPERTY _assembly_type dll)
 
 
 install_assembly(qyoto-qtdbus DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
+install(FILES ${LIBRARY_OUTPUT_PATH}/qyoto-qtdbus.xml DESTINATION share/qyoto)
 
 add_subdirectory(native)

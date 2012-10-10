@@ -7,7 +7,7 @@ set (ASSEMBLYGEN_ARGS
 	${LIBRARY_OUTPUT_PATH}/assemblygen.exe
 	-unsafe -out:qyoto-qtsvg.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll
 	-plugins:QyotoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
-	-code-file:qyoto-qtsvg.cs \"-keyfile:${KEYFILE}\"
+	-code-file:qyoto-qtsvg.cs -docs:"${DOCUMENTATION_PATH}" \"-keyfile:${KEYFILE}\"
 	${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtsvg${CMAKE_SHARED_LIBRARY_SUFFIX}
 	${qyoto_qtsvg_SRC}
 	WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
@@ -29,5 +29,6 @@ set_property(TARGET qyoto-qtsvg PROPERTY _assembly_type dll)
 
 
 install_assembly(qyoto-qtsvg DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
+install(FILES ${LIBRARY_OUTPUT_PATH}/qyoto-qtsvg.xml DESTINATION share/qyoto)
 
 add_subdirectory(native)
