@@ -313,7 +313,7 @@ public unsafe class QyotoHooks : IHookProvider
 				}
 			}
 		}
-		PropertyGenerator pg = new PropertyGenerator(Data, Translator);
+		PropertyGenerator pg = new PropertyGenerator(Data, Translator, documentation);
 		pg.Run();
 	}
 
