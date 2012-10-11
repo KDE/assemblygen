@@ -332,6 +332,19 @@ public unsafe class QyotoHooks : IHookProvider
 
 	private void PostMethodBodyHooks(Smoke* smoke, Smoke.Method* smokeMethod, CodeMemberMethod cmm, CodeTypeDeclaration type)
 	{
+		if (documentation.ContainsKey(type))
+		{
+			string docs = documentation[type];
+			Match match = Regex.Match(docs,
+			                          "::" + Regex.Escape(char.ToLowerInvariant(cmm.Name[0]) + cmm.Name.Substring(1)) +
+									  @"[^\n]+\n\s*(([^\r\n]+\r?\n)*[^\r\n]+)(\r?\n){3}");
+			if (match.Success)
+			{
+				cmm.Comments.Add(new CodeCommentStatement("<summary>", true));
+				cmm.Comments.Add(new CodeCommentStatement(match.Groups[1].Value, true));
+				cmm.Comments.Add(new CodeCommentStatement("</summary>", true));
+			}
+		}
 		GenerateEvent(cmm, cmm.Name, type, true);
 	}
 
