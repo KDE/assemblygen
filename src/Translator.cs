@@ -51,12 +51,12 @@ public unsafe class Translator
 		this.data = data;
 		foreach (ICustomTranslator translator in customTranslators)
 		{
-			typeMap.AddRange(translator.TypeMap);
-			typeStringMap.AddRange(translator.TypeStringMap);
-			typeCodeMap.AddRange(translator.TypeCodeMap);
-			InterfaceClasses.AddRange(translator.InterfaceClasses);
-			ExcludedMethods.AddRange(translator.ExcludedMethods);
-			NamespacesAsClasses.AddRange(translator.NamespacesAsClasses);
+			this.typeMap.AddRange(translator.TypeMap);
+			this.typeStringMap.AddRange(translator.TypeStringMap);
+			this.typeCodeMap.AddRange(translator.TypeCodeMap);
+			this.InterfaceClasses.AddRange(translator.InterfaceClasses);
+			this.ExcludedMethods.AddRange(translator.ExcludedMethods);
+			this.NamespacesAsClasses.AddRange(translator.NamespacesAsClasses);
 		}
 	}
 
@@ -70,12 +70,12 @@ public unsafe class Translator
 
 		public TypeInfo(string name, int pDepth, bool isRef, bool isConst, bool isUnsigned, string templateParams)
 		{
-			Name = name;
-			PointerDepth = pDepth;
-			IsCppRef = isRef;
-			IsConst = isConst;
-			IsUnsigned = isUnsigned;
-			TemplateParameters = templateParams;
+			this.Name = name;
+			this.PointerDepth = pDepth;
+			this.IsCppRef = isRef;
+			this.IsConst = isConst;
+			this.IsUnsigned = isUnsigned;
+			this.TemplateParameters = templateParams;
 		}
 
 		public string Name = string.Empty;
@@ -195,7 +195,7 @@ public unsafe class Translator
 	public CodeTypeReference CppToCSharp(Smoke.Class* klass)
 	{
 		bool isRef;
-		return CppToCSharp(ByteArrayManager.GetString(klass->className), out isRef);
+		return this.CppToCSharp(ByteArrayManager.GetString(klass->className), out isRef);
 	}
 
 	public CodeTypeReference CppToCSharp(Smoke.Type* type, out bool isRef)
@@ -260,13 +260,13 @@ public unsafe class Translator
 		}
 
 		string typeString = ByteArrayManager.GetString(type->name);
-		return CppToCSharp(typeString, out isRef);
+		return this.CppToCSharp(typeString, out isRef);
 	}
 
 	public CodeTypeReference CppToCSharp(string typeString)
 	{
 		bool isRef;
-		return CppToCSharp(typeString, out isRef);
+		return this.CppToCSharp(typeString, out isRef);
 	}
 
 	public CodeTypeReference CppToCSharp(string typeString, out bool isRef)
@@ -276,7 +276,7 @@ public unsafe class Translator
 		Match match = Regex.Match(typeString, @"^(const )?(unsigned |signed )?([\w\s:]+)(<.+>)?(\*)*(&)?$");
 		if (!match.Success)
 		{
-			return CheckForFunctionPointer(typeString);
+			return this.CheckForFunctionPointer(typeString);
 		}
 		bool isConst = match.Groups[1].Value != string.Empty;
 		bool isUnsigned = match.Groups[2].Value == "unsigned ";
@@ -299,16 +299,16 @@ public unsafe class Translator
 		// look up the translations in the translation tables above
 		string partialTypeStr;
 		TranslateFunc typeFunc;
-		if (typeStringMap.TryGetValue(name, out partialTypeStr))
+		if (this.typeStringMap.TryGetValue(name, out partialTypeStr))
 		{
 			// C++ type string => .NET type string
 			name = partialTypeStr;
 		}
-		else if (typeCodeMap.TryGetValue(name, out typeFunc))
+		else if (this.typeCodeMap.TryGetValue(name, out typeFunc))
 		{
 			// try to look up custom translation code
 			TypeInfo typeInfo = new TypeInfo(name, pointerDepth, isCppRef, isConst, isUnsigned, templateArgument);
-			object obj = typeFunc(typeInfo, data, this);
+			object obj = typeFunc(typeInfo, this.data, this);
 			isRef = typeInfo.IsRef;
 			name = typeInfo.Name;
 			pointerDepth = typeInfo.PointerDepth;
@@ -331,12 +331,12 @@ public unsafe class Translator
 			// if everything fails, just do some standard mapping
 			CodeTypeDeclaration ifaceDecl;
 			Type t;
-			if (data.InterfaceTypeMap.TryGetValue(name, out ifaceDecl) ||
-			    (data.ReferencedTypeMap.TryGetValue(name, out t) && t.IsInterface))
+			if (this.data.InterfaceTypeMap.TryGetValue(name, out ifaceDecl) ||
+			    (this.data.ReferencedTypeMap.TryGetValue(name, out t) && t.IsInterface))
 			{
 				// this class is used in multiple inheritance, we need the interface
 				int colon = name.LastIndexOf("::", StringComparison.Ordinal);
-				string prefix = (colon != -1) ? name.Substring(0, colon) : string.Empty;
+				string prefix = (colon != -1) ? name.Substring(0, colon) : String.Empty;
 				string className = (colon != -1) ? name.Substring(colon + 2) : name;
 				name = prefix;
 				if (name != string.Empty)
@@ -359,7 +359,7 @@ public unsafe class Translator
 			{
 				if (i > 0) ret += ',';
 				bool tmp;
-				ret += CppToCSharp(args[i], out tmp).BaseType;
+				ret += this.CppToCSharp(args[i], out tmp).BaseType;
 			}
 			ret += '>';
 		}
@@ -368,7 +368,7 @@ public unsafe class Translator
 			isRef = true;
 		}
 		Type type;
-		if (typeMap.TryGetValue(ret, out type))
+		if (this.typeMap.TryGetValue(ret, out type))
 		{
 			return new CodeTypeReference(type);
 		}
@@ -397,7 +397,7 @@ public unsafe class Translator
 			}
 			foreach (string argumentType in match.Groups[2].Value.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries))
 			{
-				CodeTypeReference argType = CppToCSharp(argumentType);
+				CodeTypeReference argType = this.CppToCSharp(argumentType);
 				string argTypeName = argType.BaseType.Substring(argType.BaseType.LastIndexOf('.') + 1);
 				string arg = argTypeName[0].ToString(CultureInfo.InvariantCulture).ToLowerInvariant() +
 				             argTypeName.Substring(1);
@@ -409,7 +409,7 @@ public unsafe class Translator
 			{
 				return new CodeTypeReference(typeof(Action));
 			}
-			CodeTypeDeclaration globalType = data.CSharpTypeMap[data.GlobalSpaceClassName];
+			CodeTypeDeclaration globalType = this.data.CSharpTypeMap[this.data.GlobalSpaceClassName];
 			if (globalType.Members.Cast<CodeTypeMember>().All(m => m.Name != @delegate.Name))
 			{
 				globalType.Members.Add(@delegate);
@@ -422,4 +422,13 @@ public unsafe class Translator
 
 	#endregion
 
+	public static void FormatComment(string docs, CodeTypeMember cmp)
+	{
+		cmp.Comments.Add(new CodeCommentStatement("<summary>", true));
+		foreach (string line in docs.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries))
+		{
+			cmp.Comments.Add(new CodeCommentStatement(string.Format("<para>{0}</para>", line), true));
+		}
+		cmp.Comments.Add(new CodeCommentStatement("</summary>", true));
+	}
 }

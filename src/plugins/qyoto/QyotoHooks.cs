@@ -340,9 +340,7 @@ public unsafe class QyotoHooks : IHookProvider
 									  @"[^\n]+\n\s*(([^\r\n]+\r?\n)*[^\r\n]+)(\r?\n){3}");
 			if (match.Success)
 			{
-				cmm.Comments.Add(new CodeCommentStatement("<summary>", true));
-				cmm.Comments.Add(new CodeCommentStatement(match.Groups[1].Value, true));
-				cmm.Comments.Add(new CodeCommentStatement("</summary>", true));
+				Translator.FormatComment(match.Groups[1].Value, cmm);
 			}
 		}
 		GenerateEvent(cmm, cmm.Name, type, true);

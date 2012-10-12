@@ -129,9 +129,7 @@ public unsafe class PropertyGenerator
 											  @"\r?\n(?<docs>This.*?)\r?\nAccess functions:", RegexOptions.Singleline);
 					if (match.Success)
 					{
-						cmp.Comments.Add(new CodeCommentStatement("<summary>", true));
-						cmp.Comments.Add(new CodeCommentStatement(match.Groups["docs"].Value, true));
-						cmp.Comments.Add(new CodeCommentStatement("</summary>", true));
+						Translator.FormatComment(match.Groups["docs"].Value, cmp);
 					}
 				}
 				cmp.Name = prop.Name;
