@@ -93,7 +93,7 @@ public unsafe class PropertyGenerator
 				try
 				{
 					bool isRef;
-					short id = data.Smoke->idType(prop.Type);
+					short id = data.Smoke->IDType(prop.Type);
 					if (id > 0)
 					{
 						cmp.Type = translator.CppToCSharp(data.Smoke->types + id, out isRef);
@@ -102,7 +102,7 @@ public unsafe class PropertyGenerator
 					{
 						if (!prop.Type.Contains("::"))
 						{
-							id = data.Smoke->idType(className + "::" + prop.Type);
+							id = data.Smoke->IDType(className + "::" + prop.Type);
 							if (id > 0)
 							{
 								cmp.Type = translator.CppToCSharp(data.Smoke->types + id, out isRef);
@@ -284,19 +284,19 @@ public unsafe class PropertyGenerator
 
 		while (getterMapId == 0 && classId > 0)
 		{
-			short methNameId = data.Smoke->idMethodName(prop.Name);
-			getterMapId = data.Smoke->idMethod(classId, methNameId);
+			short methNameId = data.Smoke->IDMethodName(prop.Name);
+			getterMapId = data.Smoke->IDMethod(classId, methNameId);
 			if (getterMapId == 0 && prop.Type == "bool")
 			{
 				// bool methods often begin with isFoo()
-				methNameId = data.Smoke->idMethodName(firstPrefixName);
-				getterMapId = data.Smoke->idMethod(classId, methNameId);
+				methNameId = data.Smoke->IDMethodName(firstPrefixName);
+				getterMapId = data.Smoke->IDMethod(classId, methNameId);
 
 				if (getterMapId == 0)
 				{
 					// or hasFoo()
-					methNameId = data.Smoke->idMethodName(secondPrefixName);
-					getterMapId = data.Smoke->idMethod(classId, methNameId);
+					methNameId = data.Smoke->IDMethodName(secondPrefixName);
+					getterMapId = data.Smoke->IDMethod(classId, methNameId);
 				}
 			}
 			classId = *(parents++);
@@ -353,8 +353,8 @@ public unsafe class PropertyGenerator
 		{
 			// loop through the other elements, try various munged names
 			mungedSuffix = mungedSuffixes[i];
-			short methNameId = data.Smoke->idMethodName(name + mungedSuffix);
-			short methMapId = data.Smoke->idMethod(classId, methNameId);
+			short methNameId = data.Smoke->IDMethodName(name + mungedSuffix);
+			short methMapId = data.Smoke->IDMethod(classId, methNameId);
 			if (methMapId == 0)
 				continue;
 			short methId = data.Smoke->methodMaps[methMapId].method;

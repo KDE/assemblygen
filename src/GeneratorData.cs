@@ -155,7 +155,7 @@ public unsafe class GeneratorData
 
 		// Make sure that we don't define a namespace where a class should actually be.
 		// This shouldn't happen, but to be sure we check it again.
-		short id = Smoke->idClass(prefix);
+		short id = Smoke->IDClass(prefix);
 		Smoke.Class* klass = Smoke->classes + id;
 		if (id != 0 && klass->size > 0)
 		{

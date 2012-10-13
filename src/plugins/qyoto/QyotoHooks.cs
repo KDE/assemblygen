@@ -44,7 +44,7 @@ public unsafe class QyotoHooks : IHookProvider
 	[DllImport("qyotogenerator-native", CallingConvention = CallingConvention.Cdecl)]
 	static extern void GetMetaMethodParameters(IntPtr metaMethod, AddParameter addParamFn);
 
-	static string qObjectDummyCtorCode =
+	const string QObjectDummyCtorCode =
 "            try {\n" +
 "                Type proxyInterface = Qyoto.GetSignalsInterface(GetType());\n" +
 "                SignalInvocation realProxy = new SignalInvocation(proxyInterface, this);\n" +
@@ -107,7 +107,7 @@ public unsafe class QyotoHooks : IHookProvider
 			type.Members.Add(emit);
 
 			string className = ByteArrayManager.GetString(klass->className);
-			int colon = className.LastIndexOf("::");
+			int colon = className.LastIndexOf("::", StringComparison.Ordinal);
 			string prefix = (colon != -1) ? className.Substring(0, colon) : string.Empty;
 
 			IList typeCollection = Data.GetTypeCollection(prefix);
@@ -117,7 +117,7 @@ public unsafe class QyotoHooks : IHookProvider
 			if (className != "QObject")
 			{
 				string parentClassName = ByteArrayManager.GetString(smoke->classes[smoke->inheritanceList[klass->parents]].className);
-				colon = parentClassName.LastIndexOf("::");
+				colon = parentClassName.LastIndexOf("::", StringComparison.Ordinal);
 				prefix = (colon != -1) ? parentClassName.Substring(0, colon) : string.Empty;
 				if (colon != -1)
 				{
@@ -172,7 +172,7 @@ public unsafe class QyotoHooks : IHookProvider
 					CodeParameterDeclarationExpression param;
 					try
 					{
-						short id = smoke->idType(paramType);
+						short id = smoke->IDType(paramType);
 						CodeTypeReference paramTypeRef;
 						if (id > 0)
 						{
@@ -182,7 +182,7 @@ public unsafe class QyotoHooks : IHookProvider
 						{
 							if (!paramType.Contains("::"))
 							{
-								id = smoke->idType(className + "::" + paramType);
+								id = smoke->IDType(className + "::" + paramType);
 								if (id > 0)
 								{
 									paramTypeRef = Translator.CppToCSharp(smoke->types + id, out isRef);
@@ -286,7 +286,7 @@ public unsafe class QyotoHooks : IHookProvider
 	{
 		if (type.Name == "QObject" && cmm is CodeConstructor)
 		{
-			cmm.Statements.Add(new CodeSnippetStatement(qObjectDummyCtorCode));
+			cmm.Statements.Add(new CodeSnippetStatement(QObjectDummyCtorCode));
 		}
 	}
 
@@ -399,7 +399,7 @@ public unsafe class QyotoHooks : IHookProvider
 				type.Members.Add(eventFilters);
 			}
 			CodeSnippetTypeMember codeMemberEvent = new CodeSnippetTypeMember();
-			codeMemberEvent.Name = name.Substring(0, name.IndexOf("Event"));
+			codeMemberEvent.Name = name.Substring(0, name.IndexOf("Event", StringComparison.Ordinal));
 			if (
 				new[] { "", "Custom", "Widget", "Show", "Hide", "Close", "Move", "Resize", "Viewport" }.Contains(
 					codeMemberEvent.Name))
