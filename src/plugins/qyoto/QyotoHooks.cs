@@ -335,12 +335,13 @@ public unsafe class QyotoHooks : IHookProvider
 		if (documentation.ContainsKey(type))
 		{
 			string docs = documentation[type];
-			Match match = Regex.Match(docs,
-			                          "::" + Regex.Escape(char.ToLowerInvariant(cmm.Name[0]) + cmm.Name.Substring(1)) +
-									  @"[^\n]+\n\s*(([^\r\n]+\r?\n)*[^\r\n]+)(\r?\n){3}");
+			string typeName = Regex.Escape(type.Name);
+			string methodName = Regex.Escape(ByteArrayManager.GetString(smoke->methodNames[smokeMethod->name]));
+			const string memberDoc = @"((const {0} )|({0}::)){1}\s*\([^\n]*\)( const)?( \[(\w+\s*)+\])?\r?\n(?<docs>.*?)(\r?\n){{3}}";
+			Match match = Regex.Match(docs, string.Format(memberDoc, typeName, methodName), RegexOptions.Singleline);
 			if (match.Success)
 			{
-				Translator.FormatComment(match.Groups[1].Value, cmm);
+				Translator.FormatComment(match.Groups["docs"].Value, cmm);
 			}
 		}
 		GenerateEvent(cmm, cmm.Name, type, true);
