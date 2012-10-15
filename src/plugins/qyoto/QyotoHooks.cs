@@ -271,12 +271,19 @@ public unsafe class QyotoHooks : IHookProvider
 			foreach (KeyValuePair<CodeSnippetTypeMember, CodeMemberMethod> signalEvent in signalEvents)
 			{
 				CodeSnippetTypeMember implementation = signalEvent.Key;
+				CodeCommentStatementCollection comments = new CodeCommentStatementCollection();
 				foreach (CodeTypeMember current in from CodeTypeMember member in type.Members
 												   where member.Name == implementation.Name
 												   select member)
 				{
+					if (comments.Count == 0)
+					{
+						comments.AddRange(current.Comments);
+					}
 					current.Name = "On" + current.Name;
 				}
+				signalEvent.Value.Comments.AddRange(comments);
+				signalEvent.Key.Comments.AddRange(comments);
 				type.Members.Add(signalEvent.Key);
 			}
 		}
