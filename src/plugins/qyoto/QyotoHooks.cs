@@ -68,7 +68,7 @@ public unsafe class QyotoHooks : IHookProvider
 	public Translator Translator { get; set; }
 	public GeneratorData Data { get; set; }
 	private readonly Dictionary<string, CodeMemberMethod> eventMethods = new Dictionary<string, CodeMemberMethod>();
-	private readonly Dictionary<CodeTypeDeclaration, string> documentation = new Dictionary<CodeTypeDeclaration, string>();
+	private readonly Dictionary<CodeTypeDeclaration, string> memberDocumentation = new Dictionary<CodeTypeDeclaration, string>();
 
 	public void PreMembersHook(Smoke* smoke, Smoke.Class* klass, CodeTypeDeclaration type)
 	{
@@ -302,7 +302,8 @@ public unsafe class QyotoHooks : IHookProvider
 				if (File.Exists(classDocs))
 				{
 					string docs = StripTags(File.ReadAllText(classDocs));
-					documentation[codeTypeDeclaration.Value] = StripTags(docs);
+					Match matchMembers = Regex.Match(docs, @"\n((\w+ )*\w+ Documentation\r?\n.+)", RegexOptions.Singleline);
+					this.memberDocumentation[codeTypeDeclaration.Value] = matchMembers.Groups[1].Value;
 					Match match = Regex.Match(docs, "(The " + type.Name + ".+)More...");
 					if (match.Success)
 					{
@@ -313,7 +314,7 @@ public unsafe class QyotoHooks : IHookProvider
 				}
 			}
 		}
-		PropertyGenerator pg = new PropertyGenerator(Data, Translator, documentation);
+		PropertyGenerator pg = new PropertyGenerator(Data, Translator, this.memberDocumentation);
 		pg.Run();
 	}
 
@@ -332,12 +333,12 @@ public unsafe class QyotoHooks : IHookProvider
 
 	private void PostMethodBodyHooks(Smoke* smoke, Smoke.Method* smokeMethod, CodeMemberMethod cmm, CodeTypeDeclaration type)
 	{
-		if (documentation.ContainsKey(type))
+		if (this.memberDocumentation.ContainsKey(type))
 		{
-			string docs = documentation[type];
+			string docs = this.memberDocumentation[type];
 			string typeName = Regex.Escape(type.Name);
 			string methodName = Regex.Escape(ByteArrayManager.GetString(smoke->methodNames[smokeMethod->name]));
-			const string memberDoc = @"((const {0} )|({0}::)){1}\s*\([^\n]*\)( const)?( \[(\w+\s*)+\])?\r?\n(?<docs>.*?)(\r?\n){{3}}";
+			const string memberDoc = @"{0}( |(::)){1}\s*\([^\n]*\)( const)?( \[(\w+\s*)+\])?\r?\n(?<docs>.*?)(\r?\n){{3}}";
 			Match match = Regex.Match(docs, string.Format(memberDoc, typeName, methodName), RegexOptions.Singleline);
 			if (match.Success)
 			{
