@@ -800,7 +800,7 @@ public unsafe class MethodsGenerator
 			CodeTypeMember baseVirtualProperty = GetBaseVirtualProperty(type, afterSet);
 			if (!type.IsInterface && baseVirtualProperty != null)
 			{
-				CodeMemberMethod getter = new CodeMemberMethod {Name = baseVirtualProperty.Name};
+				CodeMemberMethod getter = new CodeMemberMethod { Name = baseVirtualProperty.Name };
 				getter.Statements.Add(new CodeSnippetStatement(string.Format("            return base.{0};", afterSet)));
 				GenerateProperty(getter, setter);
 			}
@@ -812,7 +812,7 @@ public unsafe class MethodsGenerator
 			CodeTypeMember baseVirtualProperty = GetBaseVirtualProperty(type, nonSetter.Name);
 			if (!type.IsInterface && baseVirtualProperty != null)
 			{
-				CodeMemberMethod setter = new CodeMemberMethod {Name = baseVirtualProperty.Name};
+				CodeMemberMethod setter = new CodeMemberMethod { Name = baseVirtualProperty.Name };
 				setter.Statements.Add(new CodeSnippetStatement(string.Format("            base.{0} = value;", nonSetter.Name)));
 				GenerateProperty(nonSetter, setter);
 			}
@@ -821,6 +821,9 @@ public unsafe class MethodsGenerator
 
 	private void GenerateProperty(CodeMemberMethod getter, CodeMemberMethod setter)
 	{
+		CodeCommentStatementCollection comments = new CodeCommentStatementCollection();
+		comments.AddRange(getter.Comments);
+		comments.AddRange(setter.Comments);
 		getter.Comments.Clear();
 		setter.Comments.Clear();
 		if (type.Members.OfType<CodeSnippetTypeMember>().All(
@@ -840,7 +843,9 @@ public unsafe class MethodsGenerator
 				arrayExpression.Initializers.OfType<CodeArgumentReferenceExpression>().First();
 			argExpression.ParameterName = "value";
 			property.SetStatements.AddRange(setter.Statements);
-			type.Members.Add(AddAttributes(getter, setter, property));
+			CodeSnippetTypeMember completeProperty = AddAttributes(getter, setter, property);
+			AddComments(completeProperty, comments);
+			type.Members.Add(completeProperty);
 			if (type.Members.Contains(getter))
 			{
 				type.Members.Remove(getter);
@@ -919,6 +924,19 @@ public unsafe class MethodsGenerator
 		        	   	         (prop.Attributes & MemberAttributes.Final) == 0
 		        	   	   select prop).FirstOrDefault())
 		        	: null);
+	}
+
+	private static void AddComments(CodeTypeMember completeProperty, CodeCommentStatementCollection comments)
+	{
+		for (int i = comments.Count - 2; i >= 1; i--)
+		{
+			string comment = comments[i].Comment.Text;
+			if (comment == "<summary>" || comment == "</summary>" || comment.StartsWith("<para>See also "))
+			{
+				comments.RemoveAt(i);
+			}
+		}
+		completeProperty.Comments.AddRange(comments);
 	}
 
 	public static void DistributeMethod(CodeMemberMethod method, ICollection<CodeMemberMethod> setters,
