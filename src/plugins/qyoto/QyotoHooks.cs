@@ -408,13 +408,7 @@ public unsafe class QyotoHooks : IHookProvider
 				type.Members.Add(eventFilters);
 			}
 			CodeSnippetTypeMember codeMemberEvent = new CodeSnippetTypeMember();
-			codeMemberEvent.Name = name.Substring(0, name.IndexOf("Event", StringComparison.Ordinal));
-			if (
-				new[] { "", "Custom", "Widget", "Show", "Hide", "Close", "Move", "Resize", "Viewport" }.Contains(
-					codeMemberEvent.Name))
-			{
-				codeMemberEvent.Name += "Event";
-			}
+			codeMemberEvent.Name = name;
 			codeMemberEvent.Text =
 				string.Format(
 					@"
