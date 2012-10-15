@@ -445,6 +445,7 @@ public unsafe class QyotoHooks : IHookProvider
 				 isVirtual ? "virtual" : "override", paramType, codeMemberEvent.Name, GetEventTypes(name), isVirtual ? string.Empty : ".Viewport");
 			codeMemberEvent.Attributes = (codeMemberEvent.Attributes & ~MemberAttributes.AccessMask) |
 										 MemberAttributes.Public;
+			codeMemberEvent.Comments.AddRange(cmm.Comments);
 			type.Members.Add(codeMemberEvent);
 			if (isVirtual && InheritsQWidget(type))
 			{
