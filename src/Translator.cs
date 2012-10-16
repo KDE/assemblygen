@@ -427,8 +427,15 @@ public unsafe class Translator
 		cmp.Comments.Add(new CodeCommentStatement("<summary>", true));
 		foreach (string line in docs.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries))
 		{
-			cmp.Comments.Add(new CodeCommentStatement(string.Format("<para>{0}</para>", line), true));
+			string text = Regex.Replace(line, @"((\w+)(::))?(\w)(\w+)(\(\))", MatchEvaluator);
+			cmp.Comments.Add(new CodeCommentStatement(string.Format("<para>{0}</para>", text), true));
 		}
 		cmp.Comments.Add(new CodeCommentStatement("</summary>", true));
+	}
+
+	private static string MatchEvaluator(Match m)
+	{
+		return m.Groups[2].Value + (string.IsNullOrEmpty(m.Groups[3].Value) ? string.Empty : ".") +
+		       char.ToUpper(m.Groups[4].Value[0]) + m.Groups[5].Value + m.Groups[6].Value;
 	}
 }
