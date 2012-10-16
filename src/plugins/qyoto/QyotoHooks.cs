@@ -345,7 +345,7 @@ public unsafe class QyotoHooks : IHookProvider
 			string docs = this.memberDocumentation[type];
 			string typeName = Regex.Escape(type.Name);
 			string methodName = Regex.Escape(ByteArrayManager.GetString(smoke->methodNames[smokeMethod->name]));
-			const string memberDoc = @"{0}( |(::)){1}\s*\([^\n]*\)( const)?( \[(\w+\s*)+\])?\r?\n(?<docs>.*?)(\r?\n){{3}}";
+			const string memberDoc = @"{0}( |(::)){1}\s*\([^\n]*\)( const)?( \[(\w+\s*)+\])?\r?\n\W*(?<docs>.*?)(\r?\n){{2}}(&?\S* --)?(\r?\n)";
 			Match match = Regex.Match(docs, string.Format(memberDoc, typeName, methodName), RegexOptions.Singleline);
 			if (match.Success)
 			{

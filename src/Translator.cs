@@ -1,4 +1,4 @@
-/*
+﻿/*
     Generator for .NET assemblies utilizing SMOKE libraries
     Copyright (C) 2009, 2010 Arno Rehn <arno@arnorehn.de>
 
@@ -425,10 +425,10 @@ public unsafe class Translator
 	public static void FormatComment(string docs, CodeTypeMember cmp)
 	{
 		cmp.Comments.Add(new CodeCommentStatement("<summary>", true));
-		foreach (string line in docs.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries))
+		foreach (string text in from line in docs.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)
+								select Regex.Replace(line, @"((\w+)(::))?(\w)(\w+)(\(\))", MatchEvaluator))
 		{
-			string text = Regex.Replace(line, @"((\w+)(::))?(\w)(\w+)(\(\))", MatchEvaluator);
-			cmp.Comments.Add(new CodeCommentStatement(string.Format("<para>{0}</para>", text), true));
+			cmp.Comments.Add(new CodeCommentStatement(string.Format("<para>{0}</para>", text.Replace("&Auml;", "Ä")), true));
 		}
 		cmp.Comments.Add(new CodeCommentStatement("</summary>", true));
 	}
