@@ -20,7 +20,6 @@
 using System;
 using System.CodeDom.Compiler;
 using System.IO;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Diagnostics;
 using System.Linq;
@@ -34,56 +33,56 @@ public unsafe delegate void MethodHook(Smoke *smoke, Smoke.Method *smokeMethod, 
 
 public unsafe class MethodsGenerator
 {
-	private GeneratorData data;
-	private Translator translator;
-	private CodeTypeDeclaration type;
-	private Smoke.Class* smokeClass;
+	private readonly GeneratorData data;
+	private readonly Translator translator;
+	private readonly CodeTypeDeclaration type;
+	private readonly Smoke.Class* smokeClass;
 
-	private static Regex qMethodExp = new Regex("^[a-z][A-Z]");
+	private static readonly Regex qMethodExp = new Regex("^[a-z][A-Z]");
 
-	private static List<string> binaryOperators = new List<string>()
-	                                              	{
-	                                              		"!=",
-	                                              		"==",
-	                                              		"%",
-	                                              		"&",
-	                                              		"*",
-	                                              		"+",
-	                                              		"-",
-	                                              		"/",
-	                                              		"<",
-	                                              		"<=",
-	                                              		">",
-	                                              		">=",
-	                                              		"^",
-	                                              		"|"
-	                                              	};
+	private static readonly List<string> binaryOperators = new List<string>()
+	                                                       	{
+	                                                       		"!=",
+	                                                       		"==",
+	                                                       		"%",
+	                                                       		"&",
+	                                                       		"*",
+	                                                       		"+",
+	                                                       		"-",
+	                                                       		"/",
+	                                                       		"<",
+	                                                       		"<=",
+	                                                       		">",
+	                                                       		">=",
+	                                                       		"^",
+	                                                       		"|"
+	                                                       	};
 
-	private static List<string> unaryOperators = new List<string>()
-	                                             	{
-	                                             		"!",
-	                                             		"~",
-	                                             		"+",
-	                                             		"++",
-	                                             		"-",
-	                                             		"--"
-	                                             	};
+	private static readonly List<string> unaryOperators = new List<string>()
+	                                                      	{
+	                                                      		"!",
+	                                                      		"~",
+	                                                      		"+",
+	                                                      		"++",
+	                                                      		"-",
+	                                                      		"--"
+	                                                      	};
 
-	private static List<string> unsupportedOperators = new List<string>()
-	                                                   	{
-	                                                   		"=",
-	                                                   		"->",
-	                                                   		"+=",
-	                                                   		"-=",
-	                                                   		"/=",
-	                                                   		"*=",
-	                                                   		"%=",
-	                                                   		"^=",
-	                                                   		"&=",
-	                                                   		"|=",
-	                                                   		"[]",
-	                                                   		"()"
-	                                                   	};
+	private static readonly List<string> unsupportedOperators = new List<string>()
+	                                                            	{
+	                                                            		"=",
+	                                                            		"->",
+	                                                            		"+=",
+	                                                            		"-=",
+	                                                            		"/=",
+	                                                            		"*=",
+	                                                            		"%=",
+	                                                            		"^=",
+	                                                            		"&=",
+	                                                            		"|=",
+	                                                            		"[]",
+	                                                            		"()"
+	                                                            	};
 
 	public MethodsGenerator(GeneratorData data, Translator translator, CodeTypeDeclaration type, Smoke.Class* klass)
 	{
@@ -93,7 +92,7 @@ public unsafe class MethodsGenerator
 		this.smokeClass = klass;
 	}
 
-	private bool m_internalImplementation = false;
+	private bool m_internalImplementation;
 
 	public bool InternalImplementation
 	{
@@ -200,12 +199,6 @@ public unsafe class MethodsGenerator
 		List<CodeParameterDeclarationExpression> args = new List<CodeParameterDeclarationExpression>();
 		int count = 1;
 		bool isRef;
-		string csharpClassName = className;
-		int indexOfColon = csharpClassName.LastIndexOf("::");
-		if (indexOfColon != -1)
-		{
-			csharpClassName = csharpClassName.Substring(indexOfColon + 2);
-		}
 
 		// make instance operators static and bring the arguments in the correct order
 		string methName = ByteArrayManager.GetString(smoke->methodNames[method->name]);
@@ -577,15 +570,7 @@ public unsafe class MethodsGenerator
 		}
 
 		// do we have pass-by-ref parameters?
-		bool generateInvokeForRefParams = false;
-		foreach (CodeParameterDeclarationExpression expr in cmm.Parameters)
-		{
-			if (expr.Direction == FieldDirection.Ref)
-			{
-				generateInvokeForRefParams = true;
-				break;
-			}
-		}
+		bool generateInvokeForRefParams = cmm.Parameters.Cast<CodeParameterDeclarationExpression>().Any(expr => expr.Direction == FieldDirection.Ref);
 
 		// generate the SmokeMethod attribute
 		CodeAttributeDeclaration attr = new CodeAttributeDeclaration("SmokeMethod",
