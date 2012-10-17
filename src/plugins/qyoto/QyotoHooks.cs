@@ -61,6 +61,7 @@ public unsafe class QyotoHooks : IHookProvider
 		ClassesGenerator.SupportingMethodsHooks += SupportingMethodsHook;
 		ClassesGenerator.PreClassesHook += PreClassesHook;
 		ClassesGenerator.PostClassesHook += PostClassesHook;
+		EnumGenerator.PostEnumMemberHook += this.PostEnumMemberHook;
 		MethodsGenerator.PostMethodBodyHooks += this.PostMethodBodyHooks;
 		Console.WriteLine("Registered Qyoto hooks.");
 	}
@@ -335,6 +336,28 @@ public unsafe class QyotoHooks : IHookProvider
 		foreach (KeyValuePair<string, CodeMemberMethod> eventMethod in eventMethods.Where(e => !typeQAbstractScrollArea.Members.Contains(e.Value)))
 		{
 			GenerateEvent(eventMethod.Value, eventMethod.Key, typeQAbstractScrollArea, false);
+		}
+	}
+
+	private void PostEnumMemberHook(Smoke* smoke, Smoke.Method* smokeMethod, CodeMemberField cmm, CodeTypeDeclaration type)
+	{
+		CodeTypeDeclaration parentType = this.memberDocumentation.Keys.FirstOrDefault(t => t.Name == (string) type.UserData["parent"]);
+		if (parentType != null)
+		{
+			string docs = this.memberDocumentation[parentType];
+			string typeName = Regex.Escape(parentType.Name) + "::" + Regex.Escape(type.Name);
+			string memberName = Regex.Escape(parentType.Name) + "::" +
+			                    Regex.Escape(ByteArrayManager.GetString(smoke->methodNames[smokeMethod->name]));
+			const string memberDoc = @"enum {0}.*?{1}(0x)?[0-9]+(?<docs>.*?)(&\w+;)?(\r?\n)";
+			Match match = Regex.Match(docs, string.Format(memberDoc, typeName, memberName), RegexOptions.Singleline);
+			if (match.Success)
+			{
+				string doc = match.Groups["docs"].Value;
+				if (!string.IsNullOrEmpty(doc))
+				{
+					Translator.FormatComment(char.ToUpper(doc[0]) + doc.Substring(1), cmm);					
+				}
+			}
 		}
 	}
 

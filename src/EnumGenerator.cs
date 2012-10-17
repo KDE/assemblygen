@@ -21,12 +21,15 @@ using System;
 using System.Runtime.InteropServices;
 using System.CodeDom;
 
+public unsafe delegate void EnumMemberHook(Smoke* smoke, Smoke.Method* smokeMethod, CodeMemberField cmm, CodeTypeDeclaration typeDecl);
+
 // Generates C# enums from enums found in the smoke lib.
 public unsafe class EnumGenerator
 {
-
 	[DllImport("assemblygen-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
 	private static extern long GetEnumValue(Smoke* smoke, Smoke.Method* meth);
+
+	public static event EnumMemberHook PostEnumMemberHook;
 
 	private readonly GeneratorData data;
 
@@ -60,6 +63,7 @@ public unsafe class EnumGenerator
 		    data.ReferencedTypeMap[name].FullName != data.DefaultNamespace.Name + "." + cppName.Replace("::", "+"))
 		{
 			data.GetTypeCollection(prefix).Add(typeDecl);
+			typeDecl.UserData.Add("parent", prefix);
 			data.EnumTypeMap[cppName] = typeDecl;
 		}
 		return typeDecl;
@@ -130,6 +134,10 @@ public unsafe class EnumGenerator
 		}
 
 		member.InitExpression = new CodePrimitiveExpression(value);
+		if (PostEnumMemberHook != null)
+		{
+			PostEnumMemberHook(data.Smoke, meth, member, enumType);
+		}
 		enumType.Members.Add(member);
 	}
 }
