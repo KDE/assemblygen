@@ -346,16 +346,32 @@ public unsafe class QyotoHooks : IHookProvider
 		{
 			string docs = this.memberDocumentation[parentType];
 			string typeName = Regex.Escape(parentType.Name) + "::" + Regex.Escape(type.Name);
+			if (type.Comments.Count == 0)
+			{
+				const string enumDoc = @"enum {0}(\s*flags {1}::\w+\s+)?(?<docsStart>.*?)" + 
+					"(ConstantValue(Description)?.*?)(\r?\n){{2}}" +
+					"(([^\n]+\n)+ConstantValue(Description)?.*?(\r?\n){{2}})*(?<docsEnd1>.*?)" + 
+					@"(The \S+ type is a typedef for QFlags&lt;\S+&gt;. It stores an OR combination of \S+ values.)?(?<docsEnd2>.*?)(\r?\n){{2,}}";
+				Match matchEnum = Regex.Match(docs, string.Format(enumDoc, typeName, parentType.Name), RegexOptions.Singleline);
+				if (matchEnum.Success)
+				{
+					string doc = (matchEnum.Groups["docsStart"].Value + matchEnum.Groups["docsEnd1"].Value + matchEnum.Groups["docsEnd2"].Value).Trim();
+					if (!string.IsNullOrEmpty(doc))
+					{
+						Translator.FormatComment(doc, type);
+					}
+				}
+			}
 			string memberName = Regex.Escape(parentType.Name) + "::" +
 			                    Regex.Escape(ByteArrayManager.GetString(smoke->methodNames[smokeMethod->name]));
 			const string memberDoc = @"enum {0}.*?{1}(0x)?[0-9]+(?<docs>.*?)(&\w+;)?(\r?\n)";
 			Match match = Regex.Match(docs, string.Format(memberDoc, typeName, memberName), RegexOptions.Singleline);
 			if (match.Success)
 			{
-				string doc = match.Groups["docs"].Value;
+				string doc = match.Groups["docs"].Value.Trim();
 				if (!string.IsNullOrEmpty(doc))
 				{
-					Translator.FormatComment(char.ToUpper(doc[0]) + doc.Substring(1), cmm);					
+					Translator.FormatComment(char.ToUpper(doc[0]) + doc.Substring(1), cmm);
 				}
 			}
 		}
