@@ -310,14 +310,17 @@ public unsafe class QyotoHooks : IHookProvider
 				if (File.Exists(classDocs))
 				{
 					string docs = StripTags(File.ReadAllText(classDocs));
-					Match matchMembers = Regex.Match(docs, @"\n((\w+ )*\w+ Documentation\r?\n.+)", RegexOptions.Singleline);
-					this.memberDocumentation[codeTypeDeclaration.Value] = matchMembers.Groups[1].Value;
-					Match match = Regex.Match(docs, "(The " + type.Name + ".+)More...");
+					Match match = Regex.Match(docs, "(?<class>The " + type.Name + @".+?)More\.\.\..*?\r?\n" +
+						@"Detailed Description\s+(?<detailed>.*?)(\r?\n){3,}((\w+ )*\w+ Documentation\r?\n(?<members>.+))", RegexOptions.Singleline);
 					if (match.Success)
 					{
-						codeTypeDeclaration.Value.Comments.Add(new CodeCommentStatement("<summary>", true));
-						codeTypeDeclaration.Value.Comments.Add(new CodeCommentStatement(match.Groups[1].Value, true));
-						codeTypeDeclaration.Value.Comments.Add(new CodeCommentStatement("</summary>", true));
+						type.Comments.Add(new CodeCommentStatement("<summary>", true));
+						type.Comments.Add(new CodeCommentStatement(match.Groups["class"].Value, true));
+						type.Comments.Add(new CodeCommentStatement("</summary>", true));
+						type.Comments.Add(new CodeCommentStatement("<remarks>", true));
+						type.Comments.Add(new CodeCommentStatement(match.Groups["detailed"].Value, true));
+						type.Comments.Add(new CodeCommentStatement("</remarks>", true));
+						this.memberDocumentation[type] = match.Groups["members"].Value;
 					}
 				}
 			}
@@ -349,8 +352,8 @@ public unsafe class QyotoHooks : IHookProvider
 			if (type.Comments.Count == 0)
 			{
 				const string enumDoc = @"enum {0}(\s*flags {1}::\w+\s+)?(?<docsStart>.*?)" + 
-					"(ConstantValue(Description)?.*?)(\r?\n){{2}}" +
-					"(([^\n]+\n)+ConstantValue(Description)?.*?(\r?\n){{2}})*(?<docsEnd1>.*?)" + 
+					@"(ConstantValue(Description)?.*?)(\r?\n){{2}}" +
+					@"(([^\n]+\n)+ConstantValue(Description)?.*?(\r?\n){{2}})*(?<docsEnd1>.*?)" + 
 					@"(The \S+ type is a typedef for QFlags&lt;\S+&gt;. It stores an OR combination of \S+ values.)?(?<docsEnd2>.*?)(\r?\n){{2,}}";
 				Match matchEnum = Regex.Match(docs, string.Format(enumDoc, typeName, parentType.Name), RegexOptions.Singleline);
 				if (matchEnum.Success)
