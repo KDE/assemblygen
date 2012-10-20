@@ -382,19 +382,51 @@ public unsafe class QyotoHooks : IHookProvider
 
 	private void PostMethodBodyHooks(Smoke* smoke, Smoke.Method* smokeMethod, CodeMemberMethod cmm, CodeTypeDeclaration type)
 	{
+		this.CommentMember(smoke, smokeMethod, cmm, type);
+		GenerateEvent(cmm, cmm.Name, type, true);
+	}
+
+	private void CommentMember(Smoke* smoke, Smoke.Method* smokeMethod, CodeTypeMember cmm, CodeTypeDeclaration type)
+	{
 		if (this.memberDocumentation.ContainsKey(type))
 		{
 			string docs = this.memberDocumentation[type];
 			string typeName = Regex.Escape(type.Name);
-			string methodName = Regex.Escape(ByteArrayManager.GetString(smoke->methodNames[smokeMethod->name]));
-			const string memberDoc = @"{0}( |(::)){1}\s*\([^\n]*\)( const)?( \[(\w+\s*)+\])?\r?\n\W*(?<docs>.*?)(\r?\n){{2}}(&?\S* --)?(\r?\n)";
-			Match match = Regex.Match(docs, string.Format(memberDoc, typeName, methodName), RegexOptions.Singleline);
+			string signature = smoke->GetMethodSignature(smokeMethod);
+			StringBuilder signatureRegex = new StringBuilder();
+			Match matchSignature = Regex.Match(signature, @"(?<name>[^\(]+)\((?<args>.*)\)");
+			string methodName = Regex.Escape(matchSignature.Groups["name"].Value);
+			signatureRegex.Append(methodName);
+			signatureRegex.Append(@"\s*\(\s*");
+			string[] parts = matchSignature.Groups["args"].Value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+			const string separator = @",\s*";
+			foreach (string part in parts)
+			{
+				string p = Regex.Escape(part).Replace(@"\*", @"\s*\*");
+				signatureRegex.Append(Translator.MatchFunctionPointer(p).Success ? @"[^,]+" : (p + @"\s+\w+(\s*=\s*\w+)?"));
+				signatureRegex.Append(separator);
+			}
+			if (parts.Length > 0)
+			{
+				signatureRegex.Remove(signatureRegex.Length - separator.Length, separator.Length);
+			}
+			signatureRegex.Append(@"\s*\)\s*");
+			string memberDoc = @"{0}( |(::)){1}( const)?( \[(\w+\s*)+\])?\r?\n\W*(?<docs>.*?)(\r?\n){{2}}(&?\S* --)?(\r?\n)";
+			Match match = Regex.Match(docs, string.Format(memberDoc, typeName, signatureRegex), RegexOptions.Singleline);
 			if (match.Success)
 			{
 				Translator.FormatComment(match.Groups["docs"].Value, cmm);
 			}
+			else
+			{
+				memberDoc = @"{0}( |(::)){1}\s*\([^\n]*\)( const)?( \[(\w+\s*)+\])?\r?\n\W*(?<docs>.*?)(\r?\n){{2}}(&?\S* --)?(\r?\n)";
+				match = Regex.Match(docs, string.Format(memberDoc, typeName, methodName), RegexOptions.Singleline);
+				if (match.Success)
+				{
+					Translator.FormatComment(match.Groups["docs"].Value, cmm);
+				}
+			}
 		}
-		GenerateEvent(cmm, cmm.Name, type, true);
 	}
 
 	private static string StripTags(string source)

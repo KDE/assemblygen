@@ -377,7 +377,7 @@ public unsafe class Translator
 
 	private CodeTypeReference CheckForFunctionPointer(string typeString)
 	{
-		Match match = Regex.Match(typeString, @"^([^(]+)\(\*\)\(([^)]*)\)$");
+		Match match = MatchFunctionPointer(typeString);
 		if (match.Success)
 		{
 			string returnType = match.Groups[1].Value;
@@ -418,6 +418,11 @@ public unsafe class Translator
 			return new CodeTypeReference(delegateNameBuilder.ToString());
 		}
 		throw new NotSupportedException(typeString);
+	}
+
+	public static Match MatchFunctionPointer(string typeString)
+	{
+		return Regex.Match(typeString, @"^([^(]+)\(\*\)\(([^)]*)\)$");
 	}
 
 	#endregion
