@@ -353,12 +353,14 @@ public unsafe class QyotoHooks : IHookProvider
 			{
 				const string enumDoc = @"enum {0}(\s*flags {1}::\w+\s+)?(?<docsStart>.*?)" + 
 					@"(ConstantValue(Description)?.*?)(\r?\n){{2}}" +
-					@"(([^\n]+\n)+ConstantValue(Description)?.*?(\r?\n){{2}})*(?<docsEnd1>.*?)" + 
-					@"(The \S+ type is a typedef for QFlags&lt;\S+&gt;. It stores an OR combination of \S+ values.)?(?<docsEnd2>.*?)(\r?\n){{2,}}";
+					@"(([^\n]+\n)+ConstantValue(Description)?.*?(\r?\n){{2}})*(?<docsEnd1>.*?)(\r?\n){{2,}}";
 				Match matchEnum = Regex.Match(docs, string.Format(enumDoc, typeName, parentType.Name), RegexOptions.Singleline);
 				if (matchEnum.Success)
 				{
-					string doc = (matchEnum.Groups["docsStart"].Value + matchEnum.Groups["docsEnd1"].Value + matchEnum.Groups["docsEnd2"].Value).Trim();
+					string doc = (matchEnum.Groups["docsStart"].Value + matchEnum.Groups["docsEnd1"].Value).Trim();
+					doc = Regex.Replace(doc,
+					                    @"The \S+ type is a typedef for QFlags&lt;\S+&gt;\. It stores an OR combination of \S+ values\.",
+					                    string.Empty).Trim();
 					if (!string.IsNullOrEmpty(doc))
 					{
 						Translator.FormatComment(doc, type);
