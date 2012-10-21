@@ -1,4 +1,4 @@
-/*
+﻿/*
     Generator for .NET assemblies utilizing SMOKE libraries
     Copyright (C) 2009 Arno Rehn <arno@arnorehn.de>
 
@@ -318,7 +318,11 @@ public unsafe class QyotoHooks : IHookProvider
 						type.Comments.Add(new CodeCommentStatement(match.Groups["class"].Value, true));
 						type.Comments.Add(new CodeCommentStatement("</summary>", true));
 						type.Comments.Add(new CodeCommentStatement("<remarks>", true));
-						type.Comments.Add(new CodeCommentStatement(match.Groups["detailed"].Value, true));
+						StringBuilder detailed = new StringBuilder(match.Groups["detailed"].Value);
+						detailed.Replace("&aring;", "å");
+						detailed.Replace("&uuml;", "ü");
+						detailed.Replace("&mdash;", "—");
+						type.Comments.Add(new CodeCommentStatement(detailed.ToString(), true));
 						type.Comments.Add(new CodeCommentStatement("</remarks>", true));
 						this.memberDocumentation[type] = match.Groups["members"].Value;
 					}
