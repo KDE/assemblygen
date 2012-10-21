@@ -404,15 +404,18 @@ public unsafe class QyotoHooks : IHookProvider
 			string methodName = Regex.Escape(matchSignature.Groups["name"].Value);
 			signatureRegex.Append(methodName);
 			signatureRegex.Append(@"\s*\(\s*");
-			string[] parts = matchSignature.Groups["args"].Value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+			string[] argTypes = matchSignature.Groups["args"].Value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 			const string separator = @",\s*";
-			foreach (string part in parts)
+			foreach (string argType in argTypes)
 			{
-				string p = Regex.Escape(part).Replace(@"\*", @"\s*\*");
-				signatureRegex.Append(Translator.MatchFunctionPointer(p).Success ? @"[^,]+" : (p + @"\s+\w+(\s*=\s*\w+)?"));
+				StringBuilder typeBuilder = new StringBuilder(Regex.Escape(argType));
+				typeBuilder.Replace(@"\*", @"\s*\*").Replace(@"&", @"\s*&amp;").Replace(type.Name + "::", string.Empty);
+				signatureRegex.Append(Translator.MatchFunctionPointer(typeBuilder.ToString()).Success
+					                      ? @"[^,]+"
+					                      : (typeBuilder + @"\s+\w+(\s*=\s*\w+)?"));
 				signatureRegex.Append(separator);
 			}
-			if (parts.Length > 0)
+			if (argTypes.Length > 0)
 			{
 				signatureRegex.Remove(signatureRegex.Length - separator.Length, separator.Length);
 			}
