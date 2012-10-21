@@ -431,6 +431,7 @@ public unsafe class Translator
 	{
 		cmp.Comments.Add(new CodeCommentStatement("<summary>", true));
 		foreach (string text in from line in docs.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)
+								where !string.IsNullOrEmpty(line.Trim())
 								select Regex.Replace(line, @"((\w+)(::))?(\w)(\w+)(\(\))", MatchEvaluator))
 		{
 			cmp.Comments.Add(new CodeCommentStatement(string.Format("<para>{0}</para>", text.Replace("&Auml;", "Ä")), true));

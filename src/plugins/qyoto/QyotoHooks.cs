@@ -355,16 +355,18 @@ public unsafe class QyotoHooks : IHookProvider
 			string typeName = Regex.Escape(parentType.Name) + "::" + Regex.Escape(type.Name);
 			if (type.Comments.Count == 0)
 			{
-				const string enumDoc = @"enum {0}(\s*flags {1}::\w+\s+)?(?<docsStart>.*?)" + 
-					@"(ConstantValue(Description)?.*?)(\r?\n){{2}}" +
-					@"(([^\n]+\n)+ConstantValue(Description)?.*?(\r?\n){{2}})*(?<docsEnd1>.*?)(\r?\n){{2,}}";
+				const string enumDoc = @"enum {0}(\s*flags {1}::\w+\s+)?(?<docsStart>.*?)(\r?\n){{3}}";
 				Match matchEnum = Regex.Match(docs, string.Format(enumDoc, typeName, parentType.Name), RegexOptions.Singleline);
 				if (matchEnum.Success)
 				{
 					string doc = (matchEnum.Groups["docsStart"].Value + matchEnum.Groups["docsEnd1"].Value).Trim();
 					doc = Regex.Replace(doc,
-					                    @"The \S+ type is a typedef for QFlags&lt;\S+&gt;\. It stores an OR combination of \S+ values\.",
-					                    string.Empty).Trim();
+					                    @"(The \S+ type is a typedef for QFlags&lt;\S+&gt;\. It stores an OR combination of \S+ values\.)|" +
+										"(ConstantValue(Description)?.*?(((\r?\n){2})|$))",
+					                    string.Empty);
+					doc = Regex.Replace(doc,
+										@"ConstantValue(Description)?.*?(((\r?\n){2})|$)",
+										string.Empty, RegexOptions.Singleline).Trim();
 					if (!string.IsNullOrEmpty(doc))
 					{
 						Translator.FormatComment(doc, type);
