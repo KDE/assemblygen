@@ -432,16 +432,10 @@ public unsafe class Translator
 		cmp.Comments.Add(new CodeCommentStatement("<summary>", true));
 		foreach (string text in from line in docs.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)
 								where !string.IsNullOrEmpty(line.Trim())
-								select Regex.Replace(line, @"((\w+)(::))?(\w)(\w+)(\(\))", MatchEvaluator))
+								select line)
 		{
 			cmp.Comments.Add(new CodeCommentStatement(string.Format("<para>{0}</para>", text.Replace("&Auml;", "Ä")), true));
 		}
 		cmp.Comments.Add(new CodeCommentStatement("</summary>", true));
-	}
-
-	private static string MatchEvaluator(Match m)
-	{
-		return m.Groups[2].Value + (string.IsNullOrEmpty(m.Groups[3].Value) ? string.Empty : ".") +
-		       char.ToUpper(m.Groups[4].Value[0]) + m.Groups[5].Value + m.Groups[6].Value;
 	}
 }
