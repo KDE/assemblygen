@@ -24,6 +24,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Linq;
+using System.Web.Util;
 
 static class CollectionExtensions {
     public static void AddRange<T, U>(this IDictionary<T, U> self, IDictionary<T, U> dict) {
@@ -430,11 +431,9 @@ public unsafe class Translator
 	public static void FormatComment(string docs, CodeTypeMember cmp)
 	{
 		cmp.Comments.Add(new CodeCommentStatement("<summary>", true));
-		foreach (string text in from line in docs.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)
-								where !string.IsNullOrEmpty(line.Trim())
-								select line)
+		foreach (string line in HttpEncoder.HtmlEncode(docs).Split(new[] { Environment.NewLine }, StringSplitOptions.None))
 		{
-			cmp.Comments.Add(new CodeCommentStatement(string.Format("<para>{0}</para>", text.Replace("&Auml;", "Ä")), true));
+			cmp.Comments.Add(new CodeCommentStatement(string.Format("<para>{0}</para>", line), true));
 		}
 		cmp.Comments.Add(new CodeCommentStatement("</summary>", true));
 	}

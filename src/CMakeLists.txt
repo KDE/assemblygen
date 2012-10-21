@@ -17,6 +17,7 @@ set(assemblygen_SRC
     CodeDomExtensions.cs
     EnumGenerator.cs
     GeneratorData.cs
+	HttpEncoder.cs
     main.cs
     MethodsGenerator.cs
     PluginInterfaces.cs

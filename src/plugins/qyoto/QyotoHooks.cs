@@ -28,6 +28,7 @@ using System.Collections;
 using System.Runtime.InteropServices;
 using System.CodeDom;
 using System.Text.RegularExpressions;
+using System.Web.Util;
 
 public unsafe class QyotoHooks : IHookProvider
 {
@@ -315,14 +316,10 @@ public unsafe class QyotoHooks : IHookProvider
 					if (match.Success)
 					{
 						type.Comments.Add(new CodeCommentStatement("<summary>", true));
-						type.Comments.Add(new CodeCommentStatement(match.Groups["class"].Value, true));
+						type.Comments.Add(new CodeCommentStatement(HttpEncoder.HtmlEncode(match.Groups["class"].Value), true));
 						type.Comments.Add(new CodeCommentStatement("</summary>", true));
 						type.Comments.Add(new CodeCommentStatement("<remarks>", true));
-						StringBuilder detailed = new StringBuilder(match.Groups["detailed"].Value);
-						detailed.Replace("&aring;", "å");
-						detailed.Replace("&uuml;", "ü");
-						detailed.Replace("&mdash;", "—");
-						type.Comments.Add(new CodeCommentStatement(detailed.ToString(), true));
+						type.Comments.Add(new CodeCommentStatement(HttpEncoder.HtmlEncode(match.Groups["detailed"].Value), true));
 						type.Comments.Add(new CodeCommentStatement("</remarks>", true));
 						this.memberDocumentation[type] = match.Groups["members"].Value;
 					}
@@ -361,8 +358,7 @@ public unsafe class QyotoHooks : IHookProvider
 				{
 					string doc = (matchEnum.Groups["docsStart"].Value + matchEnum.Groups["docsEnd1"].Value).Trim();
 					doc = Regex.Replace(doc,
-					                    @"(The \S+ type is a typedef for QFlags&lt;\S+&gt;\. It stores an OR combination of \S+ values\.)|" +
-										"(ConstantValue(Description)?.*?(((\r?\n){2})|$))",
+					                    @"(The \S+ type is a typedef for QFlags<\S+>\. It stores an OR combination of \S+ values\.)",
 					                    string.Empty);
 					doc = Regex.Replace(doc,
 										@"ConstantValue(Description)?.*?(((\r?\n){2})|$)",
@@ -411,7 +407,7 @@ public unsafe class QyotoHooks : IHookProvider
 			foreach (string argType in argTypes)
 			{
 				StringBuilder typeBuilder = new StringBuilder(Regex.Escape(argType));
-				typeBuilder.Replace(@"\*", @"\s*\*").Replace(@"&", @"\s*&amp;").Replace(type.Name + "::", string.Empty);
+				typeBuilder.Replace(@"\*", @"\s*\*").Replace(@"&", @"\s*&").Replace(type.Name + "::", string.Empty);
 				signatureRegex.Append(Translator.MatchFunctionPointer(typeBuilder.ToString()).Success
 					                      ? @"[^,]+"
 					                      : (typeBuilder + @"\s+\w+(\s*=\s*\w+)?"));
@@ -464,7 +460,7 @@ public unsafe class QyotoHooks : IHookProvider
 				arrayIndex++;
 			}
 		}
-		return new string(array, 0, arrayIndex);
+		return HttpEncoder.HtmlDecode(new string(array, 0, arrayIndex));
 	}
 
 	private void GenerateEvent(CodeMemberMethod cmm, string name, CodeTypeDeclaration type, bool isVirtual)
