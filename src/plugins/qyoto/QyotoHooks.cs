@@ -418,7 +418,7 @@ public unsafe class QyotoHooks : IHookProvider
 				signatureRegex.Remove(signatureRegex.Length - separator.Length, separator.Length);
 			}
 			signatureRegex.Append(@"\s*\)\s*");
-			string memberDoc = @"{0}( |(::)){1}( const)?( \[(\w+\s*)+\])?\r?\n\W*(?<docs>.*?)(\r?\n){{2}}(&?\S* --)?(\r?\n)";
+			string memberDoc = @"{0}( |(::)){1}( const)?( \[(\w+\s*)+\])?\r?\n\W*(?<docs>.*?)(\r?\n){{1,2}}((&?\S* --)|((\r?\n){{2}}))";
 			Match match = Regex.Match(docs, string.Format(memberDoc, typeName, signatureRegex), RegexOptions.Singleline);
 			if (match.Success)
 			{
@@ -426,7 +426,7 @@ public unsafe class QyotoHooks : IHookProvider
 			}
 			else
 			{
-				memberDoc = @"{0}( |(::)){1}\s*\([^\n]*\)( const)?( \[(\w+\s*)+\])?\r?\n\W*(?<docs>.*?)(\r?\n){{2}}(&?\S* --)?(\r?\n)";
+				memberDoc = @"{0}( |(::)){1}\s*\([^\n]*\)( const)?( \[(\w+\s*)+\])?\r?\n\W*(?<docs>.*?)(\r?\n){{1,2}}((&?\S* --)|((\r?\n){{2}}))";
 				match = Regex.Match(docs, string.Format(memberDoc, typeName, methodName), RegexOptions.Singleline);
 				if (match.Success)
 				{

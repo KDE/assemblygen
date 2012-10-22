@@ -50,6 +50,7 @@
     <Compile Include="main.cs" />
     <Compile Include="MethodsGenerator.cs" />
     <Compile Include="PluginInterfaces.cs" />
+    <Compile Include="HttpEncoder.cs" />
     <Compile Include="Smoke.cs" />
     <Compile Include="SmokeMethodEqualityComparer.cs" />
     <Compile Include="SmokeMethods.cs" />
