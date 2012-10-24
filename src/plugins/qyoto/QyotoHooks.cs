@@ -319,7 +319,7 @@ public unsafe class QyotoHooks : IHookProvider
 						type.Comments.Add(new CodeCommentStatement(HttpEncoder.HtmlEncode(match.Groups["class"].Value), true));
 						type.Comments.Add(new CodeCommentStatement("</summary>", true));
 						type.Comments.Add(new CodeCommentStatement("<remarks>", true));
-						type.Comments.Add(new CodeCommentStatement(HttpEncoder.HtmlEncode(match.Groups["detailed"].Value), true));
+						type.Comments.Add(new CodeCommentStatement(HttpEncoder.HtmlEncode(match.Groups["detailed"].Value.Replace("\n/", "\n /")), true));
 						type.Comments.Add(new CodeCommentStatement("</remarks>", true));
 						this.memberDocumentation[type] = match.Groups["members"].Value;
 					}
