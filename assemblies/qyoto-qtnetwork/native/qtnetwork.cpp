@@ -42,7 +42,7 @@ Init_qyoto_qtnetwork()
     init_qtnetwork_Smoke();
 
     qyoto_install_handlers(Qyoto_qtnetwork_handlers);
-    QByteArray prefix("Qyoto.");
+    QByteArray prefix("QtNetwork.");
 
     QHash<int, QByteArray> qtnetwork_classname;
     for (int i = 1; i <= qtnetwork_Smoke->numClasses; i++) {

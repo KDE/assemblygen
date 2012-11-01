@@ -15,7 +15,7 @@
  *                                                                         *
  ***************************************************************************/
 
-namespace Qyoto {
+namespace QtCore {
 	using System;
 	using System.Reflection;
 	using System.Collections.Generic;

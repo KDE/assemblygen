@@ -60,7 +60,7 @@ AbstractItemModelCreateIndex(void* obj, int row, int column, void *ptr)
     int id = o->smoke->idClass("QModelIndex").index;
     smokeqyoto_object *ret = alloc_smokeqyoto_object(true, o->smoke, id, i[0].s_voidp);
     (*FreeGCHandle)(obj);
-	return (*CreateInstance)("Qyoto.QModelIndex, qyoto-qtcore", ret);
+    return (*CreateInstance)("QtCore.QModelIndex, qyoto-qtcore", ret);
 }
 
 Q_DECL_EXPORT void *
@@ -75,7 +75,7 @@ QAbstractItemModelParent(void* obj, void * modelIndex)
                                                         o->smoke,
                                                         o->smoke->idClass("QModelIndex").index,
                                                         new QModelIndex(ix) );
-	return (*CreateInstance)("Qyoto.QModelIndex, qyoto-qtcore", ret);
+    return (*CreateInstance)("QtCore.QModelIndex, qyoto-qtcore", ret);
 }
 
 Q_DECL_EXPORT int
@@ -109,7 +109,7 @@ QAbstractItemModelData(void* obj, void * modelIndex, int role)
     (*FreeGCHandle)(obj);
     (*FreeGCHandle)(modelIndex);
     smokeqyoto_object * ret = alloc_smokeqyoto_object(false, o->smoke, o->smoke->idClass("QVariant").index, &result);
-    return (*CreateInstance)("Qyoto.QVariant", ret);
+    return (*CreateInstance)("QtCore.QVariant", ret);
 }
 
 Q_DECL_EXPORT void*
@@ -121,7 +121,7 @@ QAbstractItemModelIndex(void* obj, int row, int column, void * modelIndex)
     (*FreeGCHandle)(obj);
     (*FreeGCHandle)(modelIndex);
     smokeqyoto_object *ret = alloc_smokeqyoto_object(false, o->smoke, o->smoke->idClass("QModelIndex").index, &result);
-	return (*CreateInstance)("Qyoto.QModelIndex, qyoto-qtcore", ret);
+    return (*CreateInstance)("QtCore.QModelIndex, qyoto-qtcore", ret);
 }
 
 Q_DECL_EXPORT void*
@@ -133,7 +133,7 @@ QAbstractProxyModelMapFromSource(void* obj, void* sourceIndex)
     (*FreeGCHandle)(obj);
     (*FreeGCHandle)(sourceIndex);
     smokeqyoto_object *ret = alloc_smokeqyoto_object(false, o->smoke, o->smoke->idClass("QModelIndex").index, &result);
-	return (*CreateInstance)("Qyoto.QModelIndex, qyoto-qtcore", ret);
+    return (*CreateInstance)("QtCore.QModelIndex, qyoto-qtcore", ret);
 }
 
 Q_DECL_EXPORT void*
@@ -145,7 +145,7 @@ QAbstractProxyModelMapToSource(void* obj, void* proxyIndex)
     (*FreeGCHandle)(obj);
     (*FreeGCHandle)(proxyIndex);
     smokeqyoto_object *ret = alloc_smokeqyoto_object(false, o->smoke, o->smoke->idClass("QModelIndex").index, &result);
-	return (*CreateInstance)("Qyoto.QModelIndex, qyoto-qtcore", ret);
+    return (*CreateInstance)("QtCore.QModelIndex, qyoto-qtcore", ret);
 }
 
 Q_DECL_EXPORT void
@@ -175,7 +175,7 @@ QAbstractItemDelegateSizeHint(void* obj, void* option, void* index)
     (*FreeGCHandle)(option);
     (*FreeGCHandle)(index);
     smokeqyoto_object *ret = alloc_smokeqyoto_object(false, o->smoke, o->smoke->idClass("QSize").index, &result);
-	return (*CreateInstance)("Qyoto.QSize, qyoto-qtcore", ret);
+    return (*CreateInstance)("QtCore.QSize, qyoto-qtcore", ret);
 }
 
 Q_DECL_EXPORT void*
@@ -187,7 +187,7 @@ QAbstractItemViewIndexAt(void* obj, void* point)
     (*FreeGCHandle)(obj);
     (*FreeGCHandle)(point);
     smokeqyoto_object *ret = alloc_smokeqyoto_object(false, o->smoke, o->smoke->idClass("QModelIndex").index, &result);
-	return (*CreateInstance)("Qyoto.QModelIndex, qyoto-qtcore", ret);
+    return (*CreateInstance)("QtCore.QModelIndex, qyoto-qtcore", ret);
 }
 
 Q_DECL_EXPORT void
@@ -209,7 +209,7 @@ QAbstractItemViewVisualRect(void* obj, void* index)
     (*FreeGCHandle)(obj);
     (*FreeGCHandle)(index);
     smokeqyoto_object *ret = alloc_smokeqyoto_object(false, o->smoke, o->smoke->idClass("QRect").index, &result);
-	return (*CreateInstance)("Qyoto.QRect, qyoto-qtcore", ret);
+    return (*CreateInstance)("QtCore.QRect, qyoto-qtcore", ret);
 }
 
 Q_DECL_EXPORT void*
@@ -221,7 +221,7 @@ QAbstractTextDocumentLayoutBlockBoundingRect(void* obj, void* block)
     (*FreeGCHandle)(obj);
     (*FreeGCHandle)(block);
     smokeqyoto_object *ret = alloc_smokeqyoto_object(false, o->smoke, o->smoke->idClass("QRectF").index, &result);
-	return (*CreateInstance)("Qyoto.QRectF, qyoto-qtcore", ret);
+    return (*CreateInstance)("QtCore.QRectF, qyoto-qtcore", ret);
 }
 
 Q_DECL_EXPORT void*
@@ -243,7 +243,7 @@ QAbstractTextDocumentLayoutFrameBoundingRect(void* obj, void* frame)
     (*FreeGCHandle)(obj);
     (*FreeGCHandle)(frame);
     smokeqyoto_object *ret = alloc_smokeqyoto_object(false, o->smoke, o->smoke->idClass("QRectF").index, &result);
-	return (*CreateInstance)("Qyoto.QRectF, qyoto-qtcore", ret);
+    return (*CreateInstance)("QtCore.QRectF, qyoto-qtcore", ret);
 }
 
 Q_DECL_EXPORT int

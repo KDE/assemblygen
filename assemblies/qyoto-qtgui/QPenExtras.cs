@@ -1,4 +1,4 @@
-namespace Qyoto {
+namespace QtGui {
 
 	using System;
 

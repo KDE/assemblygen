@@ -39,7 +39,7 @@ Init_qyoto_qtsql()
 {
     init_qtsql_Smoke();
 
-    QByteArray prefix("Qyoto.");
+    QByteArray prefix("QtSql.");
 
     QHash<int, QByteArray> qtsql_classname;
     for (int i = 1; i <= qtsql_Smoke->numClasses; i++) {

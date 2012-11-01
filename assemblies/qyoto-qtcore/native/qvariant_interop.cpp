@@ -46,7 +46,7 @@ QVariantValue(char * typeName, void * variant)
     if (qstrcmp(typeName, "QDBusVariant") == 0) {
         Smoke::ModuleIndex id = o->smoke->findClass("QVariant");
         smokeqyoto_object  * vo = alloc_smokeqyoto_object(true, id.smoke, id.index, value);
-        return (*CreateInstance)("Qyoto.QDBusVariant", vo);
+        return (*CreateInstance)("QtDbus.QDBusVariant", vo);
     }
 
     Smoke::ModuleIndex id = o->smoke->findClass(typeName);
@@ -67,7 +67,7 @@ QVariantFromValue(int type, void * value)
     QVariant * v = new QVariant(type, o? o->ptr : value);
     Smoke::ModuleIndex id = qtcore_Smoke->findClass("QVariant");
     smokeqyoto_object  * vo = alloc_smokeqyoto_object(true, id.smoke, id.index, (void *) v);
-    return (*CreateInstance)("Qyoto.QVariant", vo);
+    return (*CreateInstance)("QtCore.QVariant", vo);
 }
 
 }

@@ -1,6 +1,7 @@
-namespace Qyoto {
+namespace QtGui {
 
 	using System;
+	using QtCore;
 
 	public partial class QKeySequence : Object, IDisposable {
 		public static implicit operator QKeySequence(int arg) {

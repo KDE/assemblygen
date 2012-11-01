@@ -1,4 +1,4 @@
-namespace Qyoto {
+namespace QtCore {
 
 	using System;
 

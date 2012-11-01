@@ -1,4 +1,4 @@
-namespace Qyoto {
+namespace QtCore {
 	public class QPair<T1, T2> {
 		public QPair(T1 t1, T2 t2) {
 			first = t1; 

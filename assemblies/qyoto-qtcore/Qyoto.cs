@@ -15,7 +15,7 @@
  *                                                                         *
  ***************************************************************************/
 
-namespace Qyoto
+namespace QtCore
 {
 	using System;
 	using System.Collections;
@@ -291,7 +291,7 @@ namespace Qyoto
 		}
 		
 		public static uint GetCPPEnumValue(string c, string value) {
-			Type t = Type.GetType("Qyoto." + c, false);
+			Type t = Type.GetType("QtCore." + c, false);
 			if (t == null) {
 				return 0;
 			}

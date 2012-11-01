@@ -331,7 +331,7 @@ qyoto_make_metaObject(const char* parentClassName, void* parentMeta, const char*
                                                         meta );
 
     // create wrapper C# instance
-	return (*CreateInstance)("Qyoto.QMetaObject, qyoto-qtcore", m);
+    return (*CreateInstance)("QtCore.QMetaObject, qyoto-qtcore", m);
 }
 
 }
@@ -398,7 +398,7 @@ int qyoto_qt_metacall(void* obj, int _c, int _id, void* _o) {
         smokeqyoto_object* sqo = alloc_smokeqyoto_object(false, qtcore_Smoke,
                                                          qtcore_Smoke->idClass("QVariant").index,
                                                          ((void**)_o)[0]);
-        void* variant = (*CreateInstance)("Qyoto.QVariant", sqo);
+        void* variant = (*CreateInstance)("QtCore.QVariant", sqo);
         (*SetProperty)(obj, property.name(), variant);
     }
     return _id - count;

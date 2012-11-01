@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Qyoto {
+namespace QtCore {
     public interface ISmokeObject {
         IntPtr SmokeObject { get; set; }
         void CreateProxy();

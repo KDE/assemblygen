@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Qyoto
+namespace QtCore
 {
 	public class QEventHandler : QObject
 	{

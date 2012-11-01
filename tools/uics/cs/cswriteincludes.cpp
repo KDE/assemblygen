@@ -83,7 +83,8 @@ void WriteIncludes::acceptUI(DomUI *node)
         else if (header.toLower().startsWith("ktexteditor") && !use.contains("KTextEditor"))
             use << "KTextEditor";
     }
-    output << "using Qyoto;\n";
+    output << "using QtCore;\n";
+    output << "using QtGui;\n";
     foreach (QString str, use) {
         output << "using " << str << ";\n";
     }
