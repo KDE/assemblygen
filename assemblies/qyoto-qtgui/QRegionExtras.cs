@@ -1,6 +1,7 @@
-namespace Qyoto {
+namespace QtGui {
 
 	using System;
+	using QtCore;
 
 	public partial class QRegion : Object, IDisposable {
 		public static implicit operator QRegion(QBitmap arg) {

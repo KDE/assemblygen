@@ -71,7 +71,7 @@ Init_qyoto_qtgui()
     init_qtgui_Smoke();
 
     qyoto_install_handlers(qtgui_handlers);
-    QByteArray prefix("Qyoto.");
+    QByteArray prefix("QtGui.");
 
     QHash<int, QByteArray> qtgui_classname;
     for (int i = 1; i <= qtgui_Smoke->numClasses; i++) {

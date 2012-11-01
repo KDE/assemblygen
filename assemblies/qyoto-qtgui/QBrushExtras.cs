@@ -1,6 +1,7 @@
-namespace Qyoto {
+namespace QtGui {
 
 	using System;
+	using QtCore;
 
 	public partial class QBrush : Object, IDisposable {
 		public static implicit operator QBrush(Qt.GlobalColor arg) {

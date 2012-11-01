@@ -63,19 +63,13 @@ public unsafe class GeneratorData
 		CompileUnit = unit;
 		Imports = imports;
 
-		DefaultNamespace = new CodeNamespace(defaultNamespace);
-		DefaultNamespace.Imports.Add(new CodeNamespaceImport("System"));
-		DefaultNamespace.Imports.Add(new CodeNamespaceImport("System.Collections.Generic"));
-		DefaultNamespace.Imports.Add(new CodeNamespaceImport("System.Runtime.InteropServices"));
-		foreach (string import in imports)
-		{
-			DefaultNamespace.Imports.Add(new CodeNamespaceImport(import));
-		}
-
 		References = references;
+		DefaultNamespace = new CodeNamespace(defaultNamespace);
+		this.AddUsings(DefaultNamespace);
+
 		foreach (Assembly assembly in References)
 		{
-			smokeClassAttribute = assembly.GetType("Qyoto.SmokeClass", false);
+			smokeClassAttribute = assembly.GetType("QtCore.SmokeClass", false);
 			if (smokeClassAttribute != null)
 			{
 				smokeClassGetSignature = smokeClassAttribute.GetProperty("Signature").GetGetMethod();
@@ -164,18 +158,29 @@ public unsafe class GeneratorData
 
 		// Define a new namespace.
 		nspace = new CodeNamespace(prefix.Replace("::", "."));
-		nspace.Imports.Add(new CodeNamespaceImport("System"));
-		nspace.Imports.Add(new CodeNamespaceImport("System.Collections.Generic"));
-		nspace.Imports.Add(new CodeNamespaceImport("System.Runtime.InteropServices"));
-		nspace.Imports.Add(new CodeNamespaceImport(DefaultNamespace.Name));
-		foreach (string import in Imports)
-		{
-			nspace.Imports.Add(new CodeNamespaceImport(import));
-		}
+		this.AddUsings(nspace);
 
 		CompileUnit.Namespaces.Add(nspace);
 		NamespaceMap[prefix] = nspace;
 		return nspace.Types;
+	}
+
+	private void AddUsings(CodeNamespace nspace)
+	{
+		nspace.Imports.Add(new CodeNamespaceImport("System"));
+		nspace.Imports.Add(new CodeNamespaceImport("System.Collections.Generic"));
+		nspace.Imports.Add(new CodeNamespaceImport("System.Runtime.InteropServices"));
+		nspace.Imports.Add(new CodeNamespaceImport(this.DefaultNamespace.Name));
+		foreach (string @namespace in from Type type in this.References.SelectMany(r => r.GetTypes())
+		                              where type.Namespace != this.DefaultNamespace.Name && !string.IsNullOrEmpty(type.Namespace)
+		                              select type.Namespace)
+		{
+			nspace.Imports.Add(new CodeNamespaceImport(@namespace));
+		}
+		foreach (string import in this.Imports)
+		{
+			nspace.Imports.Add(new CodeNamespaceImport(import));
+		}
 	}
 
 	public class InternalMemberInfo

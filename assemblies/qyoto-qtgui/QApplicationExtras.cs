@@ -1,9 +1,10 @@
-namespace Qyoto {
+namespace QtGui {
 
 	using System;
 	using System.Reflection;
 	using System.Collections;
 	using System.Text;
+	using QtCore;
 
 	public partial class QApplication : QCoreApplication, IDisposable {
 	

@@ -1230,7 +1230,7 @@ void marshall_QMapintQVariant(Marshall *m) {
 			for (QMap<int, QVariant>::iterator i = map->begin(); i != map->end(); ++i) {
 				void* v = (void*) &(i.value());
 				smokeqyoto_object * vo = alloc_smokeqyoto_object(false, id.smoke, id.index, v);
-				void* value = (*CreateInstance)("Qyoto.QVariant", vo);
+                void* value = (*CreateInstance)("QtCore.QVariant", vo);
 				(*AddIntObjectToDictionary)(dict, i.key(), value);
 				(*FreeGCHandle)(value);
 			}
@@ -1331,7 +1331,7 @@ void marshall_QMapQStringQVariant(Marshall *m) {
 			for (QMap<QString, QVariant>::iterator i = map->begin(); i != map->end(); ++i) {
 				void* v = new QVariant(i.value());
 				smokeqyoto_object * vo = alloc_smokeqyoto_object(false, id.smoke, id.index, v);
-				void* value = (*CreateInstance)("Qyoto.QVariant", vo);
+                void* value = (*CreateInstance)("QtCore.QVariant", vo);
 				void* string = (void*) (*IntPtrFromQString)((void*) &(i.key()));
 				(*AddObjectObjectToDictionary)(	dict,
 								string,

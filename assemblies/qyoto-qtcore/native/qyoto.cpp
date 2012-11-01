@@ -364,7 +364,7 @@ Init_qyoto_qtcore()
     init_qtcore_Smoke();
 
     qyoto_install_handlers(Qyoto_handlers);
-    QByteArray prefix("Qyoto.");
+    QByteArray prefix("QtCore.");
 
     QHash<int, QByteArray> qtcore_classname;
     for (int i = 1; i <= qtcore_Smoke->numClasses; i++) {

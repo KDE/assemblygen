@@ -46,7 +46,7 @@ void Init_qtwebkit()
 {
 	init_qtwebkit_Smoke();
 
-	QByteArray prefix("Qyoto.");
+    QByteArray prefix("QtWebkit.");
 
 	static QHash<int, QByteArray> classNames;
 	for (int i = 1; i <= qtwebkit_Smoke->numClasses; i++) {

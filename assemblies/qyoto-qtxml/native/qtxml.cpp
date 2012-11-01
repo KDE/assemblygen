@@ -39,7 +39,7 @@ Init_qyoto_qtxml()
 {
     init_qtxml_Smoke();
 
-    QByteArray prefix("Qyoto.");
+    QByteArray prefix("QtXml.");
 
     QHash<int, QByteArray> qtxml_classname;
     for (int i = 1; i <= qtxml_Smoke->numClasses; i++) {

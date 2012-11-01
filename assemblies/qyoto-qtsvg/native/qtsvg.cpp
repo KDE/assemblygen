@@ -39,7 +39,7 @@ Init_qyoto_qtsvg()
 {
     init_qtsvg_Smoke();
 
-    QByteArray prefix("Qyoto.");
+    QByteArray prefix("QtSvg.");
 
     QHash<int, QByteArray> qtsvg_classname;
     for (int i = 1; i <= qtsvg_Smoke->numClasses; i++) {

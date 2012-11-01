@@ -39,7 +39,7 @@ Init_qyoto_qtxmlpatterns()
 {
     init_qtxmlpatterns_Smoke();
 
-    QByteArray prefix("Qyoto.");
+    QByteArray prefix("QtXmlpatterns.");
 
     QHash<int, QByteArray> qtxmlpatterns_classname;
     for (int i = 1; i <= qtxmlpatterns_Smoke->numClasses; i++) {

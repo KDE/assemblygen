@@ -1,4 +1,4 @@
-namespace Qyoto {
+namespace QtCore {
 	using System;
 	public partial class QByteArray : Object, IDisposable {
 		public QByteArray(byte[] array) : this(array.Length, (sbyte) '\0') {

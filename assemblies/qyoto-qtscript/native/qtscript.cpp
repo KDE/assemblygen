@@ -40,7 +40,7 @@ Init_qyoto_qtscript()
 {
     init_qtscript_Smoke();
 
-    QByteArray prefix("Qyoto.");
+    QByteArray prefix("QtScript.");
 
     QHash<int, QByteArray> qtscript_classname;
     for (int i = 1; i <= qtscript_Smoke->numClasses; i++) {
