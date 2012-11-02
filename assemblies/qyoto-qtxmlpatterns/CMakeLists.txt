@@ -5,7 +5,7 @@ set (qyoto_qtxmlpatterns_SRC
 GET_LIBRARY_OUTPUT_DIR(library_target_dir)
 set (ASSEMBLYGEN_ARGS
 	${LIBRARY_OUTPUT_PATH}/assemblygen.exe
-	-unsafe -out:qyoto-qtxmlpatterns.dll -r:qyoto-qtcore.dll -r:qyoto-qtnetwork.dll
+	-unsafe -out:qyoto-qtxmlpatterns.dll -r:qyoto-qtcore.dll -r:qyoto-qtnetwork.dll -namespace:QtXmlPatterns
 	-plugins:QyotoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
 	-code-file:qyoto-qtxmlpatterns.cs -docs:"${DOCUMENTATION_PATH}" \"-keyfile:${KEYFILE}\"
 	${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtxmlpatterns${CMAKE_SHARED_LIBRARY_SUFFIX}

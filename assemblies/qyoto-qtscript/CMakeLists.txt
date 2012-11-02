@@ -5,7 +5,7 @@ set (qyoto_qtscript_SRC
 GET_LIBRARY_OUTPUT_DIR(library_target_dir)
 set (ASSEMBLYGEN_ARGS
 	${LIBRARY_OUTPUT_PATH}/assemblygen.exe
-	-unsafe -out:qyoto-qtscript.dll -r:qyoto-qtcore.dll
+	-unsafe -out:qyoto-qtscript.dll -r:qyoto-qtcore.dll -namespace:QtScript
 	-plugins:QyotoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
 	-code-file:qyoto-qtscript.cs -docs:"${DOCUMENTATION_PATH}" \"-keyfile:${KEYFILE}\"
 	${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtscript${CMAKE_SHARED_LIBRARY_SUFFIX}

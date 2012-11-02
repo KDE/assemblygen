@@ -5,6 +5,7 @@ set (qyoto_qtwebkit_SRC
 GET_LIBRARY_OUTPUT_DIR(library_target_dir)
 set (ASSEMBLYGEN_ARGS
 	${LIBRARY_OUTPUT_PATH}/assemblygen.exe
+	 -namespace:QtWebKit
 	-unsafe -out:qyoto-qtwebkit.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:qyoto-qtnetwork.dll -r:qyoto-qtscript.dll
 	-plugins:QyotoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
 	-code-file:qyoto-qtwebkit.cs -docs:"${DOCUMENTATION_PATH}" \"-keyfile:${KEYFILE}\"

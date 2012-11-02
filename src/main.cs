@@ -95,7 +95,7 @@ Any options not listed here are directly passed to the compiler (leading dashes 
 		string assemblyFile = "out.dll";
 		int warnLevel = 0;
 		string smokeLib = null;
-		string defaultNamespace = string.Empty;
+		string defaultNamespace = "Qyoto";
 		string globalClass = "Global";
 		string destination = string.Empty;
 		string docs = string.Empty;
@@ -220,16 +220,6 @@ Any options not listed here are directly passed to the compiler (leading dashes 
 		if (smoke == (Smoke*) 0)
 		{
 			return SmokeLoadingFailure;
-		}
-		if (string.IsNullOrEmpty(defaultNamespace))
-		{
-			StringBuilder defaultNamespaceBuilder = new StringBuilder(smoke->ToString());
-			defaultNamespaceBuilder[0] = char.ToUpperInvariant(defaultNamespaceBuilder[0]);
-			if (defaultNamespaceBuilder.ToString().StartsWith("Qt"))
-			{
-				defaultNamespaceBuilder[2] = char.ToUpperInvariant(defaultNamespaceBuilder[2]);
-			}
-			defaultNamespace = defaultNamespaceBuilder.ToString();
 		}
 
 		List<ICustomTranslator> customTranslators = (from plugin in plugins

@@ -41,7 +41,7 @@ Init_qyoto_qtuitools()
 {
     init_qtuitools_Smoke();
 
-    QByteArray prefix("QtUitools.");
+    QByteArray prefix("QtUiTools.");
 
     QHash<int, QByteArray> qtuitools_classname;
     for (int i = 1; i <= qtuitools_Smoke->numClasses; i++) {

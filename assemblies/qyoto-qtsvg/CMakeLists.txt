@@ -5,7 +5,7 @@ set (qyoto_qtsvg_SRC
 GET_LIBRARY_OUTPUT_DIR(library_target_dir)
 set (ASSEMBLYGEN_ARGS
 	${LIBRARY_OUTPUT_PATH}/assemblygen.exe
-	-unsafe -out:qyoto-qtsvg.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll
+	-unsafe -out:qyoto-qtsvg.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -namespace:QtSvg
 	-plugins:QyotoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
 	-code-file:qyoto-qtsvg.cs -docs:"${DOCUMENTATION_PATH}" \"-keyfile:${KEYFILE}\"
 	${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtsvg${CMAKE_SHARED_LIBRARY_SUFFIX}

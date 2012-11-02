@@ -39,7 +39,7 @@ Init_qyoto_qtopengl()
 {
     init_qtopengl_Smoke();
 
-    QByteArray prefix("QtOpengl.");
+    QByteArray prefix("QtOpenGL.");
 
     QHash<int, QByteArray> qtopengl_classname;
     for (int i = 1; i <= qtopengl_Smoke->numClasses; i++) {

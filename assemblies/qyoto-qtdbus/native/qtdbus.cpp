@@ -42,7 +42,7 @@ Init_qyoto_qtdbus()
     init_qtdbus_Smoke();
 
     qyoto_install_handlers(Qyoto_qtdbus_handlers);
-    QByteArray prefix("Qyoto.");
+    QByteArray prefix("QtDBus.");
 
     QHash<int, QByteArray> qtdbus_classname;
     for (int i = 1; i <= qtdbus_Smoke->numClasses; i++) {

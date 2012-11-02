@@ -4,7 +4,7 @@ set (qyoto_phonon_SRC
 
 GET_LIBRARY_OUTPUT_DIR(library_target_dir)
 set (ASSEMBLYGEN_ARGS
-   ${LIBRARY_OUTPUT_PATH}/assemblygen.exe -global-class:PhononGlobal
+   ${LIBRARY_OUTPUT_PATH}/assemblygen.exe -global-class:PhononGlobal -namespace:Phonon
    -unsafe -out:qyoto-phonon.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll
    -plugins:QyotoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
    -code-file:qyoto-phonon.cs -docs:"${DOCUMENTATION_PATH}" \"-keyfile:${KEYFILE}\"

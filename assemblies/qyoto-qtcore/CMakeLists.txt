@@ -32,7 +32,7 @@ GET_LIBRARY_OUTPUT_DIR(library_target_dir)
 
 set (ASSEMBLYGEN_ARGS
 	${LIBRARY_OUTPUT_PATH}/assemblygen.exe
-	-unsafe -out:qyoto-qtcore.dll -global-class:Qt
+	-unsafe -out:qyoto-qtcore.dll -global-class:Qt -namespace:QtCore
 	-plugins:QyotoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
 	-code-file:qyoto-qtcore.cs -docs:"${DOCUMENTATION_PATH}" 
 	\"-keyfile:${KEYFILE}\"
