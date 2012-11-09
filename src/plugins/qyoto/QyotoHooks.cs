@@ -305,30 +305,41 @@ public unsafe class QyotoHooks : IHookProvider
 		string htmlDocs = Path.Combine(Data.Docs, "html");
 		if (Directory.Exists(htmlDocs))
 		{
-			foreach (KeyValuePair<IntPtr, CodeTypeDeclaration> codeTypeDeclaration in Data.SmokeTypeMap)
+			foreach (CodeTypeDeclaration type in this.Data.SmokeTypeMap.Select(codeTypeDeclaration => codeTypeDeclaration.Value))
 			{
-				CodeTypeDeclaration type = codeTypeDeclaration.Value;
-				string classDocs = Path.Combine(htmlDocs, type.Name.ToLowerInvariant() + ".html");
-				if (File.Exists(classDocs))
+				foreach (CodeTypeDeclaration nestedType in type.Members.OfType<CodeTypeDeclaration>())
 				{
-					string docs = StripTags(File.ReadAllText(classDocs));
-					Match match = Regex.Match(docs, "(?<class>The " + type.Name + @".+?)More\.\.\..*?\r?\n" +
-						@"Detailed Description\s+(?<detailed>.*?)(\r?\n){3,}((\w+ )*\w+ Documentation\r?\n(?<members>.+))", RegexOptions.Singleline);
-					if (match.Success)
-					{
-						type.Comments.Add(new CodeCommentStatement("<summary>", true));
-						type.Comments.Add(new CodeCommentStatement(HttpEncoder.HtmlEncode(match.Groups["class"].Value), true));
-						type.Comments.Add(new CodeCommentStatement("</summary>", true));
-						type.Comments.Add(new CodeCommentStatement("<remarks>", true));
-						type.Comments.Add(new CodeCommentStatement(HttpEncoder.HtmlEncode(match.Groups["detailed"].Value.Replace("\n/", "\n /")), true));
-						type.Comments.Add(new CodeCommentStatement("</remarks>", true));
-						this.memberDocumentation[type] = match.Groups["members"].Value;
-					}
+					this.GetClassDocs(nestedType, string.Format("{0}::{1}", type.Name, nestedType.Name),
+					                  string.Format("{0}-{1}", type.Name, nestedType.Name), htmlDocs);
 				}
+				this.GetClassDocs(type, type.Name, type.Name, htmlDocs);
 			}
 		}
 		PropertyGenerator pg = new PropertyGenerator(Data, Translator, this.memberDocumentation);
 		pg.Run();
+	}
+
+	private void GetClassDocs(CodeTypeDeclaration type, string typeName, string fileName, string htmlDocs)
+	{
+		string classDocs = Path.Combine(htmlDocs, fileName.ToLowerInvariant() + ".html");
+		if (File.Exists(classDocs))
+		{
+			string docs = StripTags(File.ReadAllText(classDocs));
+			Match match = Regex.Match(docs, string.Format(@"(?<class>((The {0})|(This class)).+?)More\.\.\..*?\r?\n" + 
+									  @"Detailed Description\s+(?<detailed>.*?)(\r?\n){{3,}}((\w+ )*\w+ Documentation\r?\n(?<members>.+))", typeName),
+			                          RegexOptions.Singleline);
+			if (match.Success)
+			{
+				type.Comments.Add(new CodeCommentStatement("<summary>", true));
+				type.Comments.Add(new CodeCommentStatement(HttpEncoder.HtmlEncode(match.Groups["class"].Value), true));
+				type.Comments.Add(new CodeCommentStatement("</summary>", true));
+				type.Comments.Add(new CodeCommentStatement("<remarks>", true));
+				type.Comments.Add(
+					new CodeCommentStatement(HttpEncoder.HtmlEncode(match.Groups["detailed"].Value.Replace("\n/", "\n /")), true));
+				type.Comments.Add(new CodeCommentStatement("</remarks>", true));
+				this.memberDocumentation[type] = match.Groups["members"].Value;
+			}
+		}
 	}
 
 	void PostClassesHook()
