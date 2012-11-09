@@ -25,7 +25,9 @@ using System.Collections.Generic;
 using System.CodeDom;
 using System.Linq;
 
-internal unsafe class AttributeGenerator
+public delegate void AttributePropertyHook(CodeTypeMember cmm, CodeTypeDeclaration typeDecl);
+
+public unsafe class AttributeGenerator
 {
 	private class Attribute
 	{
@@ -33,6 +35,8 @@ internal unsafe class AttributeGenerator
 		public Smoke.Method* GetMethod = (Smoke.Method*) 0;
 		public Smoke.Method* SetMethod = (Smoke.Method*) 0;
 	}
+
+	public static event AttributePropertyHook PostAttributeProperty;
 
 	private readonly Dictionary<string, Attribute> attributes = new Dictionary<string, Attribute>();
 
@@ -137,6 +141,10 @@ internal unsafe class AttributeGenerator
 				prop.Attributes |= MemberAttributes.Static;
 
 			ret.Add(prop);
+			if (PostAttributeProperty != null)
+			{
+				PostAttributeProperty(prop, type);
+			}
 		}
 		return ret;
 	}

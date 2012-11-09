@@ -64,6 +64,7 @@ public unsafe class QyotoHooks : IHookProvider
 		ClassesGenerator.PostClassesHook += PostClassesHook;
 		EnumGenerator.PostEnumMemberHook += this.PostEnumMemberHook;
 		MethodsGenerator.PostMethodBodyHooks += this.PostMethodBodyHooks;
+		AttributeGenerator.PostAttributeProperty += this.PostAttributePropertyHook;
 		Console.WriteLine("Registered Qyoto hooks.");
 	}
 
@@ -388,6 +389,22 @@ public unsafe class QyotoHooks : IHookProvider
 	{
 		this.CommentMember(smoke, smokeMethod, cmm, type);
 		GenerateEvent(cmm, cmm.Name, type, true);
+	}
+
+	private void PostAttributePropertyHook(CodeTypeMember cmm, CodeTypeDeclaration type)
+	{
+		if (this.memberDocumentation.ContainsKey(type))
+		{
+			string docs = this.memberDocumentation[type];
+			string typeName = Regex.Escape(type.Name);
+			string originalName = char.ToLowerInvariant(cmm.Name[0]) + cmm.Name.Substring(1);
+			const string memberDoc = @"{0}::{1}\r?\n\W*(?<docs>.*?)(\r?\n){{3}}";
+			Match match = Regex.Match(docs, string.Format(memberDoc, typeName, originalName), RegexOptions.Singleline);
+			if (match.Success)
+			{
+				Translator.FormatComment(match.Groups["docs"].Value, cmm);
+			}
+		}
 	}
 
 	private void CommentMember(Smoke* smoke, Smoke.Method* smokeMethod, CodeTypeMember cmm, CodeTypeDeclaration type)
