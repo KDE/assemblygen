@@ -301,6 +301,11 @@ public unsafe class MethodsGenerator
 				else
 				{
 					arg = methodArgs[count++ - 1];
+					int nameEnd = arg.IndexOf(' ');
+					if (nameEnd > 0)
+					{
+						arg = arg.Substring(0, nameEnd);
+					}
 				}
 				CodeParameterDeclarationExpression exp =
 					new CodeParameterDeclarationExpression(translator.CppToCSharp(smoke->types + *typeIndex, out isRef), arg);
