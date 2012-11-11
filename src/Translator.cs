@@ -235,6 +235,31 @@ public unsafe class Translator
 		if (typeId == Smoke.TypeId.t_uint)
 		{
 			string typeName = ByteArrayManager.GetString(type->name);
+			// HACK: some enums - only as typedef flags if used in signals/slots; otherwise cannot be found because meta object only has typedef in method signature; remove when fixed in SMOKE
+			switch (typeName)
+			{
+				case "QGraphicsScene::SceneLayers":
+					typeName = "QFlags<QGraphicsScene::SceneLayer>";
+					break;
+				case "Qt::DockWidgetAreas":
+					typeName = "QFlags<Qt::DockWidgetArea>";
+					break;
+				case "QGraphicsBlurEffect::BlurHints":
+					typeName = "QFlags<QGraphicsBlurEffect::BlurHint>";
+					break;
+				case "QItemSelectionModel::SelectionFlags":
+					typeName = "QFlags<QItemSelectionModel::SelectionFlag>";
+					break;
+				case "Qt::Alignment":
+					typeName = "QFlags<Qt::AlignmentFlag>";
+					break;
+				case "Qt::ToolBarAreas":
+					typeName = "QFlags<Qt::ToolBarArea>";
+					break;
+				case "QIODevice::OpenMode":
+					typeName = "QFlags<QIODevice::OpenModeFlag>";
+					break;
+			}
 			if (typeName.StartsWith("QFlags<") &&
 			    // HACK: qdrawutil.h says, DrawingHint is for internal use; nonetheless, SMOKE generates an overload using it; ignoring
 			    typeName != "QFlags<QDrawBorderPixmap::DrawingHint>")
