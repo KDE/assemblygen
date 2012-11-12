@@ -456,7 +456,7 @@ public unsafe class Translator
 	public static void FormatComment(string docs, CodeTypeMember cmp)
 	{
 		cmp.Comments.Add(new CodeCommentStatement("<summary>", true));
-		foreach (string line in HttpEncoder.HtmlEncode(docs).Split(new[] { Environment.NewLine }, StringSplitOptions.None))
+		foreach (string line in HtmlEncoder.HtmlEncode(docs).Split(new[] { Environment.NewLine }, StringSplitOptions.None))
 		{
 			cmp.Comments.Add(new CodeCommentStatement(string.Format("<para>{0}</para>", line), true));
 		}

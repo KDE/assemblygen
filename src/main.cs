@@ -247,7 +247,7 @@ Any options not listed here are directly passed to the compiler (leading dashes 
 		DestroySmoke((IntPtr) smoke);
 
 		Dictionary<string, string> providerOptions = new Dictionary<string, string>();
-		providerOptions.Add("CompilerVersion", "v3.5");
+		providerOptions.Add("CompilerVersion", "v4.0");
 		CodeDomProvider csharp = new CSharpCodeProvider(providerOptions);
 		if (codeFile != string.Empty)
 		{

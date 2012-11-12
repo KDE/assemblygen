@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>assemblygen</RootNamespace>
     <AssemblyName>assemblygen</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
@@ -50,7 +50,7 @@
     <Compile Include="main.cs" />
     <Compile Include="MethodsGenerator.cs" />
     <Compile Include="PluginInterfaces.cs" />
-    <Compile Include="HttpEncoder.cs" />
+    <Compile Include="HtmlEncoder.cs" />
     <Compile Include="Smoke.cs" />
     <Compile Include="SmokeMethodEqualityComparer.cs" />
     <Compile Include="SmokeMethods.cs" />

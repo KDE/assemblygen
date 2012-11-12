@@ -38,11 +38,11 @@ using System.Text;
 
 namespace System.Web.Util
 {
-	public class HttpEncoder
+	public class HtmlEncoder
 	{
 		static SortedDictionary <string, char> entities;
 
-		static HttpEncoder ()
+		static HtmlEncoder ()
 		{
 			InitEntities();
 		}

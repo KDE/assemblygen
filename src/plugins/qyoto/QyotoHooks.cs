@@ -331,11 +331,11 @@ public unsafe class QyotoHooks : IHookProvider
 			if (match.Success)
 			{
 				type.Comments.Add(new CodeCommentStatement("<summary>", true));
-				type.Comments.Add(new CodeCommentStatement(HttpEncoder.HtmlEncode(match.Groups["class"].Value), true));
+				type.Comments.Add(new CodeCommentStatement(HtmlEncoder.HtmlEncode(match.Groups["class"].Value), true));
 				type.Comments.Add(new CodeCommentStatement("</summary>", true));
 				type.Comments.Add(new CodeCommentStatement("<remarks>", true));
 				type.Comments.Add(
-					new CodeCommentStatement(HttpEncoder.HtmlEncode(match.Groups["detailed"].Value.Replace("\n/", "\n /")), true));
+					new CodeCommentStatement(HtmlEncoder.HtmlEncode(match.Groups["detailed"].Value.Replace("\n/", "\n /")), true));
 				type.Comments.Add(new CodeCommentStatement("</remarks>", true));
 				this.memberDocumentation[type] = match.Groups["members"].Value;
 			}
@@ -488,7 +488,7 @@ public unsafe class QyotoHooks : IHookProvider
 				arrayIndex++;
 			}
 		}
-		return HttpEncoder.HtmlDecode(new string(array, 0, arrayIndex));
+		return HtmlEncoder.HtmlDecode(new string(array, 0, arrayIndex));
 	}
 
 	private void GenerateEvent(CodeMemberMethod cmm, string name, CodeTypeDeclaration type, bool isVirtual)
