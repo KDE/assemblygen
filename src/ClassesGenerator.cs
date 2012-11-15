@@ -315,8 +315,7 @@ public unsafe class ClassesGenerator
 	}
 
 	private void GenerateInheritedMethods(Smoke.Class* klass, MethodsGenerator methgen, AttributeGenerator attrgen,
-	                                      List<Smoke.ModuleIndex> alreadyImplemented,
-	                                      ICollection<CodeMemberMethod> setters, ICollection<CodeMemberMethod> nonSetters)
+	                                      List<Smoke.ModuleIndex> alreadyImplemented)
 	{
 		// Contains inherited methods that have to be implemented by the current class.
 		// We use our custom comparer, so we don't end up with the same method multiple times.
@@ -361,10 +360,8 @@ public unsafe class ClassesGenerator
 				continue;
 			}
 
-			CodeMemberMethod method = methgen.GenerateMethod(pair.Key.smoke, meth, pair.Value,
-			                                                 translator.CppToCSharp(
-				                                                 ByteArrayManager.GetString(ifaceKlass->className)));
-			MethodsGenerator.DistributeMethod(method, setters, nonSetters);
+			CodeTypeReference type = translator.CppToCSharp(ByteArrayManager.GetString(ifaceKlass->className));
+			methgen.GenerateMethod(pair.Key.smoke, meth, pair.Value, type);
 		}
 	}
 
@@ -378,8 +375,6 @@ public unsafe class ClassesGenerator
 				continue;
 			}
 			CodeTypeDeclaration type = data.SmokeTypeMap[(IntPtr) klass];
-			List<CodeMemberMethod> setters = new List<CodeMemberMethod>();
-			List<CodeMemberMethod> nonSetters = new List<CodeMemberMethod>();
 
 			CodeTypeDeclaration implType;
 			if (!data.InternalTypeMap.TryGetValue(type, out implType))
@@ -392,10 +387,9 @@ public unsafe class ClassesGenerator
 
 			foreach (KeyValuePair<Smoke.ModuleIndex, string> pair in Util.GetAbstractMethods(data.Smoke, i))
 			{
-				MethodsGenerator.DistributeMethod(methgen.GenerateMethod(pair.Key.smoke, pair.Key.index, pair.Value), setters,
-				                                  nonSetters);
+				methgen.GenerateMethod(pair.Key.smoke, pair.Key.index, pair.Value);
 			}
-			methgen.GenerateProperties(setters, nonSetters);
+			methgen.GenerateProperties();
 		}
 	}
 
@@ -411,8 +405,8 @@ public unsafe class ClassesGenerator
 		AttributeGenerator attrgen = null;
 		CodeTypeDeclaration type = null;
 		List<Smoke.ModuleIndex> alreadyImplemented = new List<Smoke.ModuleIndex>();
-		List<CodeMemberMethod> setters = new List<CodeMemberMethod>();
-		List<CodeMemberMethod> nonSetters = new List<CodeMemberMethod>();
+
+		this.FillEnums();
 
 		for (short i = 1; i < data.Smoke->numMethodMaps; i++)
 		{
@@ -424,7 +418,7 @@ public unsafe class ClassesGenerator
 				if (attrgen != null)
 				{
 					// generate inherited methods
-					GenerateInheritedMethods(klass, methgen, attrgen, alreadyImplemented, setters, nonSetters);
+					this.GenerateInheritedMethods(klass, methgen, attrgen, alreadyImplemented);
 
 					// generate all scheduled attributes
 					attrgen.Run();
@@ -433,7 +427,7 @@ public unsafe class ClassesGenerator
 					{
 						PostMembersHooks(data.Smoke, klass, type);
 					}
-					methgen.GenerateProperties(setters, nonSetters);
+					methgen.GenerateProperties();
 				}
 
 				currentClassId = map->classId;
@@ -441,8 +435,6 @@ public unsafe class ClassesGenerator
 				type = data.SmokeTypeMap[(IntPtr) klass];
 
 				alreadyImplemented.Clear();
-				setters.Clear();
-				nonSetters.Clear();
 				attrgen = new AttributeGenerator(data, translator, type);
 				methgen = new MethodsGenerator(data, translator, type, klass);
 			}
@@ -453,7 +445,6 @@ public unsafe class ClassesGenerator
 				Smoke.Method* meth = data.Smoke->methods + map->method;
 				if ((meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0)
 				{
-					eg.DefineMember(meth);
 					continue;
 				}
 
@@ -469,7 +460,7 @@ public unsafe class ClassesGenerator
 					continue;
 				}
 
-				MethodsGenerator.DistributeMethod(methgen.GenerateMethod(map->method, mungedName), setters, nonSetters);
+				methgen.GenerateMethod(map->method, mungedName);
 				alreadyImplemented.Add(new Smoke.ModuleIndex(data.Smoke, map->method));
 			}
 			else if (map->method < 0)
@@ -479,7 +470,6 @@ public unsafe class ClassesGenerator
 					Smoke.Method* meth = data.Smoke->methods + *overload;
 					if ((meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0)
 					{
-						eg.DefineMember(meth);
 						continue;
 					}
 
@@ -489,7 +479,7 @@ public unsafe class ClassesGenerator
 					{
 						continue;
 					}
-					else if ((meth->flags & (ushort) Smoke.MethodFlags.mf_attribute) > 0)
+					if ((meth->flags & (ushort) Smoke.MethodFlags.mf_attribute) > 0)
 					{
 						attrgen.ScheduleAttributeAccessor(meth);
 						continue;
@@ -503,7 +493,7 @@ public unsafe class ClassesGenerator
 							nextDiffersByConst = true;
 					}
 
-					MethodsGenerator.DistributeMethod(methgen.GenerateMethod(*overload, mungedName), setters, nonSetters);
+					methgen.GenerateMethod(*overload, mungedName);
 					alreadyImplemented.Add(new Smoke.ModuleIndex(data.Smoke, *overload));
 					if (nextDiffersByConst)
 						overload++;
@@ -514,14 +504,52 @@ public unsafe class ClassesGenerator
 		// Generate the last scheduled attributes
 		attrgen.Run();
 		// Generate remaining inherited methods
-		GenerateInheritedMethods(klass, methgen, attrgen, alreadyImplemented, setters, nonSetters);
+		this.GenerateInheritedMethods(klass, methgen, attrgen, alreadyImplemented);
 
 		if (PostMembersHooks != null)
 		{
 			PostMembersHooks(data.Smoke, klass, type);
 		}
-		methgen.GenerateProperties(setters, nonSetters);
+		methgen.GenerateProperties();
 		AddMissingOperators();
+	}
+
+	private void FillEnums()
+	{
+		for (short i = 1; i < this.data.Smoke->numMethodMaps; i++)
+		{
+			Smoke.MethodMap* map = this.data.Smoke->methodMaps + i;
+			if (map->method > 0)
+			{
+				Smoke.Method* meth = this.data.Smoke->methods + map->method;
+				if ((meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0)
+				{
+					this.eg.DefineMember(meth);
+				}
+			}
+			else if (map->method < 0)
+			{
+				for (short* overload = this.data.Smoke->ambiguousMethodList + (-map->method); *overload > 0; overload++)
+				{
+					Smoke.Method* meth = this.data.Smoke->methods + *overload;
+					if ((meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0)
+					{
+						this.eg.DefineMember(meth);
+						continue;
+					}
+
+					// if the methods differ only by constness, we will generate special code
+					bool nextDiffersByConst = false;
+					if (*(overload + 1) > 0)
+					{
+						if (SmokeMethodEqualityComparer.EqualExceptConstness(meth, this.data.Smoke->methods + *(overload + 1)))
+							nextDiffersByConst = true;
+					}
+					if (nextDiffersByConst)
+						overload++;
+				}
+			}
+		}
 	}
 
 	private delegate void AddComplementingOperatorsFn(

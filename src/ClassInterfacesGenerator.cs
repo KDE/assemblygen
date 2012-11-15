@@ -128,9 +128,7 @@ public unsafe class ClassInterfacesGenerator
 			mg = new MethodsGenerator(data, translator, ifaceDecl, klass);
 			ag = new AttributeGenerator(data, translator, ifaceDecl);
 
-			List<CodeMemberMethod> setters = new List<CodeMemberMethod>();
-			List<CodeMemberMethod> nonSetters = new List<CodeMemberMethod>();
-
+			List<IntPtr> methods = new List<IntPtr>();
 			///TODO: replace this algorithm, it's highly inefficient
 			for (short i = 0; i <= data.Smoke->numMethods && data.Smoke->methods[i].classId <= idx; i++)
 			{
@@ -157,15 +155,18 @@ public unsafe class ClassInterfacesGenerator
 					continue;
 				}
 
-				CodeMemberMethod cmm = mg.GenerateBasicMethodDefinition(data.Smoke, meth);
+				methods.Insert(0, (IntPtr) meth);
+			}
+			foreach (Smoke.Method* method in methods)
+			{
+				CodeMemberMethod cmm = mg.GenerateBasicMethodDefinition(data.Smoke, method);
 				if (cmm != null && !ifaceDecl.HasMethod(cmm))
 				{
 					ifaceDecl.Members.Add(cmm);
-					MethodsGenerator.DistributeMethod(cmm, setters, nonSetters);
 				}
 			}
 
-			mg.GenerateProperties(setters, nonSetters);
+			mg.GenerateProperties();
 
 			foreach (CodeMemberProperty prop in ag.GenerateBasicAttributeDefinitions())
 			{
