@@ -19,6 +19,7 @@
 
 using System;
 using System.CodeDom.Compiler;
+using System.Collections;
 using System.IO;
 using System.Reflection;
 using System.Diagnostics;
@@ -37,11 +38,13 @@ public unsafe class MethodsGenerator
 	private readonly Translator translator;
 	private readonly CodeTypeDeclaration type;
 	private readonly Smoke.Class* smokeClass;
+	private readonly List<CodeMemberMethod> setters = new List<CodeMemberMethod>();
+	private readonly List<CodeMemberMethod> nonSetters = new List<CodeMemberMethod>();
 
 	private static readonly Regex qMethodExp = new Regex("^[a-z][A-Z]");
 
-	private static readonly List<string> binaryOperators = new List<string>()
-	                                                       	{
+	private static readonly List<string> binaryOperators = new List<string>
+		{
 	                                                       		"!=",
 	                                                       		"==",
 	                                                       		"%",
@@ -58,8 +61,8 @@ public unsafe class MethodsGenerator
 	                                                       		"|"
 	                                                       	};
 
-	private static readonly List<string> unaryOperators = new List<string>()
-	                                                      	{
+	private static readonly List<string> unaryOperators = new List<string>
+		{
 	                                                      		"!",
 	                                                      		"~",
 	                                                      		"+",
@@ -93,6 +96,7 @@ public unsafe class MethodsGenerator
 	}
 
 	private bool m_internalImplementation;
+	private static readonly CodeDomProvider provider = new CSharpCodeProvider();
 
 	public bool InternalImplementation
 	{
@@ -100,10 +104,25 @@ public unsafe class MethodsGenerator
 		set { m_internalImplementation = value; }
 	}
 
+	public List<CodeMemberMethod> Setters
+	{
+		get { return this.setters; }
+	}
+
+	public List<CodeMemberMethod> NonSetters
+	{
+		get { return this.nonSetters; }
+	}
+
+	public static CodeDomProvider Provider
+	{
+		get { return provider; }
+	}
+
 	public static event MethodHook PreMethodBodyHooks;
 	public static event MethodHook PostMethodBodyHooks;
 
-	private bool MethodOverrides(Smoke* smoke, Smoke.Method* method, out MemberAttributes access, out bool foundInInterface)
+	private static bool MethodOverrides(Smoke* smoke, Smoke.Method* method, out MemberAttributes access, out bool foundInInterface)
 	{
 		access = MemberAttributes.Public;
 		foundInInterface = false;
@@ -171,18 +190,13 @@ public unsafe class MethodsGenerator
 
 	public CodeMemberMethod GenerateBasicMethodDefinition(Smoke* smoke, Smoke.Method* method)
 	{
-		return GenerateBasicMethodDefinition(smoke, method, (CodeTypeReference) null);
+		return GenerateBasicMethodDefinition(smoke, method, null);
 	}
 
 	public CodeMemberMethod GenerateBasicMethodDefinition(Smoke* smoke, Smoke.Method* method, CodeTypeReference iface)
 	{
 		string cppSignature = smoke->GetMethodSignature(method);
 		return GenerateBasicMethodDefinition(smoke, method, cppSignature, iface);
-	}
-
-	public CodeMemberMethod GenerateBasicMethodDefinition(Smoke* smoke, Smoke.Method* method, string cppSignature)
-	{
-		return GenerateBasicMethodDefinition(smoke, method, cppSignature, null);
 	}
 
 	public CodeMemberMethod GenerateBasicMethodDefinition(Smoke* smoke, Smoke.Method* method, string cppSignature,
@@ -196,7 +210,7 @@ public unsafe class MethodsGenerator
 			return null;
 		}
 
-		List<CodeParameterDeclarationExpression> args = new List<CodeParameterDeclarationExpression>();
+		CodeParameterDeclarationExpressionCollection args = new CodeParameterDeclarationExpressionCollection();
 		int count = 1;
 		bool isRef;
 
@@ -293,27 +307,7 @@ public unsafe class MethodsGenerator
 		{
 			try
 			{
-				string arg;
-				if (methodArgs == null)
-				{
-					arg = "arg" + count++;
-				}
-				else
-				{
-					arg = methodArgs[count++ - 1];
-					int nameEnd = arg.IndexOf(' ');
-					if (nameEnd > 0)
-					{
-						arg = arg.Substring(0, nameEnd);
-					}
-				}
-				CodeParameterDeclarationExpression exp =
-					new CodeParameterDeclarationExpression(translator.CppToCSharp(smoke->types + *typeIndex, out isRef), arg);
-				if (isRef)
-				{
-					exp.Direction = FieldDirection.Ref;
-				}
-				args.Add(exp);
+				args.Add(this.GetArgument(smoke, typeIndex, methodArgs, args, ref count));
 			}
 			catch (NotSupportedException)
 			{
@@ -321,9 +315,10 @@ public unsafe class MethodsGenerator
 				return null;
 			}
 		}
+		this.RemovePreviousOverload(args, char.ToUpper(methName[0]) + methName.Substring(1));
 
 		// translate return type
-		CodeTypeReference returnType = null;
+		CodeTypeReference returnType;
 		try
 		{
 			returnType = translator.CppToCSharp(smoke->types + method->ret, out isRef);
@@ -338,13 +333,13 @@ public unsafe class MethodsGenerator
 		if ((method->flags & (uint) Smoke.MethodFlags.mf_ctor) > 0)
 		{
 			cmm = new CodeConstructor();
-			cmm.Attributes = (MemberAttributes) 0; // initialize to 0 so we can do |=
+			cmm.Attributes = 0; // initialize to 0 so we can do |=
 			((CodeConstructor) cmm).ChainedConstructorArgs.Add(new CodeSnippetExpression("(System.Type) null"));
 		}
 		else
 		{
 			cmm = new CodeMemberMethod();
-			cmm.Attributes = (MemberAttributes) 0; // initialize to 0 so we can do |=
+			cmm.Attributes = 0; // initialize to 0 so we can do |=
 
 			string csName = methName;
 			if (!isOperator && methName != "finalize" && !qMethodExp.IsMatch(methName))
@@ -439,7 +434,7 @@ public unsafe class MethodsGenerator
 				{
 					// virtual/final
 					MemberAttributes access;
-					bool foundInInterface = false;
+					bool foundInInterface;
 					bool isOverride = MethodOverrides(smoke, method, out access, out foundInInterface);
 
 					// methods that have to be implemented from interfaces can't override anything
@@ -492,12 +487,194 @@ public unsafe class MethodsGenerator
 		{
 			cmm.Parameters.Add(exp);
 		}
+		this.DistributeMethod(cmm);
 		return cmm;
 	}
 
-	public CodeMemberMethod GenerateMethod(short idx, string mungedName, CodeTypeReference iface)
+	private class ParameterTypeComparer : IEqualityComparer<CodeParameterDeclarationExpression>
 	{
-		return GenerateMethod(data.Smoke, idx, mungedName, iface);
+		public bool Equals(CodeParameterDeclarationExpression x, CodeParameterDeclarationExpression y)
+		{
+			return x.Type.BaseType == y.Type.BaseType;
+		}
+
+		public int GetHashCode(CodeParameterDeclarationExpression obj)
+		{
+			return obj.Type.GetHashCode();
+		}
+	}
+
+	private CodeParameterDeclarationExpression GetArgument(Smoke* smoke, short* typeIndex, IList<string> methodArgs, IEnumerable args, ref int count)
+	{
+		bool isRef;
+		CodeTypeReference argType = translator.CppToCSharp(smoke->types + *typeIndex, out isRef);
+		string argName = this.GetArgName(smoke, typeIndex, methodArgs, ref count, isRef, argType);
+		if (!argName.Contains(" = "))
+		{
+			RemoveDefaultValuesFromPreviousArgs(args);
+		}
+		CodeParameterDeclarationExpression arg = new CodeParameterDeclarationExpression(argType, argName);
+		if (isRef)
+		{
+			arg.Direction = FieldDirection.Ref;
+		}
+		return arg;
+	}
+
+	private string GetArgName(Smoke* smoke, short* typeIndex, IList<string> methodArgs, ref int count, bool isRef, CodeTypeReference argType)
+	{
+		if (methodArgs == null)
+		{
+			return "arg" + count++;
+		}
+		string arg = methodArgs[count++ - 1];
+		int nameEnd = arg.IndexOf(' ');
+		if (nameEnd > 0)
+		{
+			string defaultValue = arg.Substring(nameEnd + 3);
+			arg = arg.Substring(0, nameEnd);
+			if (isRef)
+			{
+				return arg;
+			}
+			arg = Provider.CreateEscapedIdentifier(arg);
+			Smoke.TypeId typeId = (Smoke.TypeId) ((smoke->types + *typeIndex)->flags & (ushort) Smoke.TypeFlags.tf_elem);
+			switch (typeId)
+			{
+				case Smoke.TypeId.t_voidp:
+				case Smoke.TypeId.t_class:
+					switch (argType.BaseType)
+					{
+						case "System.Int64":
+							return arg + " = 0";
+						case "System.IntPtr":
+							return arg + " = new IntPtr()";
+					}
+					if (argType.BaseType.Contains("QObjectWrapOption"))
+					{
+						return arg + " = 0";
+					}
+					switch (defaultValue)
+					{
+						case "0":
+							return arg + " = null";
+						case "QString()":
+							return arg + " = \"\"";
+					}
+					break;
+				case Smoke.TypeId.t_int:
+					if (char.IsLetter(defaultValue[0]))
+					{
+						int indexOfColon = defaultValue.IndexOf("::", StringComparison.Ordinal);
+						string containingType;
+						string enumMember;
+						string additional;
+						if (indexOfColon > 0)
+						{
+							containingType = defaultValue.Substring(0, indexOfColon);
+							Match match = Regex.Match(defaultValue, @"::(\w+)(.*)");
+							enumMember = match.Groups[1].Value;
+							additional = match.Groups[2].Value;
+						}
+						else
+						{
+							containingType = this.type.Name;
+							enumMember = defaultValue;
+							additional = string.Empty;
+						}
+						string enumType = (from keyValue in this.data.EnumTypeMap
+						                   where keyValue.Value.IsEnum && keyValue.Key.StartsWith(containingType + "::")
+						                   from CodeTypeMember member in keyValue.Value.Members
+						                   where member.Name == enumMember
+						                   select keyValue.Value.Name).FirstOrDefault() ??
+						                  (from referencedType in this.data.ReferencedTypeMap.Values
+						                   where referencedType.IsEnum && referencedType.FullName.Contains("." + containingType + "+")
+						                   from FieldInfo member in referencedType.GetFields(BindingFlags.Public | BindingFlags.Static)
+						                   where member.Name == enumMember
+						                   select referencedType.Name).FirstOrDefault();
+						if (string.IsNullOrEmpty(enumType))
+						{
+							var result = (from CodeTypeReference baseType in this.type.BaseTypes
+							              where this.data.CSharpTypeMap.ContainsKey(baseType.BaseType)
+							              let baseTypeDeclaration =
+								              this.data.CSharpTypeMap[baseType.BaseType]
+							              from CodeTypeDeclaration member in
+								              baseTypeDeclaration.Members.OfType<CodeTypeDeclaration>()
+							              where member.IsEnum
+							              from CodeTypeMember enumValue in member.Members
+							              where enumValue.Name == enumMember
+							              select new KeyValuePair<string, string>(baseType.BaseType, member.Name)).FirstOrDefault();
+							containingType = result.Key;
+							enumType = result.Value;
+						}
+						return arg + " = (int) " + GetEnumMembers(string.Format("{0}.{1}", containingType, enumType), enumMember) + additional;
+					}
+					goto default;
+				case Smoke.TypeId.t_uint:
+				case Smoke.TypeId.t_enum:
+					if (defaultValue == "0" || defaultValue.EndsWith("()"))
+					{
+						return arg + " = 0";
+					}
+					if (char.IsLetter(defaultValue[0]))
+					{
+						return arg + " = " + GetEnumMembers(argType.BaseType, defaultValue);
+					}
+					goto default;
+				case Smoke.TypeId.t_char:
+					break;
+				default:
+					return arg + " = " + defaultValue;
+			}
+		}
+		return arg;
+	}
+
+	private void RemovePreviousOverload(CodeParameterDeclarationExpressionCollection args, string methodName)
+	{
+		if (args.Count > 0 && args[args.Count - 1].Name.Contains(" = "))
+		{
+			IEnumerable<CodeParameterDeclarationExpression> parameters = args.Cast<CodeParameterDeclarationExpression>().Take(args.Count - 1);
+			foreach (CodeMemberMethod method in (from method in this.type.Members.OfType<CodeMemberMethod>()
+			                                     where method.Name == methodName && !this.setters.Contains(method) &&
+			                                           (method.Attributes & MemberAttributes.Override) == 0 &&
+			                                           method.Parameters.Cast<CodeParameterDeclarationExpression>()
+			                                                 .SequenceEqual(parameters, new ParameterTypeComparer())
+			                                     select method).ToList())
+			{
+				this.type.Members.Remove(method);
+			}
+		}
+	}
+
+	private static void RemoveDefaultValuesFromPreviousArgs(IEnumerable args)
+	{
+		foreach (CodeParameterDeclarationExpression parameterDeclarationExpression in args)
+		{
+			int indexOfSpace = parameterDeclarationExpression.Name.IndexOf(' ');
+			if (indexOfSpace > 0)
+			{
+				parameterDeclarationExpression.Name = parameterDeclarationExpression.Name.Substring(0, indexOfSpace);
+			}
+		}
+	}
+
+	private static string GetEnumMembers(string type, string defaultValue)
+	{
+		StringBuilder enumValueBuilder = new StringBuilder();
+		foreach (string enumValue in defaultValue.Split('|'))
+		{
+			enumValueBuilder.Append(type);
+			enumValueBuilder.Append('.');
+			MatchCollection matches = Regex.Matches(enumValue, @"(\w+)");
+			enumValueBuilder.Append(matches[matches.Count - 1].Groups[1].Value);
+			enumValueBuilder.Append('|');
+		}
+		if (enumValueBuilder[enumValueBuilder.Length - 1] == '|')
+		{
+			enumValueBuilder.Remove(enumValueBuilder.Length - 1, 1);
+		}
+		return enumValueBuilder.ToString();
 	}
 
 	public CodeMemberMethod GenerateMethod(short idx, string mungedName)
@@ -505,29 +682,9 @@ public unsafe class MethodsGenerator
 		return GenerateMethod(data.Smoke, idx, mungedName);
 	}
 
-	public CodeMemberMethod GenerateMethod(Smoke.Method* method, string mungedName)
-	{
-		return GenerateMethod(data.Smoke, method, mungedName);
-	}
-
-	public CodeMemberMethod GenerateMethod(Smoke.Method* method, string mungedName, CodeTypeReference iface)
-	{
-		return GenerateMethod(data.Smoke, method, mungedName, iface);
-	}
-
-	public CodeMemberMethod GenerateMethod(Smoke* smoke, short idx, string mungedName, CodeTypeReference iface)
-	{
-		return GenerateMethod(smoke, smoke->methods + idx, mungedName, iface);
-	}
-
 	public CodeMemberMethod GenerateMethod(Smoke* smoke, short idx, string mungedName)
 	{
 		return GenerateMethod(smoke, smoke->methods + idx, mungedName, null);
-	}
-
-	public CodeMemberMethod GenerateMethod(Smoke* smoke, Smoke.Method* method, string mungedName)
-	{
-		return GenerateMethod(smoke, method, mungedName, null);
 	}
 
 	public CodeMemberMethod GenerateMethod(Smoke* smoke, Smoke.Method* method, string mungedName, CodeTypeReference iface)
@@ -626,7 +783,13 @@ public unsafe class MethodsGenerator
 		foreach (CodeParameterDeclarationExpression param in cmm.Parameters)
 		{
 			argsInitializer.Initializers.Add(new CodeTypeOfExpression(param.Type));
-			argsInitializer.Initializers.Add(new CodeArgumentReferenceExpression(param.Name));
+			string argReference = param.Name;
+			int indexOfSpace = argReference.IndexOf(' ');
+			if (indexOfSpace > 0)
+			{
+				argReference = argReference.Substring(0, indexOfSpace);
+			}
+			argsInitializer.Initializers.Add(new CodeArgumentReferenceExpression(argReference));
 		}
 
 		CodeStatement argsStatement = new CodeVariableDeclarationStatement(typeof(object[]), "smokeArgs", argsInitializer);
@@ -712,6 +875,7 @@ public unsafe class MethodsGenerator
 			                                                   	)));
 			containingType.Members.Add(dispose);
 		}
+		this.DistributeMethod(cmm);
 		return cmm;
 	}
 
@@ -747,7 +911,7 @@ public unsafe class MethodsGenerator
 		return null;
 	}
 
-	public void GenerateProperties(IEnumerable<CodeMemberMethod> setters, IList<CodeMemberMethod> nonSetters)
+	public void GenerateProperties()
 	{
 		List<CodeMemberMethod> methods = type.Members.OfType<CodeMemberMethod>().ToList();
 
@@ -861,30 +1025,27 @@ public unsafe class MethodsGenerator
 	{
 		if (method.CustomAttributes.Count > 0)
 		{
-			using (CodeDomProvider provider = new CSharpCodeProvider())
+			using (StringWriter writer = new StringWriter())
 			{
-				using (StringWriter writer = new StringWriter())
-				{
-					string propertyCode = string.IsNullOrEmpty(propertySnippet.Name)
-					                      	? GetMemberCode(property, provider, writer)
-					                      	: propertySnippet.Text;
-					writer.GetStringBuilder().Length = 0;
-					string getterCode = GetMemberCode(method, provider, writer);
-					string attribute = string.Format(replaceRegex, Regex.Match(getterCode, @"(\[.+\])").Groups[1].Value);
-					string propertyWithAttribute = Regex.Replace(propertyCode, findRegex, attribute);
-					propertySnippet.Name = property.Name;
-					propertySnippet.Attributes = property.Attributes;
-					propertySnippet.Text = propertyWithAttribute;
-				}
+				string propertyCode = string.IsNullOrEmpty(propertySnippet.Name)
+					                      ? GetMemberCode(property, writer)
+					                      : propertySnippet.Text;
+				writer.GetStringBuilder().Length = 0;
+				string getterCode = GetMemberCode(method, writer);
+				string attribute = string.Format(replaceRegex, Regex.Match(getterCode, @"(\[.+\])").Groups[1].Value);
+				string propertyWithAttribute = Regex.Replace(propertyCode, findRegex, attribute);
+				propertySnippet.Name = property.Name;
+				propertySnippet.Attributes = property.Attributes;
+				propertySnippet.Text = propertyWithAttribute;
 			}
 		}
 	}
 
-	private static string GetMemberCode(CodeTypeMember member, CodeDomProvider provider, TextWriter writer)
+	private static string GetMemberCode(CodeTypeMember member, TextWriter writer)
 	{
 		CodeTypeDeclaration dummyType = new CodeTypeDeclaration();
 		dummyType.Members.Add(member);
-		provider.GenerateCodeFromType(dummyType, writer, null);
+		Provider.GenerateCodeFromType(dummyType, writer, null);
 		string propertyCode = writer.ToString();
 		StringBuilder propertyCodeBuilder = new StringBuilder(propertyCode);
 		propertyCodeBuilder.Remove(0, propertyCode.IndexOf('{') + 1);
@@ -929,8 +1090,7 @@ public unsafe class MethodsGenerator
 		completeProperty.Comments.AddRange(comments);
 	}
 
-	public static void DistributeMethod(CodeMemberMethod method, ICollection<CodeMemberMethod> setters,
-	                                    ICollection<CodeMemberMethod> nonSetters)
+	private void DistributeMethod(CodeMemberMethod method)
 	{
 		if (method != null)
 		{

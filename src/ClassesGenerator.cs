@@ -312,6 +312,7 @@ public unsafe class ClassesGenerator
 		{
 			PostClassesHook();
 		}
+		MethodsGenerator.Provider.Dispose();
 	}
 
 	private void GenerateInheritedMethods(Smoke.Class* klass, MethodsGenerator methgen, AttributeGenerator attrgen,
