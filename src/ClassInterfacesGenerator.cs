@@ -87,8 +87,6 @@ public unsafe class ClassInterfacesGenerator
 
 	public void Run()
 	{
-		MethodsGenerator mg;
-		AttributeGenerator ag;
 		HashSet<short> interfaceClasses = GetClassList();
 
 		// Make the interfaces known first, otherwise Translator won't work correctly.
@@ -125,8 +123,8 @@ public unsafe class ClassInterfacesGenerator
 				parent++;
 			}
 
-			mg = new MethodsGenerator(data, translator, ifaceDecl, klass);
-			ag = new AttributeGenerator(data, translator, ifaceDecl);
+			MethodsGenerator mg = new MethodsGenerator(data, translator, ifaceDecl, klass);
+			AttributeGenerator ag = new AttributeGenerator(data, translator, ifaceDecl);
 
 			List<IntPtr> methods = new List<IntPtr>();
 			///TODO: replace this algorithm, it's highly inefficient
@@ -155,8 +153,9 @@ public unsafe class ClassInterfacesGenerator
 					continue;
 				}
 
-				methods.Insert(0, (IntPtr) meth);
+				methods.Add((IntPtr) meth);
 			}
+			methods.Sort(CompareSmokeMethods);
 			foreach (Smoke.Method* method in methods)
 			{
 				CodeMemberMethod cmm = mg.GenerateBasicMethodDefinition(data.Smoke, method);
@@ -165,7 +164,6 @@ public unsafe class ClassInterfacesGenerator
 					ifaceDecl.Members.Add(cmm);
 				}
 			}
-
 			mg.GenerateProperties();
 
 			foreach (CodeMemberProperty prop in ag.GenerateBasicAttributeDefinitions())
@@ -173,5 +171,28 @@ public unsafe class ClassInterfacesGenerator
 				ifaceDecl.Members.Add(prop);
 			}
 		}
+	}
+
+	private static int CompareSmokeMethods(IntPtr i1, IntPtr i2)
+	{
+		Smoke.Method* m1 = (Smoke.Method*) i1;
+		Smoke.Method* m2 = (Smoke.Method*) i2;
+		if (m1->name > m2->name)
+		{
+			return 1;
+		}
+		if (m1->name < m2->name)
+		{
+			return -1;
+		}
+		if (m1->numArgs > m2->numArgs)
+		{
+			return 1;
+		}
+		if (m1->numArgs < m2->numArgs)
+		{
+			return -1;
+		}
+		return 0;
 	}
 }
