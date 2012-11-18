@@ -35,7 +35,6 @@ public class QyotoTranslator : ICustomTranslator {
 
         // flag types that are not recognised as such
         { "HDC__", typeof(IntPtr) },
-        { "HWND__", typeof(IntPtr) },
         { "HPALETTE__", typeof(IntPtr) },
         { "HBITMAP__", typeof(IntPtr) },
         { "HICON__", typeof(IntPtr) },
@@ -58,6 +57,7 @@ public class QyotoTranslator : ICustomTranslator {
 
     Dictionary<string, string> typeStringMap = new Dictionary<string, string>()
     {
+        { "HWND__", "NativeULong" },
         { "QList", "System.Collections.Generic.List" },
         { "QStringList", "System.Collections.Generic.List<string>" },
         { "QVector", "System.Collections.Generic.List" },

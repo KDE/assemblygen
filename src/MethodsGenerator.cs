@@ -537,6 +537,11 @@ public unsafe class MethodsGenerator
 			{
 				return arg;
 			}
+			// HACK
+			if (argType.BaseType.EndsWith("NativeULong"))
+			{
+				return arg;
+			}
 			arg = Provider.CreateEscapedIdentifier(arg);
 			Smoke.TypeId typeId = (Smoke.TypeId) ((smoke->types + *typeIndex)->flags & (ushort) Smoke.TypeFlags.tf_elem);
 			switch (typeId)
@@ -623,12 +628,6 @@ public unsafe class MethodsGenerator
 					goto default;
 				case Smoke.TypeId.t_char:
 					break;
-				case Smoke.TypeId.t_ulong:
-					if (argType.BaseType.EndsWith("NativeULong"))
-					{
-						return arg;
-					}
-					goto default;
 				default:
 					return arg + " = " + defaultValue;
 			}
