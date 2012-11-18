@@ -34,14 +34,6 @@ public class QyotoTranslator : ICustomTranslator {
         { "qulonglong", typeof(ulong) },
 
         // flag types that are not recognised as such
-        { "BlurHints", typeof(uint) },
-        { "ChangeFlags", typeof(uint) },
-        { "ColorDialogOptions", typeof(uint) },
-        { "FontDialogOptions", typeof(uint) },
-        { "Options", typeof(uint) },
-        { "PageSetupDialogOptions", typeof(uint) },
-        { "PrintDialogOptions", typeof(uint) },
-        { "WatchMode", typeof(uint) },
         { "HDC__", typeof(IntPtr) },
         { "HWND__", typeof(IntPtr) },
         { "HPALETTE__", typeof(IntPtr) },

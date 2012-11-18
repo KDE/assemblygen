@@ -201,6 +201,7 @@ public unsafe class Translator
 
 	public CodeTypeReference CppToCSharp(Smoke.Type* type, out bool isRef)
 	{
+		string typeString = ByteArrayManager.GetString(type->name);
 		isRef = false;
 		if ((IntPtr) type->name == IntPtr.Zero)
 		{
@@ -234,39 +235,11 @@ public unsafe class Translator
 		}
 		if (typeId == Smoke.TypeId.t_uint)
 		{
-			string typeName = ByteArrayManager.GetString(type->name);
-			// HACK: some enums - only as typedef flags if used in signals/slots; otherwise cannot be found because meta object only has typedef in method signature; remove when fixed in SMOKE
-			switch (typeName)
+			// HACK: qdrawutil.h says, DrawingHint is for internal use; nonetheless, SMOKE generates an overload using it; ignoring
+			if (typeString == "unsigned int" || typeString == "QFlags<QDrawBorderPixmap::DrawingHint>")
 			{
-				case "QGraphicsScene::SceneLayers":
-					typeName = "QFlags<QGraphicsScene::SceneLayer>";
-					break;
-				case "Qt::DockWidgetAreas":
-					typeName = "QFlags<Qt::DockWidgetArea>";
-					break;
-				case "QGraphicsBlurEffect::BlurHints":
-					typeName = "QFlags<QGraphicsBlurEffect::BlurHint>";
-					break;
-				case "QItemSelectionModel::SelectionFlags":
-					typeName = "QFlags<QItemSelectionModel::SelectionFlag>";
-					break;
-				case "Qt::Alignment":
-					typeName = "QFlags<Qt::AlignmentFlag>";
-					break;
-				case "Qt::ToolBarAreas":
-					typeName = "QFlags<Qt::ToolBarArea>";
-					break;
-				case "QIODevice::OpenMode":
-					typeName = "QFlags<QIODevice::OpenModeFlag>";
-					break;
+				return new CodeTypeReference(typeof(uint));
 			}
-			if (typeName.StartsWith("QFlags<") &&
-			    // HACK: qdrawutil.h says, DrawingHint is for internal use; nonetheless, SMOKE generates an overload using it; ignoring
-			    typeName != "QFlags<QDrawBorderPixmap::DrawingHint>")
-			{
-				return this.CppToCSharp(typeName, out isRef);
-			}
-			return new CodeTypeReference(typeof(uint));
 		}
 		if (typeId == Smoke.TypeId.t_long)
 		{
@@ -284,8 +257,6 @@ public unsafe class Translator
 		{
 			return new CodeTypeReference(typeof(double));
 		}
-
-		string typeString = ByteArrayManager.GetString(type->name);
 		return this.CppToCSharp(typeString, out isRef);
 	}
 
@@ -297,6 +268,57 @@ public unsafe class Translator
 
 	public CodeTypeReference CppToCSharp(string typeString, out bool isRef)
 	{
+		// HACK: some enums - only as typedef flags if used in signals/slots; otherwise cannot be found because meta object only has typedef in method signature; remove when fixed in SMOKE
+		switch (typeString)
+		{
+			case "QDockWidget::DockWidgetFeatures":
+				typeString = "QFlags<QDockWidget::DockWidgetFeature>";
+				break;
+			case "QGraphicsScene::SceneLayers":
+				typeString = "QFlags<QGraphicsScene::SceneLayer>";
+				break;
+			case "Qt::DockWidgetAreas":
+				typeString = "QFlags<Qt::DockWidgetArea>";
+				break;
+			case "Qt::WindowStates":
+				typeString = "QFlags<Qt::WindowState>";
+				break;
+			case "QGraphicsBlurEffect::BlurHints":
+				typeString = "QFlags<QGraphicsBlurEffect::BlurHint>";
+				break;
+			case "QItemSelectionModel::SelectionFlags":
+				typeString = "QFlags<QItemSelectionModel::SelectionFlag>";
+				break;
+			case "Qt::Alignment":
+				typeString = "QFlags<Qt::AlignmentFlag>";
+				break;
+			case "Qt::ToolBarAreas":
+				typeString = "QFlags<Qt::ToolBarArea>";
+				break;
+			case "QIODevice::OpenMode":
+				typeString = "QFlags<QIODevice::OpenModeFlag>";
+				break;
+			case "ColorDialogOptions":
+			case "QColorDialog::ColorDialogOptions":
+				typeString = "QFlags<QColorDialog::ColorDialogOption>";
+				break;
+			case "FontDialogOptions":
+			case "QFontDialog::FontDialogOptions":
+				typeString = "QFlags<QFontDialog::FontDialogOption>";
+				break;
+			case "PageSetupDialogOptions":
+			case "QPageSetupDialog::PageSetupDialogOptions":
+				typeString = "QFlags<QPageSetupDialog::PageSetupDialogOption>";
+				break;
+			case "PrintDialogOptions":
+			case "QAbstractPrintDialog::PrintDialogOptions":
+				typeString = "QFlags<QAbstractPrintDialog::PrintDialogOption>";
+				break;
+			case "WatchMode":
+			case "QDBusServiceWatcher::WatchMode":
+				typeString = "QFlags<QDBusServiceWatcher::WatchModeFlag>";
+				break;
+		}
 		// yes, this won't match Foo<...>::Bar - but we can't wrap that anyway
 		isRef = false;
 		Match match = Regex.Match(typeString, @"^(const )?(unsigned |signed )?([\w\s:]+)(<.+>)?(\*)*(&)?$");
