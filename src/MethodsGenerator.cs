@@ -637,6 +637,10 @@ public unsafe class MethodsGenerator
 
 	private void RemovePreviousOverload(CodeParameterDeclarationExpressionCollection args, string methodName)
 	{
+		if (methodName == type.Name)
+		{
+			methodName = ".ctor";
+		}
 		if (args.Count > 0 && args[args.Count - 1].Name.Contains(" = "))
 		{
 			IEnumerable<CodeParameterDeclarationExpression> parameters = args.Cast<CodeParameterDeclarationExpression>().Take(args.Count - 1);
