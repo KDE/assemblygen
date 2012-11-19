@@ -365,13 +365,18 @@ public unsafe class Translator
 			isUnsigned = typeInfo.IsUnsigned;
 			templateArgument = typeInfo.TemplateParameters;
 
-			if (obj is string)
+			string s = obj as string;
+			if (s != null)
 			{
-				name = (string) obj;
+				name = s;
 			}
-			else if (obj is CodeTypeReference)
+			else
 			{
-				return (CodeTypeReference) obj;
+				CodeTypeReference typeReference = obj as CodeTypeReference;
+				if (typeReference != null)
+				{
+					return typeReference;
+				}
 			}
 		}
 		else

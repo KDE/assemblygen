@@ -32,7 +32,6 @@ using System.Web.Util;
 
 public unsafe class QyotoHooks : IHookProvider
 {
-
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
 	delegate void AddSignal(string signature, string name, string returnType, IntPtr metaMethod);
 
@@ -383,7 +382,7 @@ public unsafe class QyotoHooks : IHookProvider
 			}
 			string memberName = Regex.Escape(parentType.Name) + "::" +
 			                    Regex.Escape(ByteArrayManager.GetString(smoke->methodNames[smokeMethod->name]));
-			const string memberDoc = @"enum {0}.*?{1}(0x)?[0-9]+(?<docs>.*?)(&\w+;)?(\r?\n)";
+			const string memberDoc = @"enum {0}.*{1}\t[^\t\n\r]+\t(?<docs>.*?)(&\w+;)?(\r?\n)";
 			Match match = Regex.Match(docs, string.Format(memberDoc, typeName, memberName), RegexOptions.Singleline);
 			if (match.Success)
 			{
@@ -467,6 +466,7 @@ public unsafe class QyotoHooks : IHookProvider
 	private static string StripTags(string source)
 	{
 		char[] array = new char[source.Length];
+		List<char> tagArray = new List<char>();
 		int arrayIndex = 0;
 		bool inside = false;
 
@@ -482,10 +482,19 @@ public unsafe class QyotoHooks : IHookProvider
 				inside = false;
 				continue;
 			}
-			if (!inside)
+			if (inside)
 			{
-				array[arrayIndex] = @let;
-				arrayIndex++;
+				tagArray.Add(@let);
+			}
+			else
+			{
+				string tag = new string(tagArray.ToArray());
+				if (tag.Contains("/tdtd"))
+				{
+					array[arrayIndex++] = '\t';
+				}
+				tagArray.Clear();
+				array[arrayIndex++] = @let;
 			}
 		}
 		return HtmlEncoder.HtmlDecode(new string(array, 0, arrayIndex));
