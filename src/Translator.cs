@@ -425,6 +425,11 @@ public unsafe class Translator
 		{
 			return new CodeTypeReference(type);
 		}
+		// HACK: in qprinter.h there is a typedef PageSize PaperSize; but PageSize is obsolete; using PaperSize; remove when the typedef maps are added to SMOKE
+		if (ret == "QPrinter.PageSize")
+		{
+			ret = "QPrinter.PaperSize";
+		}
 		return new CodeTypeReference(ret);
 	}
 
