@@ -645,7 +645,7 @@ public unsafe class MethodsGenerator
 		{
 			IEnumerable<CodeParameterDeclarationExpression> parameters = args.Cast<CodeParameterDeclarationExpression>().Take(args.Count - 1);
 			foreach (CodeMemberMethod method in (from method in this.type.Members.OfType<CodeMemberMethod>()
-			                                     where method.Name == methodName && !this.setters.Contains(method) &&
+			                                     where method.Name == methodName && 
 			                                           (method.Attributes & MemberAttributes.Override) == 0 &&
 			                                           method.Parameters.Cast<CodeParameterDeclarationExpression>()
 			                                                 .SequenceEqual(parameters, new ParameterTypeComparer())
