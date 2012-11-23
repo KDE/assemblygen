@@ -39,6 +39,7 @@ public unsafe class MethodsGenerator
 	private readonly CodeTypeDeclaration type;
 	private readonly Smoke.Class* smokeClass;
 	private readonly List<CodeMemberMethod> setters = new List<CodeMemberMethod>();
+	private readonly List<CodeMemberMethod> setMethods = new List<CodeMemberMethod>();
 	private readonly List<CodeMemberMethod> nonSetters = new List<CodeMemberMethod>();
 
 	private static readonly Regex qMethodExp = new Regex("^[a-z][A-Z]");
@@ -102,16 +103,6 @@ public unsafe class MethodsGenerator
 	{
 		get { return m_internalImplementation; }
 		set { m_internalImplementation = value; }
-	}
-
-	public List<CodeMemberMethod> Setters
-	{
-		get { return this.setters; }
-	}
-
-	public List<CodeMemberMethod> NonSetters
-	{
-		get { return this.nonSetters; }
 	}
 
 	public static CodeDomProvider Provider
@@ -923,18 +914,23 @@ public unsafe class MethodsGenerator
 	public void GenerateProperties()
 	{
 		List<CodeMemberMethod> methods = type.Members.OfType<CodeMemberMethod>().ToList();
+		this.GenerateProperties(methods, this.setters, false);
+		this.GenerateProperties(methods, this.setMethods, true);
+	}
 
-		foreach (CodeMemberMethod setter in setters)
+	private void GenerateProperties(ICollection<CodeMemberMethod> methods, IEnumerable<CodeMemberMethod> settersToUse, bool readOnly)
+	{
+		foreach (CodeMemberMethod setter in settersToUse)
 		{
-			if (!type.Members.Contains(setter))
+			if (!this.type.Members.Contains(setter))
 			{
 				continue;
 			}
 			string afterSet = setter.Name.Substring(3);
-			for (int i = nonSetters.Count - 1; i >= 0; i--)
+			for (int i = this.nonSetters.Count - 1; i >= 0; i--)
 			{
-				CodeMemberMethod getter = nonSetters[i];
-				if (!type.Members.Contains(getter))
+				CodeMemberMethod getter = this.nonSetters[i];
+				if (!this.type.Members.Contains(getter))
 				{
 					continue;
 				}
@@ -944,51 +940,64 @@ public unsafe class MethodsGenerator
 				    !methods.Any(m => m != getter && string.Compare(getter.Name, m.Name, StringComparison.OrdinalIgnoreCase) == 0))
 				{
 					methods.Remove(getter);
-					if (type.IsInterface)
+					if (this.type.IsInterface)
 					{
 						CodeSnippetTypeMember property = new CodeSnippetTypeMember();
 						property.Name = getter.Name;
-						property.Text = string.Format("        {0} {1} {{ get; set; }}", getter.ReturnType.BaseType, getter.Name);
-						type.Members.Add(property);
-						type.Members.Remove(getter);
-						type.Members.Remove(setter);
+						string template = readOnly ? "        {0} {1} {{ get; }}" : "        {0} {1} {{ get; set; }}";
+						property.Text = string.Format(template, getter.ReturnType.BaseType, getter.Name);
+						this.type.Members.Add(property);
+						this.type.Members.Remove(getter);
+						if (!readOnly)
+						{
+							this.type.Members.Remove(setter);							
+						}
 					}
 					else
 					{
-						GenerateProperty(getter, setter);
+						this.GenerateProperty(getter, readOnly ? null : setter);
 					}
 					goto next;
 				}
 			}
-			CodeTypeMember baseVirtualProperty = GetBaseVirtualProperty(type, afterSet);
-			if (!type.IsInterface && baseVirtualProperty != null)
+			CodeTypeMember baseVirtualProperty = this.GetBaseVirtualProperty(this.type, afterSet);
+			if (!this.type.IsInterface && baseVirtualProperty != null)
 			{
 				CodeMemberMethod getter = new CodeMemberMethod { Name = baseVirtualProperty.Name };
+				getter.ReturnType = setter.Parameters[0].Type;
 				getter.Statements.Add(new CodeSnippetStatement(string.Format("            return base.{0};", afterSet)));
-				GenerateProperty(getter, setter);
+				this.GenerateProperty(getter, readOnly ? null : setter);
 			}
 			next:
 			;
 		}
-		foreach (CodeMemberMethod nonSetter in nonSetters)
+		foreach (CodeMemberMethod nonSetter in this.nonSetters)
 		{
-			CodeTypeMember baseVirtualProperty = GetBaseVirtualProperty(type, nonSetter.Name);
-			if (!type.IsInterface && baseVirtualProperty != null)
+			CodeTypeMember baseVirtualProperty = this.GetBaseVirtualProperty(this.type, nonSetter.Name);
+			if (!this.type.IsInterface && baseVirtualProperty != null)
 			{
-				CodeMemberMethod setter = new CodeMemberMethod { Name = baseVirtualProperty.Name };
-				setter.Statements.Add(new CodeSnippetStatement(string.Format("            base.{0} = value;", nonSetter.Name)));
-				GenerateProperty(nonSetter, setter);
+				bool isReadOnly = (baseVirtualProperty is CodeMemberProperty && !((CodeMemberProperty) baseVirtualProperty).HasSet) ||
+								  !Regex.IsMatch(((CodeSnippetTypeMember) baseVirtualProperty).Text, @"\s+set\s*{");
+				if (readOnly == isReadOnly)
+				{
+					CodeMemberMethod setter = new CodeMemberMethod { Name = baseVirtualProperty.Name };
+					setter.Statements.Add(new CodeSnippetStatement(string.Format("            base.{0} = value;", nonSetter.Name)));
+					this.GenerateProperty(nonSetter, readOnly ? null : setter);
+				}
 			}
 		}
 	}
 
-	private void GenerateProperty(CodeMemberMethod getter, CodeMemberMethod setter)
+	private void GenerateProperty(CodeMemberMethod getter, CodeMemberMethod setter = null)
 	{
 		CodeCommentStatementCollection comments = new CodeCommentStatementCollection();
 		comments.AddRange(getter.Comments);
-		comments.AddRange(setter.Comments);
 		getter.Comments.Clear();
-		setter.Comments.Clear();
+		if (setter != null)
+		{
+			comments.AddRange(setter.Comments);
+			setter.Comments.Clear();
+		}
 		if (type.Members.OfType<CodeSnippetTypeMember>().All(
 				p => string.Compare(getter.Name, p.Name, StringComparison.OrdinalIgnoreCase) != 0) &&
 			type.Members.OfType<CodeMemberProperty>().All(
@@ -996,36 +1005,41 @@ public unsafe class MethodsGenerator
 		{
 			CodeMemberProperty property = new CodeMemberProperty();
 			property.Name = getter.Name;
-			property.Type = setter.Parameters[0].Type;
-			property.Attributes = setter.Attributes;
+			property.Type = getter.ReturnType;
+			property.Attributes = setter == null ? getter.Attributes : setter.Attributes;
 			property.GetStatements.AddRange(getter.Statements);
-			CodeVariableDeclarationStatement variableStatement =
-				setter.Statements.OfType<CodeVariableDeclarationStatement>().First();
-			CodeArrayCreateExpression arrayExpression = (CodeArrayCreateExpression) variableStatement.InitExpression;
-			CodeArgumentReferenceExpression argExpression =
-				arrayExpression.Initializers.OfType<CodeArgumentReferenceExpression>().First();
-			argExpression.ParameterName = "value";
-			property.SetStatements.AddRange(setter.Statements);
+			if (setter != null)
+			{
+				CodeVariableDeclarationStatement variableStatement =
+					setter.Statements.OfType<CodeVariableDeclarationStatement>().First();
+				CodeArrayCreateExpression arrayExpression = (CodeArrayCreateExpression) variableStatement.InitExpression;
+				CodeArgumentReferenceExpression argExpression =
+					arrayExpression.Initializers.OfType<CodeArgumentReferenceExpression>().First();
+				argExpression.ParameterName = "value";
+				property.SetStatements.AddRange(setter.Statements);
+			}
 			CodeSnippetTypeMember completeProperty = AddAttributes(getter, setter, property);
-			AddComments(completeProperty, comments);
+			AddComments(completeProperty, comments, setter == null);
 			type.Members.Add(completeProperty);
 			if (type.Members.Contains(getter))
 			{
 				type.Members.Remove(getter);
 			}
-			if (type.Members.Contains(setter))
+			if (setter != null && this.type.Members.Contains(setter))
 			{
 				type.Members.Remove(setter);
 			}
 		}
 	}
 
-	private static CodeSnippetTypeMember AddAttributes(CodeTypeMember getter, CodeTypeMember setter,
-	                                                   CodeTypeMember property)
+	private static CodeSnippetTypeMember AddAttributes(CodeTypeMember getter, CodeTypeMember setter, CodeTypeMember property)
 	{
 		CodeSnippetTypeMember propertySnippet = new CodeSnippetTypeMember();
 		AddAttributes(getter, property, propertySnippet, @"{(\s*)get", @"{{$1{0}$1get");
-		AddAttributes(setter, property, propertySnippet, @"}(\s*)set", @"}}$1{0}$1set");
+		if (setter != null)
+		{
+			AddAttributes(setter, property, propertySnippet, @"}(\s*)set", @"}}$1{0}$1set");
+		}
 		return propertySnippet;
 	}
 
@@ -1086,15 +1100,18 @@ public unsafe class MethodsGenerator
 		        	: null);
 	}
 
-	private static void AddComments(CodeTypeMember completeProperty, CodeCommentStatementCollection comments)
+	private static void AddComments(CodeTypeMember completeProperty, CodeCommentStatementCollection comments, bool readOnly)
 	{
-		for (int i = comments.Count - 2; i >= 1; i--)
+		if (!readOnly)
 		{
-			string comment = comments[i].Comment.Text;
-			if (comment == "<summary>" || comment == "</summary>" || comment.StartsWith("<para>See also "))
+			for (int i = comments.Count - 2; i >= 1; i--)
 			{
-				comments.RemoveAt(i);
-			}
+				string comment = comments[i].Comment.Text;
+				if (comment == "<summary>" || comment == "</summary>" || comment.StartsWith("<para>See also "))
+				{
+					comments.RemoveAt(i);
+				}
+			}	
 		}
 		completeProperty.Comments.AddRange(comments);
 	}
@@ -1103,10 +1120,16 @@ public unsafe class MethodsGenerator
 	{
 		if (method != null)
 		{
-			if (method.Name.StartsWith("Set") && method.Parameters.Count == 1 &&
-			    method.ReturnType.BaseType == "System.Void")
+			if (method.Name.StartsWith("Set") && method.ReturnType.BaseType == "System.Void")
 			{
-				setters.Add(method);
+				if (method.Parameters.Count == 1)
+				{
+					setters.Add(method);
+				}
+				else
+				{
+					setMethods.Add(method);
+				}
 			}
 			else
 			{
