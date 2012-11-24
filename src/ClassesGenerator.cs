@@ -155,6 +155,7 @@ public unsafe class ClassesGenerator
 			data.CSharpTypeMap[mapName] = type;
 			IList collection = data.GetTypeCollection(prefix);
 			collection.Add(type);
+			type.UserData.Add("parent", prefix);
 
 			// add the internal implementation type for abstract classes
 			if ((type.TypeAttributes & TypeAttributes.Abstract) == TypeAttributes.Abstract)

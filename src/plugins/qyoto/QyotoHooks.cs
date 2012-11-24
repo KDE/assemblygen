@@ -70,7 +70,7 @@ public unsafe class QyotoHooks : IHookProvider
 	public Translator Translator { get; set; }
 	public GeneratorData Data { get; set; }
 	private readonly Dictionary<string, CodeMemberMethod> eventMethods = new Dictionary<string, CodeMemberMethod>();
-	private readonly Dictionary<CodeTypeDeclaration, string> memberDocumentation = new Dictionary<CodeTypeDeclaration, string>();
+	private readonly Dictionary<CodeTypeDeclaration, List<string>> memberDocumentation = new Dictionary<CodeTypeDeclaration, List<string>>();
 
 	public void PreMembersHook(Smoke* smoke, Smoke.Class* klass, CodeTypeDeclaration type)
 	{
@@ -304,9 +304,11 @@ public unsafe class QyotoHooks : IHookProvider
 		string htmlDocs = Path.Combine(Data.Docs, "html");
 		if (Directory.Exists(htmlDocs))
 		{
-			foreach (CodeTypeDeclaration type in this.Data.SmokeTypeMap.Select(codeTypeDeclaration => codeTypeDeclaration.Value))
+			foreach (CodeTypeDeclaration type in from smokeType in this.Data.SmokeTypeMap
+												where string.IsNullOrEmpty((string) smokeType.Value.UserData["parent"])
+	 											select smokeType.Value)
 			{
-				foreach (CodeTypeDeclaration nestedType in type.Members.OfType<CodeTypeDeclaration>())
+				foreach (CodeTypeDeclaration nestedType in type.Members.OfType<CodeTypeDeclaration>().Where(t => !t.IsEnum))
 				{
 					this.GetClassDocs(nestedType, string.Format("{0}::{1}", type.Name, nestedType.Name),
 					                  string.Format("{0}-{1}", type.Name, nestedType.Name), htmlDocs);
@@ -320,25 +322,34 @@ public unsafe class QyotoHooks : IHookProvider
 
 	private void GetClassDocs(CodeTypeDeclaration type, string typeName, string fileName, string htmlDocs)
 	{
-		string classDocs = Path.Combine(htmlDocs, fileName.ToLowerInvariant() + ".html");
-		if (File.Exists(classDocs))
+		List<string> documentation = new List<string>();
+		foreach (string docFile in new[] { fileName + ".html", fileName + "-obsolete.html" })
 		{
-			string docs = StripTags(File.ReadAllText(classDocs));
-			Match match = Regex.Match(docs, string.Format(@"(?<class>((The {0})|(This class)).+?)More\.\.\..*?\r?\n" + 
-									  @"Detailed Description\s+(?<detailed>.*?)(\r?\n){{3,}}((\w+ )*\w+ Documentation\r?\n(?<members>.+))", typeName),
-			                          RegexOptions.Singleline);
-			if (match.Success)
+			string classDocs = Path.Combine(htmlDocs, docFile.ToLowerInvariant());
+			if (File.Exists(classDocs))
 			{
-				type.Comments.Add(new CodeCommentStatement("<summary>", true));
-				type.Comments.Add(new CodeCommentStatement(HtmlEncoder.HtmlEncode(match.Groups["class"].Value), true));
-				type.Comments.Add(new CodeCommentStatement("</summary>", true));
-				type.Comments.Add(new CodeCommentStatement("<remarks>", true));
-				type.Comments.Add(
-					new CodeCommentStatement(HtmlEncoder.HtmlEncode(match.Groups["detailed"].Value.Replace("\n/", "\n /")), true));
-				type.Comments.Add(new CodeCommentStatement("</remarks>", true));
-				this.memberDocumentation[type] = match.Groups["members"].Value;
+				string docs = StripTags(File.ReadAllText(classDocs));
+				Match match = Regex.Match(docs, string.Format(@"(?<class>((The {0})|(This class)).+?)More\.\.\..*?\r?\n" +
+				                                              @"Detailed Description\s+(?<detailed>.*?)(\r?\n){{3,}}" +
+				                                              @"((\w+ )*\w+ Documentation\r?\n(?<members>.+))", typeName),
+				                          RegexOptions.Singleline);
+				if (match.Success)
+				{
+					type.Comments.Add(new CodeCommentStatement("<summary>", true));
+					type.Comments.Add(new CodeCommentStatement(HtmlEncoder.HtmlEncode(match.Groups["class"].Value), true));
+					type.Comments.Add(new CodeCommentStatement("</summary>", true));
+					type.Comments.Add(new CodeCommentStatement("<remarks>", true));
+					type.Comments.Add(new CodeCommentStatement(HtmlEncoder.HtmlEncode(match.Groups["detailed"].Value.Replace("\n/", "\n /")), true));
+					type.Comments.Add(new CodeCommentStatement("</remarks>", true));
+					documentation.Add(match.Groups["members"].Value);
+				}
+				else
+				{
+					documentation.Add(docs);					
+				}
 			}
 		}
+		this.memberDocumentation[type] = documentation;
 	}
 
 	void PostClassesHook()
@@ -359,37 +370,45 @@ public unsafe class QyotoHooks : IHookProvider
 		CodeTypeDeclaration parentType = this.memberDocumentation.Keys.FirstOrDefault(t => t.Name == (string) type.UserData["parent"]);
 		if (parentType != null)
 		{
-			string docs = this.memberDocumentation[parentType];
+			IList<string> docs = this.memberDocumentation[parentType];
 			string typeName = Regex.Escape(parentType.Name) + "::" + Regex.Escape(type.Name);
 			if (type.Comments.Count == 0)
 			{
-				const string enumDoc = @"enum {0}(\s*flags {1}::\w+\s+)?(?<docsStart>.*?)(\r?\n){{3}}";
-				Match matchEnum = Regex.Match(docs, string.Format(enumDoc, typeName, parentType.Name), RegexOptions.Singleline);
-				if (matchEnum.Success)
+				for (int i = 0; i < docs.Count; i++)
 				{
-					string doc = (matchEnum.Groups["docsStart"].Value + matchEnum.Groups["docsEnd1"].Value).Trim();
-					doc = Regex.Replace(doc,
-					                    @"(The \S+ type is a typedef for QFlags<\S+>\. It stores an OR combination of \S+ values\.)",
-					                    string.Empty);
-					doc = Regex.Replace(doc,
-										@"ConstantValue(Description)?.*?(((\r?\n){2})|$)",
-										string.Empty, RegexOptions.Singleline).Trim();
-					if (!string.IsNullOrEmpty(doc))
+					const string enumDoc = @"enum {0}(\s*flags {1}::\w+\s+)?(?<docsStart>.*?)(\r?\n){{3}}";
+					Match matchEnum = Regex.Match(docs[i], string.Format(enumDoc, typeName, parentType.Name), RegexOptions.Singleline);
+					if (matchEnum.Success)
 					{
-						Translator.FormatComment(doc, type);
+						string doc = (matchEnum.Groups["docsStart"].Value + matchEnum.Groups["docsEnd1"].Value).Trim();
+						doc = Regex.Replace(doc,
+						                    @"(The \S+ type is a typedef for QFlags<\S+>\. It stores an OR combination of \S+ values\.)",
+						                    string.Empty);
+						doc = Regex.Replace(doc,
+						                    @"ConstantValue(Description)?.*?(((\r?\n){2})|$)",
+						                    string.Empty, RegexOptions.Singleline).Trim();
+						if (!string.IsNullOrEmpty(doc))
+						{
+							Translator.FormatComment(doc, type, i > 0);
+							break;
+						}
 					}
 				}
 			}
 			string memberName = Regex.Escape(parentType.Name) + "::" +
 			                    Regex.Escape(ByteArrayManager.GetString(smoke->methodNames[smokeMethod->name]));
 			const string memberDoc = @"enum {0}.*{1}\t[^\t\n\r]+\t(?<docs>.*?)(&\w+;)?(\r?\n)";
-			Match match = Regex.Match(docs, string.Format(memberDoc, typeName, memberName), RegexOptions.Singleline);
-			if (match.Success)
+			for (int i = 0; i < docs.Count; i++)
 			{
-				string doc = match.Groups["docs"].Value.Trim();
-				if (!string.IsNullOrEmpty(doc))
+				Match match = Regex.Match(docs[i], string.Format(memberDoc, typeName, memberName), RegexOptions.Singleline);
+				if (match.Success)
 				{
-					Translator.FormatComment(char.ToUpper(doc[0]) + doc.Substring(1), cmm);
+					string doc = match.Groups["docs"].Value.Trim();
+					if (!string.IsNullOrEmpty(doc))
+					{
+						Translator.FormatComment(char.ToUpper(doc[0]) + doc.Substring(1), cmm, i > 0);
+						break;
+					}
 				}
 			}
 		}
@@ -405,14 +424,18 @@ public unsafe class QyotoHooks : IHookProvider
 	{
 		if (this.memberDocumentation.ContainsKey(type))
 		{
-			string docs = this.memberDocumentation[type];
+			IList<string> docs = this.memberDocumentation[type];
 			string typeName = Regex.Escape(type.Name);
 			string originalName = char.ToLowerInvariant(cmm.Name[0]) + cmm.Name.Substring(1);
-			const string memberDoc = @"{0}::{1}\r?\n\W*(?<docs>.*?)(\r?\n){{3}}";
-			Match match = Regex.Match(docs, string.Format(memberDoc, typeName, originalName), RegexOptions.Singleline);
-			if (match.Success)
+			const string memberDoc = @"{0}::{1}\r?\n\W*(?<docs>.*?)(\r?\n\s*){{3}}";
+			for (int i = 0; i < docs.Count; i++)
 			{
-				Translator.FormatComment(match.Groups["docs"].Value, cmm);
+				Match match = Regex.Match(docs[i], string.Format(memberDoc, typeName, originalName), RegexOptions.Singleline);
+				if (match.Success)
+				{
+					Translator.FormatComment(match.Groups["docs"].Value, cmm, i > 0);
+					break;
+				}
 			}
 		}
 	}
@@ -421,7 +444,7 @@ public unsafe class QyotoHooks : IHookProvider
 	{
 		if (this.memberDocumentation.ContainsKey(type))
 		{
-			string docs = this.memberDocumentation[type];
+			IList<string> docs = this.memberDocumentation[type];
 			string typeName = Regex.Escape(type.Name);
 			string signature = smoke->GetMethodSignature(smokeMethod);
 			StringBuilder signatureRegex = new StringBuilder();
@@ -445,19 +468,21 @@ public unsafe class QyotoHooks : IHookProvider
 				signatureRegex.Remove(signatureRegex.Length - separator.Length, separator.Length);
 			}
 			signatureRegex.Append(@"\s*\)\s*");
-			string memberDoc = @"{0}( |(::)){1}( const)?( \[(\w+\s*)+\])?\r?\n\W*(?<docs>.*?)(\r?\n){{1,2}}((&?\S* --)|((\r?\n){{2}}))";
-			Match match = Regex.Match(docs, string.Format(memberDoc, typeName, signatureRegex), RegexOptions.Singleline);
-			if (match.Success)
+			string memberDoc = @"{0}( |(::)){1}( const)?( \[(\w+\s*)+\])?\r?\n\W*(?<docs>.*?)(\r?\n\s*){{1,2}}((&?\S* --)|((\r?\n\s*){{2}}))";
+			for (int i = 0; i < docs.Count; i++)
 			{
-				Translator.FormatComment(match.Groups["docs"].Value, cmm);
-			}
-			else
-			{
-				memberDoc = @"{0}( |(::)){1}\s*\([^\n]*\)( const)?( \[(\w+\s*)+\])?\r?\n\W*(?<docs>.*?)(\r?\n){{1,2}}((&?\S* --)|((\r?\n){{2}}))";
-				match = Regex.Match(docs, string.Format(memberDoc, typeName, methodName), RegexOptions.Singleline);
+				Match match = Regex.Match(docs[i], string.Format(memberDoc, typeName, signatureRegex), RegexOptions.Singleline);
 				if (match.Success)
 				{
-					Translator.FormatComment(match.Groups["docs"].Value, cmm);
+					Translator.FormatComment(match.Groups["docs"].Value, cmm, i > 0);
+					break;
+				}
+				memberDoc = @"{0}( |(::)){1}\s*\([^\n]*\)( const)?( \[(\w+\s*)+\])?\r?\n\W*(?<docs>.*?)(\r?\n\s*){{1,2}}((&?\S* --)|((\r?\n\s*){{2}}))";
+				match = Regex.Match(docs[i], string.Format(memberDoc, typeName, methodName), RegexOptions.Singleline);
+				if (match.Success)
+				{
+					Translator.FormatComment(match.Groups["docs"].Value, cmm, i > 0);
+					break;
 				}
 			}
 		}

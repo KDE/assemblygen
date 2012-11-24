@@ -58,9 +58,9 @@ public unsafe class PropertyGenerator
 
 	private readonly GeneratorData data;
 	private readonly Translator translator;
-	private readonly Dictionary<CodeTypeDeclaration, string> documentation;
+	private readonly Dictionary<CodeTypeDeclaration, List<string>> documentation;
 
-	public PropertyGenerator(GeneratorData data, Translator translator, Dictionary<CodeTypeDeclaration, string> documentation)
+	public PropertyGenerator(GeneratorData data, Translator translator, Dictionary<CodeTypeDeclaration, List<string>> documentation)
 	{
 		this.data = data;
 		this.translator = translator;
@@ -123,13 +123,17 @@ public unsafe class PropertyGenerator
 
 				if (documentation.ContainsKey(type))
 				{
-					string docs = documentation[type];
-					Match match = Regex.Match(docs,
-											  prop.Name + " : (const )?" + prop.OriginalType +
-											  @"\r?\n(?<docs>This.*?)\r?\nAccess functions:", RegexOptions.Singleline);
-					if (match.Success)
+					IList<string> docs = documentation[type];
+					for (int i = 0; i < docs.Count; i++)
 					{
-						Translator.FormatComment(match.Groups["docs"].Value, cmp);
+						Match match = Regex.Match(docs[i],
+												  prop.Name + " : (const )?" + prop.OriginalType +
+												  @"\r?\n(?<docs>This.*?)\r?\nAccess functions:", RegexOptions.Singleline);
+						if (match.Success)
+						{
+							Translator.FormatComment(match.Groups["docs"].Value, cmp, i > 0);
+							break;
+						}
 					}
 				}
 				cmp.Name = prop.Name;
