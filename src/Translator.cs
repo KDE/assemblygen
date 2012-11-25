@@ -484,27 +484,4 @@ public unsafe class Translator
 	}
 
 	#endregion
-
-	public static void FormatComment(string docs, CodeTypeMember cmp, bool obsolete)
-	{
-		StringBuilder obsoleteMessageBuilder = new StringBuilder();
-		cmp.Comments.Add(new CodeCommentStatement("<summary>", true));
-		foreach (string line in HtmlEncoder.HtmlEncode(docs).Split(Environment.NewLine.ToCharArray(), StringSplitOptions.None))
-		{
-			cmp.Comments.Add(new CodeCommentStatement(string.Format("<para>{0}</para>", line), true));
-			if (obsolete && (line.Contains("instead") || line.Contains("deprecated")))
-			{
-				obsoleteMessageBuilder.Append(HtmlEncoder.HtmlDecode(line));
-				obsoleteMessageBuilder.Append(' ');
-			}
-		}
-		cmp.Comments.Add(new CodeCommentStatement("</summary>", true));
-		if (obsoleteMessageBuilder.Length > 0)
-		{
-			obsoleteMessageBuilder.Remove(obsoleteMessageBuilder.Length - 1, 1);
-			CodeTypeReference obsoleteAttribute = new CodeTypeReference(typeof(ObsoleteAttribute));
-			CodePrimitiveExpression obsoleteMessage = new CodePrimitiveExpression(obsoleteMessageBuilder.ToString());
-			cmp.CustomAttributes.Add(new CodeAttributeDeclaration(obsoleteAttribute, new CodeAttributeArgument(obsoleteMessage)));
-		}
-	}
 }

@@ -131,7 +131,7 @@ public unsafe class PropertyGenerator
 												  @"\n(?<docs>This.*?)\nAccess functions:", RegexOptions.Singleline);
 						if (match.Success)
 						{
-							Translator.FormatComment(match.Groups["docs"].Value, cmp, i > 0);
+							Util.FormatComment(match.Groups["docs"].Value, cmp, i > 0);
 							break;
 						}
 					}

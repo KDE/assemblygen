@@ -45,6 +45,17 @@ public class Documentation
 		}
 	}
 
+	private static IDictionary<string, string> GetFromHtml(string docsPath)
+	{
+		string docs = Path.Combine(docsPath, "html");
+		if (!Directory.Exists(docs))
+		{
+			return new Dictionary<string, string>();
+		}
+		return Directory.GetFiles(docs, "*.html").ToDictionary(Path.GetFileName,
+															   f => File.ReadAllText(f).Replace("\r", string.Empty));
+	}
+
 	private static IDictionary<string, string> GetFromQch(string docsPath)
 	{
 		string dataSource = Path.Combine(docsPath, "qch", "qt.qch");
@@ -83,16 +94,5 @@ public class Documentation
 				}
 			}
 		}
-	}
-
-	private static IDictionary<string, string> GetFromHtml(string docsPath)
-	{
-		string docs = Path.Combine(docsPath, "html");
-		if (!Directory.Exists(docs))
-		{
-			return new Dictionary<string, string>();
-		}
-		return Directory.GetFiles(docs, "*.html").ToDictionary(Path.GetFileName,
-		                                                       f => File.ReadAllText(f).Replace("\r", string.Empty));
 	}
 }
