@@ -18,8 +18,11 @@
 */
 
 using System;
+using System.CodeDom;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
+using System.Text;
+using System.Web.Util;
 
 public static class Util
 {
@@ -152,5 +155,28 @@ public static class Util
 	public static unsafe bool IsClassAbstract(Smoke* smoke, short classId)
 	{
 		return GetAbstractMethods(smoke, classId).Count > 0;
+	}
+
+	public static void FormatComment(string docs, CodeTypeMember cmp, bool obsolete = false, string tag = "summary")
+	{
+		StringBuilder obsoleteMessageBuilder = new StringBuilder();
+		cmp.Comments.Add(new CodeCommentStatement(string.Format("<{0}>", tag), true));
+		foreach (string line in HtmlEncoder.HtmlEncode(docs).Split(Environment.NewLine.ToCharArray(), StringSplitOptions.None))
+		{
+			cmp.Comments.Add(new CodeCommentStatement(string.Format("<para>{0}</para>", line), true));
+			if (obsolete && (line.Contains("instead") || line.Contains("deprecated")))
+			{
+				obsoleteMessageBuilder.Append(HtmlEncoder.HtmlDecode(line));
+				obsoleteMessageBuilder.Append(' ');
+			}
+		}
+		cmp.Comments.Add(new CodeCommentStatement(string.Format("</{0}>", tag), true));
+		if (obsoleteMessageBuilder.Length > 0)
+		{
+			obsoleteMessageBuilder.Remove(obsoleteMessageBuilder.Length - 1, 1);
+			CodeTypeReference obsoleteAttribute = new CodeTypeReference(typeof(ObsoleteAttribute));
+			CodePrimitiveExpression obsoleteMessage = new CodePrimitiveExpression(obsoleteMessageBuilder.ToString());
+			cmp.CustomAttributes.Add(new CodeAttributeDeclaration(obsoleteAttribute, new CodeAttributeArgument(obsoleteMessage)));
+		}
 	}
 }

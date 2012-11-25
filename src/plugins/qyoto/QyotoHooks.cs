@@ -331,11 +331,11 @@ public unsafe class QyotoHooks : IHookProvider
 				if (match.Success)
 				{
 					type.Comments.Add(new CodeCommentStatement("<summary>", true));
-					type.Comments.Add(new CodeCommentStatement(HtmlEncoder.HtmlEncode(match.Groups["class"].Value), true));
+					string summary = match.Groups["class"].Value.Trim();
+					type.Comments.Add(new CodeCommentStatement(HtmlEncoder.HtmlEncode(summary), true));
 					type.Comments.Add(new CodeCommentStatement("</summary>", true));
-					type.Comments.Add(new CodeCommentStatement("<remarks>", true));
-					type.Comments.Add(new CodeCommentStatement(HtmlEncoder.HtmlEncode(match.Groups["detailed"].Value.Replace("\n/", "\n /")), true));
-					type.Comments.Add(new CodeCommentStatement("</remarks>", true));
+					string detailed = match.Groups["detailed"].Value.Replace(summary, string.Empty);
+					Util.FormatComment(detailed.Replace("\n/", "\n /"), type, false, "remarks");
 					docs.Add(match.Groups["members"].Value);
 				}
 				else
@@ -384,7 +384,7 @@ public unsafe class QyotoHooks : IHookProvider
 						                    string.Empty, RegexOptions.Singleline).Trim();
 						if (!string.IsNullOrEmpty(doc))
 						{
-							Translator.FormatComment(doc, type, i > 0);
+							Util.FormatComment(doc, type, i > 0);
 							break;
 						}
 					}
@@ -401,7 +401,7 @@ public unsafe class QyotoHooks : IHookProvider
 					string doc = match.Groups["docs"].Value.Trim();
 					if (!string.IsNullOrEmpty(doc))
 					{
-						Translator.FormatComment(char.ToUpper(doc[0]) + doc.Substring(1), cmm, i > 0);
+						Util.FormatComment(char.ToUpper(doc[0]) + doc.Substring(1), cmm, i > 0);
 						break;
 					}
 				}
@@ -428,7 +428,7 @@ public unsafe class QyotoHooks : IHookProvider
 				Match match = Regex.Match(docs[i], string.Format(memberDoc, typeName, originalName), RegexOptions.Singleline);
 				if (match.Success)
 				{
-					Translator.FormatComment(match.Groups["docs"].Value, cmm, i > 0);
+					Util.FormatComment(match.Groups["docs"].Value, cmm, i > 0);
 					break;
 				}
 			}
@@ -469,14 +469,14 @@ public unsafe class QyotoHooks : IHookProvider
 				Match match = Regex.Match(docs[i], string.Format(memberDoc, typeName, signatureRegex), RegexOptions.Singleline);
 				if (match.Success)
 				{
-					Translator.FormatComment(match.Groups["docs"].Value, cmm, i > 0);
+					Util.FormatComment(match.Groups["docs"].Value, cmm, i > 0);
 					break;
 				}
 				memberDoc = @"{0}( |(::)){1}\s*\([^\n]*\)( const)?( \[(\w+\s*)+\])?\n\W*(?<docs>.*?)(\n\s*){{1,2}}((&?\S* --)|((\n\s*){{2}}))";
 				match = Regex.Match(docs[i], string.Format(memberDoc, typeName, methodName), RegexOptions.Singleline);
 				if (match.Success)
 				{
-					Translator.FormatComment(match.Groups["docs"].Value, cmm, i > 0);
+					Util.FormatComment(match.Groups["docs"].Value, cmm, i > 0);
 					break;
 				}
 			}
