@@ -20,128 +20,137 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
-using System.Text;
 
-public static class Util {
-    [DllImport("assemblygen-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
-    [return: MarshalAs(UnmanagedType.U1)]
-    public static extern unsafe bool GetModuleIndexFromClassName(byte* name, ref Smoke* smoke, ref short index);
+public static class Util
+{
+	[DllImport("assemblygen-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+	[return: MarshalAs(UnmanagedType.U1)]
+	public static extern unsafe bool GetModuleIndexFromClassName(byte* name, ref Smoke* smoke, ref short index);
 
-    [DllImport("assemblygen-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
-    [return: MarshalAs(UnmanagedType.U1)]
-    public static extern unsafe bool IsDerivedFrom(string className, string baseClassName);
+	[DllImport("assemblygen-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+	[return: MarshalAs(UnmanagedType.U1)]
+	public static extern bool IsDerivedFrom(string className, string baseClassName);
 
-    [DllImport("assemblygen-native", CharSet=CharSet.Ansi, CallingConvention=CallingConvention.Cdecl)]
-    [return: MarshalAs(UnmanagedType.U1)]
-    public static extern unsafe bool IsDerivedFrom(byte* className, byte* baseClassName);
+	[DllImport("assemblygen-native", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+	[return: MarshalAs(UnmanagedType.U1)]
+	public static extern unsafe bool IsDerivedFrom(byte* className, byte* baseClassName);
 
-    public static bool IsQObject(string className) {
-        return IsDerivedFrom(className, "QObject");
-    }
+	public static bool IsQObject(string className)
+	{
+		return IsDerivedFrom(className, "QObject");
+	}
 
-    public unsafe static bool IsQObject(Smoke.Class *klass) {
-        return IsDerivedFrom(ByteArrayManager.GetString(klass->className), "QObject");
-    }
+	public static unsafe bool IsQObject(Smoke.Class* klass)
+	{
+		return IsDerivedFrom(ByteArrayManager.GetString(klass->className), "QObject");
+	}
 
-    public static bool IsPrimitiveType(string type) {
-        type = type.Replace("unsigned ", "u");
-        if (   type == "char" || type == "uchar" || type == "short" || type == "ushort" || type == "int" || type == "uint"
-            || type == "long" || type == "long long" || type == "ulong" || type == "ulong long" || type == "float" || type == "double"
-            || type == "bool" || type == "void" || type == "qreal" || type == "QString")
-        {
-            return true;
-        }
-        return false;
-    }
+	public static bool IsPrimitiveType(string type)
+	{
+		type = type.Replace("unsigned ", "u");
+		return type == "char" || type == "uchar" || type == "short" || type == "ushort" || type == "int" || type == "uint"
+		       || type == "long" || type == "long long" || type == "ulong" || type == "ulong long" || type == "float" ||
+		       type == "double"
+		       || type == "bool" || type == "void" || type == "qreal" || type == "QString";
+	}
 
-    public static string StackItemFieldFromType(Type type) {
-        if (type == typeof(bool))
-            return "s_bool";
-        else if (type == typeof(sbyte))
-            return "s_char";
-        else if (type == typeof(byte))
-            return "s_uchar";
-        else if (type == typeof(short))
-            return "s_short";
-        else if (type == typeof(ushort))
-            return "s_ushort";
-        else if (type == typeof(int))
-            return "s_int";
-        else if (type == typeof(uint))
-            return "s_uint";
-        else if (type == typeof(long))
-            return "s_long";
-        else if (type == typeof(ulong))
-            return "s_ulong";
-        else if (type == typeof(float))
-            return "s_float";
-        else if (type == typeof(double))
-            return "s_double";
-        else
-            return "s_class";
-    }
+	public static string StackItemFieldFromType(Type type)
+	{
+		if (type == typeof(bool))
+			return "s_bool";
+		if (type == typeof(sbyte))
+			return "s_char";
+		if (type == typeof(byte))
+			return "s_uchar";
+		if (type == typeof(short))
+			return "s_short";
+		if (type == typeof(ushort))
+			return "s_ushort";
+		if (type == typeof(int))
+			return "s_int";
+		if (type == typeof(uint))
+			return "s_uint";
+		if (type == typeof(long))
+			return "s_long";
+		if (type == typeof(ulong))
+			return "s_ulong";
+		if (type == typeof(float))
+			return "s_float";
+		if (type == typeof(double))
+			return "s_double";
+		return "s_class";
+	}
 
-    public static List<string> SplitUnenclosed(string input, char delimeter, char open, char close) {
-        int enclosed = 0;
-        int lastDelimeter = -1;
-        List<string> ret = new List<string>();
-        for (int i = 0; i < input.Length; i++) {
-            char c = input[i];
-            if (c == open) {
-                enclosed++;
-            } else if (c == close) {
-                enclosed--;
-            } else if (c == delimeter && enclosed == 0) {
-                ret.Add(input.Substring(lastDelimeter + 1, i - lastDelimeter - 1));
-                lastDelimeter = i;
-            }
-        }
-        ret.Add(input.Substring(lastDelimeter + 1));
-        return ret;
-    }
+	public static List<string> SplitUnenclosed(string input, char delimeter, char open, char close)
+	{
+		int enclosed = 0;
+		int lastDelimeter = -1;
+		List<string> ret = new List<string>();
+		for (int i = 0; i < input.Length; i++)
+		{
+			char c = input[i];
+			if (c == open)
+			{
+				enclosed++;
+			}
+			else if (c == close)
+			{
+				enclosed--;
+			}
+			else if (c == delimeter && enclosed == 0)
+			{
+				ret.Add(input.Substring(lastDelimeter + 1, i - lastDelimeter - 1));
+				lastDelimeter = i;
+			}
+		}
+		ret.Add(input.Substring(lastDelimeter + 1));
+		return ret;
+	}
 
-    public static unsafe Stack<KeyValuePair<Smoke.ModuleIndex, string>> GetAbstractMethods(Smoke *smoke, short classId) {
-        Dictionary<Smoke.ModuleIndex, string> methods =
-            new Dictionary<Smoke.ModuleIndex, string>(SmokeMethodEqualityComparer.AbstractRespectingComparer);
-        SmokeMethodEqualityComparer defaultComparer = SmokeMethodEqualityComparer.DefaultEqualityComparer;
+	public static unsafe Stack<KeyValuePair<Smoke.ModuleIndex, string>> GetAbstractMethods(Smoke* smoke, short classId)
+	{
+		Dictionary<Smoke.ModuleIndex, string> methods =
+			new Dictionary<Smoke.ModuleIndex, string>(SmokeMethodEqualityComparer.AbstractRespectingComparer);
+		SmokeMethodEqualityComparer defaultComparer = SmokeMethodEqualityComparer.DefaultEqualityComparer;
 
-        smoke->FindAllMethods(classId, methods, true);
-        var abstractMethods = new Stack<KeyValuePair<Smoke.ModuleIndex, string>>();
+		smoke->FindAllMethods(classId, methods, true);
+		var abstractMethods = new Stack<KeyValuePair<Smoke.ModuleIndex, string>>();
 
-        foreach (KeyValuePair<Smoke.ModuleIndex, string> pair in methods) {
-            Smoke.Method *meth = pair.Key.smoke->methods + pair.Key.index;
-            if ((meth->flags & (ushort) Smoke.MethodFlags.mf_purevirtual) == 0) {
-                // only compare pure-virtuals
-                continue;
-            }
-            abstractMethods.Push(pair);
+		foreach (KeyValuePair<Smoke.ModuleIndex, string> pair in methods)
+		{
+			Smoke.Method* meth = pair.Key.smoke->methods + pair.Key.index;
+			if ((meth->flags & (ushort) Smoke.MethodFlags.mf_purevirtual) == 0)
+			{
+				// only compare pure-virtuals
+				continue;
+			}
+			abstractMethods.Push(pair);
 
-            foreach (KeyValuePair<Smoke.ModuleIndex, string> other in methods) {
-                // Break if we encounter our original Index. Anything after this one will be further up in the
-                // hierarchy and thus can't override anything.
-                if (pair.Key == other.Key)
-                    break;
+			foreach (KeyValuePair<Smoke.ModuleIndex, string> other in methods)
+			{
+				// Break if we encounter our original Index. Anything after this one will be further up in the
+				// hierarchy and thus can't override anything.
+				if (pair.Key == other.Key)
+					break;
 
-                Smoke.Method *otherMeth = other.Key.smoke->methods + other.Key.index;
-                if (defaultComparer.Equals(pair.Key, other.Key)) {
-                    if ((otherMeth->flags & (ushort) Smoke.MethodFlags.mf_purevirtual) == 0) {
-                        // overriden with implementation
-                        abstractMethods.Pop();
-                    }
-                    break;
-                }
-            }
-        }
+				Smoke.Method* otherMeth = other.Key.smoke->methods + other.Key.index;
+				if (defaultComparer.Equals(pair.Key, other.Key))
+				{
+					if ((otherMeth->flags & (ushort) Smoke.MethodFlags.mf_purevirtual) == 0)
+					{
+						// overriden with implementation
+						abstractMethods.Pop();
+					}
+					break;
+				}
+			}
+		}
 
-        return abstractMethods;
-    }
+		return abstractMethods;
+	}
 
-    public unsafe static bool IsClassAbstract(Smoke *smoke, short classId) {
-        if (GetAbstractMethods(smoke, classId).Count > 0) {
-            return true;
-        }
-
-        return false;
-    }
-
+	public static unsafe bool IsClassAbstract(Smoke* smoke, short classId)
+	{
+		return GetAbstractMethods(smoke, classId).Count > 0;
+	}
 }
