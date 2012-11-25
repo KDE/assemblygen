@@ -53,7 +53,7 @@ public class Documentation
 			return new Dictionary<string, string>();
 		}
 		return Directory.GetFiles(docs, "*.html").ToDictionary(Path.GetFileName,
-															   f => File.ReadAllText(f).Replace("\r", string.Empty));
+															   f => File.ReadAllText(f).Replace("\r", string.Empty).Replace(@"\", @"\\"));
 	}
 
 	private static IDictionary<string, string> GetFromQch(string docsPath)
@@ -86,7 +86,7 @@ public class Documentation
 							{
 								zOutputStream.Write(blob, 4, length - 4);
 								zOutputStream.Flush();
-								documentation.Add(sqliteDataReader.GetString(0), Encoding.UTF8.GetString(output.ToArray()));
+								documentation.Add(sqliteDataReader.GetString(0), Encoding.UTF8.GetString(output.ToArray()).Replace(@"\", @"\\"));
 							}
 						}
 					}
