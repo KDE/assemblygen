@@ -489,7 +489,7 @@ public unsafe class Translator
 	{
 		StringBuilder obsoleteMessageBuilder = new StringBuilder();
 		cmp.Comments.Add(new CodeCommentStatement("<summary>", true));
-		foreach (string line in HtmlEncoder.HtmlEncode(docs).Split(new[] { Environment.NewLine }, StringSplitOptions.None))
+		foreach (string line in HtmlEncoder.HtmlEncode(docs).Split(Environment.NewLine.ToCharArray(), StringSplitOptions.None))
 		{
 			cmp.Comments.Add(new CodeCommentStatement(string.Format("<para>{0}</para>", line), true));
 			if (obsolete && (line.Contains("instead") || line.Contains("deprecated")))
