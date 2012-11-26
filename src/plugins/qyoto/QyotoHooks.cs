@@ -446,7 +446,7 @@ public unsafe class QyotoHooks : IHookProvider
 			Match matchSignature = Regex.Match(signature, @"(?<name>[^\(]+)\((?<args>.*)\)");
 			string methodName = Regex.Escape(matchSignature.Groups["name"].Value);
 			signatureRegex.Append(methodName);
-			signatureRegex.Append(@"\s*\(\s*");
+			signatureRegex.Append(@"\s*\(\s*(?<args>");
 			string[] argTypes = matchSignature.Groups["args"].Value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 			const string separator = @",\s*";
 			foreach (string argType in argTypes)
@@ -455,14 +455,14 @@ public unsafe class QyotoHooks : IHookProvider
 				typeBuilder.Replace(@"\*", @"\s*\*").Replace(@"&", @"\s*&").Replace(type.Name + "::", string.Empty);
 				signatureRegex.Append(Translator.MatchFunctionPointer(typeBuilder.ToString()).Success
 					                      ? @"[^,]+"
-					                      : (typeBuilder + @"\s+\w+(\s*=\s*\w+)?"));
+					                      : (typeBuilder + @"\s+(\w+(\s*=\s*\w+)?)?"));
 				signatureRegex.Append(separator);
 			}
 			if (argTypes.Length > 0)
 			{
 				signatureRegex.Remove(signatureRegex.Length - separator.Length, separator.Length);
 			}
-			signatureRegex.Append(@"\s*\)\s*");
+			signatureRegex.Append(@")\s*\)\s*");
 			string memberDoc = @"{0}( |(::)){1}( const)?( \[(\w+\s*)+\])?\n\W*(?<docs>.*?)(\n\s*){{1,2}}((&?\S* --)|((\n\s*){{2}}))";
 			for (int i = 0; i < docs.Count; i++)
 			{
@@ -470,6 +470,7 @@ public unsafe class QyotoHooks : IHookProvider
 				if (match.Success)
 				{
 					Util.FormatComment(match.Groups["docs"].Value, cmm, i > 0);
+					FillMissingParameterNames(cmm, match.Groups["args"].Value);
 					break;
 				}
 				memberDoc = @"{0}( |(::)){1}\s*\([^\n]*\)( const)?( \[(\w+\s*)+\])?\n\W*(?<docs>.*?)(\n\s*){{1,2}}((&?\S* --)|((\n\s*){{2}}))";
@@ -478,6 +479,42 @@ public unsafe class QyotoHooks : IHookProvider
 				{
 					Util.FormatComment(match.Groups["docs"].Value, cmm, i > 0);
 					break;
+				}
+			}
+		}
+	}
+
+	private static void FillMissingParameterNames(CodeTypeMember cmm, string signature)
+	{
+		CodeMemberMethod method = cmm as CodeMemberMethod;
+		if (method == null || method.Name.StartsWith("operator") || method.Name.StartsWith("implicit operator") ||
+		    method.Name.StartsWith("explicit operator"))
+		{
+			return;
+		}
+		string[] args = signature.Split(',');
+		for (int i = 0; i < method.Parameters.Count; i++)
+		{
+			if (Regex.IsMatch(method.Parameters[i].Name, @"^arg\d(\s*=\s*\w+)?$"))
+			{
+				string oldArgName = method.Parameters[i].Name;
+				int index = oldArgName.IndexOf(" = ", StringComparison.Ordinal);
+				string name = Regex.Match(args[i], @"(?<name>\w+)(\s*=\s*\w+)?$").Groups["name"].Value;
+				if (!string.IsNullOrEmpty(name))
+				{
+					method.Parameters[i].Name = name + (index > 0 ? oldArgName.Substring(index) : string.Empty);
+					IEnumerable<CodeStatement> statements = method.Statements.Cast<CodeStatement>().ToList();
+					var variableDeclarationStatement = statements.OfType<CodeVariableDeclarationStatement>().First();
+					var arrayCreateExpression = (CodeArrayCreateExpression) variableDeclarationStatement.InitExpression;
+					var argumentReferenceExpression = (CodeArgumentReferenceExpression) arrayCreateExpression.Initializers[2 * i + 1];
+					argumentReferenceExpression.ParameterName = method.Parameters[i].Name;
+					foreach (var variable in from assignStatement in statements.OfType<CodeAssignStatement>()
+					                         let var = (CodeVariableReferenceExpression) assignStatement.Left
+					                         where var.VariableName == oldArgName
+					                         select var)
+					{
+						variable.VariableName = method.Parameters[i].Name;
+					}
 				}
 			}
 		}
