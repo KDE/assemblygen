@@ -181,13 +181,8 @@ public unsafe class MethodsGenerator
 
 	public CodeMemberMethod GenerateBasicMethodDefinition(Smoke* smoke, Smoke.Method* method)
 	{
-		return GenerateBasicMethodDefinition(smoke, method, null);
-	}
-
-	public CodeMemberMethod GenerateBasicMethodDefinition(Smoke* smoke, Smoke.Method* method, CodeTypeReference iface)
-	{
 		string cppSignature = smoke->GetMethodSignature(method);
-		return GenerateBasicMethodDefinition(smoke, method, cppSignature, iface);
+		return this.GenerateBasicMethodDefinition(smoke, method, cppSignature, null);
 	}
 
 	public CodeMemberMethod GenerateBasicMethodDefinition(Smoke* smoke, Smoke.Method* method, string cppSignature,
@@ -480,6 +475,15 @@ public unsafe class MethodsGenerator
 		}
 		this.DistributeMethod(cmm);
 		return cmm;
+	}
+
+	private void CorrectParameterNames(CodeMemberMethod cmm)
+	{
+		CodeMemberMethod baseVirtualMethod = this.GetBaseVirtualMethod(type, cmm);
+		if (baseVirtualMethod != null)
+		{
+			RenameParameters(cmm, baseVirtualMethod.Parameters.Cast<CodeParameterDeclarationExpression>().Select(p => p.Name).ToList());
+		}
 	}
 
 	private class ParameterTypeComparer : IEqualityComparer<CodeParameterDeclarationExpression>
@@ -875,6 +879,7 @@ public unsafe class MethodsGenerator
 			                                                   	)));
 			containingType.Members.Add(dispose);
 		}
+		this.CorrectParameterNames(cmm);
 		this.DistributeMethod(cmm);
 		return cmm;
 	}
@@ -1100,6 +1105,31 @@ public unsafe class MethodsGenerator
 		        	: null);
 	}
 
+	private CodeMemberMethod GetBaseVirtualMethod(CodeTypeDeclaration containingType, CodeMemberMethod method)
+	{
+		return (from CodeTypeReference baseType in containingType.BaseTypes
+				where data.CSharpTypeMap.ContainsKey(baseType.BaseType)
+				select this.GetBaseVirtualMethod(data.CSharpTypeMap[baseType.BaseType], method)).FirstOrDefault() ??
+			   (from CodeTypeReference baseType in containingType.BaseTypes
+				let @interface = data.InterfaceTypeMap.Values.FirstOrDefault(t => t.Name == baseType.BaseType)
+				where @interface != null
+				select this.GetBaseVirtualMethod(@interface, method)).FirstOrDefault() ??
+			   (containingType != type
+					? (containingType.IsInterface
+						   ? (from CodeMemberMethod memberMethod in containingType.Members.OfType<CodeMemberMethod>()
+							  where memberMethod.Name == method.Name && memberMethod.Parameters.Count == method.Parameters.Count &&
+									memberMethod.Parameters.Cast<CodeParameterDeclarationExpression>().SequenceEqual(
+										method.Parameters.Cast<CodeParameterDeclarationExpression>(), new ParameterTypeComparer())
+							  select memberMethod).FirstOrDefault()
+						   : (from CodeMemberMethod memberMethod in containingType.Members.OfType<CodeMemberMethod>()
+							  where memberMethod.Name == method.Name && memberMethod.Parameters.Count == method.Parameters.Count &&
+									(memberMethod.Attributes & MemberAttributes.Final) == 0 &&
+									memberMethod.Parameters.Cast<CodeParameterDeclarationExpression>().SequenceEqual(
+										method.Parameters.Cast<CodeParameterDeclarationExpression>(), new ParameterTypeComparer())
+							  select memberMethod).FirstOrDefault())
+					: null);
+	}
+
 	private static void AddComments(CodeTypeMember completeProperty, CodeCommentStatementCollection comments, bool readOnly)
 	{
 		if (!readOnly)
@@ -1114,6 +1144,37 @@ public unsafe class MethodsGenerator
 			}	
 		}
 		completeProperty.Comments.AddRange(comments);
+	}
+
+	public static void RenameParameters(CodeMemberMethod method, IList<string> args)
+	{
+		for (int i = 0; i < method.Parameters.Count; i++)
+		{
+			CodeParameterDeclarationExpression parameter = method.Parameters[i];
+			string oldArgName = parameter.Name;
+			int index = oldArgName.IndexOf(" = ", StringComparison.Ordinal);
+			string nameOnly = index > 0 ? oldArgName.Substring(0, index) : oldArgName;
+			if (nameOnly.Length == 4 && nameOnly.StartsWith("arg") && char.IsDigit(nameOnly[3]))
+			{
+				string name = Regex.Match(args[i], @"(?<name>\w+)(\s*=\s*\w+)?$").Groups["name"].Value;
+				if (!string.IsNullOrEmpty(name))
+				{
+					parameter.Name = name + (index > 0 ? oldArgName.Substring(index) : string.Empty);
+					IEnumerable<CodeStatement> statements = method.Statements.Cast<CodeStatement>().ToList();
+					var variableDeclarationStatement = statements.OfType<CodeVariableDeclarationStatement>().First();
+					var arrayCreateExpression = (CodeArrayCreateExpression) variableDeclarationStatement.InitExpression;
+					var argumentReferenceExpression = (CodeArgumentReferenceExpression) arrayCreateExpression.Initializers[2 * i + 1];
+					argumentReferenceExpression.ParameterName = parameter.Name;
+					foreach (var variable in from assignStatement in statements.OfType<CodeAssignStatement>()
+											 let var = (CodeVariableReferenceExpression) assignStatement.Left
+											 where var.VariableName == oldArgName
+											 select var)
+					{
+						variable.VariableName = parameter.Name;
+					}
+				}
+			}
+		}
 	}
 
 	private void DistributeMethod(CodeMemberMethod method)

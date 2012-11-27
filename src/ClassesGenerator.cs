@@ -401,75 +401,52 @@ public unsafe class ClassesGenerator
 
 	private void GenerateMethods()
 	{
-		short currentClassId = 0;
-		Smoke.Class* klass = (Smoke.Class*) IntPtr.Zero;
-		MethodsGenerator methgen = null;
-		AttributeGenerator attrgen = null;
-		CodeTypeDeclaration type = null;
 		List<Smoke.ModuleIndex> alreadyImplemented = new List<Smoke.ModuleIndex>();
 
 		this.FillEnums();
 
+		Dictionary<short, List<Smoke.MethodMap>> dictionary = new Dictionary<short, List<Smoke.MethodMap>>();
+		List<short> classes = new List<short>();
 		for (short i = 1; i < data.Smoke->numMethodMaps; i++)
 		{
 			Smoke.MethodMap* map = data.Smoke->methodMaps + i;
-
-			if (currentClassId != map->classId)
+			if (!dictionary.ContainsKey(map->classId))
 			{
-				// we encountered a new class
-				if (attrgen != null)
-				{
-					// generate inherited methods
-					this.GenerateInheritedMethods(klass, methgen, attrgen, alreadyImplemented);
-
-					// generate all scheduled attributes
-					attrgen.Run();
-
-					if (PostMembersHooks != null)
-					{
-						PostMembersHooks(data.Smoke, klass, type);
-					}
-					methgen.GenerateProperties();
-				}
-
-				currentClassId = map->classId;
-				klass = data.Smoke->classes + currentClassId;
-				type = data.SmokeTypeMap[(IntPtr) klass];
-
-				alreadyImplemented.Clear();
-				attrgen = new AttributeGenerator(data, translator, type);
-				methgen = new MethodsGenerator(data, translator, type, klass);
+				dictionary.Add(map->classId, new List<Smoke.MethodMap>());
 			}
-
-			string mungedName = ByteArrayManager.GetString(data.Smoke->methodNames[map->name]);
-			if (map->method > 0)
+			dictionary[map->classId].Add(*map);
+			if (!classes.Contains(map->classId))
 			{
-				Smoke.Method* meth = data.Smoke->methods + map->method;
-				if ((meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0)
-				{
-					continue;
-				}
-
-				if ((meth->flags & (ushort) Smoke.MethodFlags.mf_property) > 0 // non-virtual properties are excluded
-				    && (meth->flags & (ushort) Smoke.MethodFlags.mf_virtual) == 0
-				    && (meth->flags & (ushort) Smoke.MethodFlags.mf_purevirtual) == 0)
-				{
-					continue;
-				}
-				if ((meth->flags & (ushort) Smoke.MethodFlags.mf_attribute) > 0)
-				{
-					attrgen.ScheduleAttributeAccessor(meth);
-					continue;
-				}
-
-				methgen.GenerateMethod(map->method, mungedName);
-				alreadyImplemented.Add(new Smoke.ModuleIndex(data.Smoke, map->method));
+				classes.Add(map->classId);
 			}
-			else if (map->method < 0)
+		}
+		foreach (KeyValuePair<short, List<Smoke.MethodMap>> pair in dictionary.OrderBy(k =>
 			{
-				for (short* overload = data.Smoke->ambiguousMethodList + (-map->method); *overload > 0; overload++)
+				int chainLength = 0;
+				Smoke.Class* klass = data.Smoke->classes + k.Key;
+				short* parent = data.Smoke->inheritanceList + klass->parents;
+				while (*parent > 0)
 				{
-					Smoke.Method* meth = data.Smoke->methods + *overload;
+					++chainLength;
+					klass = data.Smoke->classes + *parent;
+					parent = data.Smoke->inheritanceList + klass->parents;
+				}
+				return chainLength;
+			}))
+		{
+			Smoke.Class* klass = data.Smoke->classes + pair.Key;
+			CodeTypeDeclaration type = data.SmokeTypeMap[(IntPtr) klass];
+
+			alreadyImplemented.Clear();
+			AttributeGenerator attrgen = new AttributeGenerator(data, translator, type);
+			MethodsGenerator methgen = new MethodsGenerator(data, translator, type, klass);
+
+			foreach (Smoke.MethodMap map in pair.Value)
+			{
+				string mungedName = ByteArrayManager.GetString(data.Smoke->methodNames[map.name]);
+				if (map.method > 0)
+				{
+					Smoke.Method* meth = data.Smoke->methods + map.method;
 					if ((meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0)
 					{
 						continue;
@@ -487,32 +464,62 @@ public unsafe class ClassesGenerator
 						continue;
 					}
 
-					// if the methods differ only by constness, we will generate special code
-					bool nextDiffersByConst = false;
-					if (*(overload + 1) > 0)
+					methgen.GenerateMethod(map.method, mungedName);
+					alreadyImplemented.Add(new Smoke.ModuleIndex(data.Smoke, map.method));
+				}
+				else if (map.method < 0)
+				{
+					for (short* overload = data.Smoke->ambiguousMethodList + (-map.method); *overload > 0; overload++)
 					{
-						if (SmokeMethodEqualityComparer.EqualExceptConstness(meth, data.Smoke->methods + *(overload + 1)))
-							nextDiffersByConst = true;
-					}
+						Smoke.Method* meth = data.Smoke->methods + *overload;
+						if ((meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0)
+						{
+							continue;
+						}
 
-					methgen.GenerateMethod(*overload, mungedName);
-					alreadyImplemented.Add(new Smoke.ModuleIndex(data.Smoke, *overload));
-					if (nextDiffersByConst)
-						overload++;
+						if ((meth->flags & (ushort) Smoke.MethodFlags.mf_property) > 0 // non-virtual properties are excluded
+						    && (meth->flags & (ushort) Smoke.MethodFlags.mf_virtual) == 0
+						    && (meth->flags & (ushort) Smoke.MethodFlags.mf_purevirtual) == 0)
+						{
+							continue;
+						}
+						if ((meth->flags & (ushort) Smoke.MethodFlags.mf_attribute) > 0)
+						{
+							attrgen.ScheduleAttributeAccessor(meth);
+							continue;
+						}
+
+						// if the methods differ only by constness, we will generate special code
+						bool nextDiffersByConst = false;
+						if (*(overload + 1) > 0)
+						{
+							if (SmokeMethodEqualityComparer.EqualExceptConstness(meth, data.Smoke->methods + *(overload + 1)))
+								nextDiffersByConst = true;
+						}
+
+						methgen.GenerateMethod(*overload, mungedName);
+						alreadyImplemented.Add(new Smoke.ModuleIndex(data.Smoke, *overload));
+						if (nextDiffersByConst)
+							overload++;
+					}
 				}
 			}
+			// generate inherited methods
+			this.GenerateInheritedMethods(klass, methgen, attrgen, alreadyImplemented);
+
+			// generate all scheduled attributes
+			attrgen.Run();
+			methgen.GenerateProperties();
 		}
-
-		// Generate the last scheduled attributes
-		attrgen.Run();
-		// Generate remaining inherited methods
-		this.GenerateInheritedMethods(klass, methgen, attrgen, alreadyImplemented);
-
-		if (PostMembersHooks != null)
+		foreach (short @class in classes)
 		{
-			PostMembersHooks(data.Smoke, klass, type);
+			Smoke.Class* klass = data.Smoke->classes + @class;
+			CodeTypeDeclaration type = data.SmokeTypeMap[(IntPtr) klass];
+			if (PostMembersHooks != null)
+			{
+				PostMembersHooks(this.data.Smoke, klass, type);
+			}
 		}
-		methgen.GenerateProperties();
 		AddMissingOperators();
 	}
 

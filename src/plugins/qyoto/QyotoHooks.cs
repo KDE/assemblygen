@@ -269,6 +269,7 @@ public unsafe class QyotoHooks : IHookProvider
 			});
 
 			typeCollection.Add(ifaceDecl);
+			CodeTypeMemberCollection members = new CodeTypeMemberCollection();
 			foreach (KeyValuePair<CodeSnippetTypeMember, CodeMemberMethod> signalEvent in signalEvents)
 			{
 				CodeSnippetTypeMember implementation = signalEvent.Key;
@@ -285,7 +286,17 @@ public unsafe class QyotoHooks : IHookProvider
 				}
 				signalEvent.Value.Comments.AddRange(comments);
 				signalEvent.Key.Comments.AddRange(comments);
-				type.Members.Add(signalEvent.Key);
+				members.Add(signalEvent.Key);
+			}
+			int index = 0;
+			CodeSnippetTypeMember lastEvent = type.Members.OfType<CodeSnippetTypeMember>().LastOrDefault(s => s.Text.Contains("EventHandler<QEventArgs<"));
+			if (lastEvent != null)
+			{
+				index = type.Members.IndexOf(lastEvent) + 1;
+			}
+			for (int i = members.Count - 1; i >= 0; i--)
+			{
+				type.Members.Insert(index, members[i]);				
 			}
 		}
 	}
@@ -493,31 +504,7 @@ public unsafe class QyotoHooks : IHookProvider
 			return;
 		}
 		string[] args = signature.Split(',');
-		for (int i = 0; i < method.Parameters.Count; i++)
-		{
-			if (Regex.IsMatch(method.Parameters[i].Name, @"^arg\d(\s*=\s*\w+)?$"))
-			{
-				string oldArgName = method.Parameters[i].Name;
-				int index = oldArgName.IndexOf(" = ", StringComparison.Ordinal);
-				string name = Regex.Match(args[i], @"(?<name>\w+)(\s*=\s*\w+)?$").Groups["name"].Value;
-				if (!string.IsNullOrEmpty(name))
-				{
-					method.Parameters[i].Name = name + (index > 0 ? oldArgName.Substring(index) : string.Empty);
-					IEnumerable<CodeStatement> statements = method.Statements.Cast<CodeStatement>().ToList();
-					var variableDeclarationStatement = statements.OfType<CodeVariableDeclarationStatement>().First();
-					var arrayCreateExpression = (CodeArrayCreateExpression) variableDeclarationStatement.InitExpression;
-					var argumentReferenceExpression = (CodeArgumentReferenceExpression) arrayCreateExpression.Initializers[2 * i + 1];
-					argumentReferenceExpression.ParameterName = method.Parameters[i].Name;
-					foreach (var variable in from assignStatement in statements.OfType<CodeAssignStatement>()
-					                         let var = (CodeVariableReferenceExpression) assignStatement.Left
-					                         where var.VariableName == oldArgName
-					                         select var)
-					{
-						variable.VariableName = method.Parameters[i].Name;
-					}
-				}
-			}
-		}
+		MethodsGenerator.RenameParameters(method, args);
 	}
 
 	private static string StripTags(string source)
