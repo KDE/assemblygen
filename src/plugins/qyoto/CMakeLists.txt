@@ -20,7 +20,7 @@ if (WIN32)
 	set_target_properties (qyotogenerator-native PROPERTIES COMPILE_FLAGS -mstackrealign)
 endif (WIN32)
 
-csharp_add_library(QyotoGenerator ${QyotoGenerator_SRC} UNSAFE REFERENCES assemblygen Mono.Data.Sqlite.dll zlib.net.dll)
+csharp_add_library(QyotoGenerator ${QyotoGenerator_SRC} UNSAFE REFERENCES System.Data assemblygen Mono.Data.Sqlite.dll zlib.net.dll)
 file(COPY Mono.Data.Sqlite.dll zlib.net.dll sqlite3.dll DESTINATION ${LIBRARY_OUTPUT_PATH})
 
 install(TARGETS qyotogenerator-native DESTINATION lib${LIB_SUFFIX}/assemblygen/plugins)

@@ -529,7 +529,7 @@ public unsafe class MethodsGenerator
 				return arg;
 			}
 			// HACK
-			if (argType.BaseType.EndsWith("NativeULong"))
+			if (argType.BaseType.EndsWith("NativeLong") || argType.BaseType.EndsWith("NativeULong"))
 			{
 				return arg;
 			}
