@@ -239,7 +239,7 @@ public unsafe class MethodsGenerator
 					try
 					{
 						CodeParameterDeclarationExpression exp =
-							new CodeParameterDeclarationExpression(translator.CppToCSharp(className, out isRef), "arg" + count++);
+							new CodeParameterDeclarationExpression(translator.CppToCSharp(className, out isRef), "one");
 						args.Add(exp);
 					}
 					catch (NotSupportedException)
@@ -274,7 +274,7 @@ public unsafe class MethodsGenerator
 					if (smoke->classes[method->classId].size > 0)
 					{
 						CodeParameterDeclarationExpression exp =
-							new CodeParameterDeclarationExpression(translator.CppToCSharp(className, out isRef), "arg" + count++);
+							new CodeParameterDeclarationExpression(translator.CppToCSharp(className, out isRef), "value");
 						args.Add(exp);
 					}
 				}
@@ -288,7 +288,7 @@ public unsafe class MethodsGenerator
 		}
 
 		// translate arguments
-		string[] methodArgs = isOperator ? null : GetMethodArgs(smoke, method);
+		string[] methodArgs = this.GetMethodArgs(smoke, method);
 		for (short* typeIndex = smoke->argumentList + method->args; *typeIndex > 0; typeIndex++)
 		{
 			try

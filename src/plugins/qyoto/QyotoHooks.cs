@@ -498,12 +498,16 @@ public unsafe class QyotoHooks : IHookProvider
 	private static void FillMissingParameterNames(CodeTypeMember cmm, string signature)
 	{
 		CodeMemberMethod method = cmm as CodeMemberMethod;
-		if (method == null || method.Name.StartsWith("operator") || method.Name.StartsWith("implicit operator") ||
-		    method.Name.StartsWith("explicit operator"))
+		if (method == null)
 		{
 			return;
 		}
-		string[] args = signature.Split(',');
+		List<string> args = new List<string>(signature.Split(','));
+		if (args.Count < method.Parameters.Count)
+		{
+			// operator
+			args.Insert(0, "one");
+		}
 		MethodsGenerator.RenameParameters(method, args);
 	}
 

@@ -562,7 +562,7 @@ public unsafe class ClassesGenerator
 	}
 
 	private delegate void AddComplementingOperatorsFn(
-		IList<CodeMemberMethod> a, IList<CodeMemberMethod> b, string opName, string returnExpression);
+		IList<CodeMemberMethod> a, IList<CodeMemberMethod> b, string opName, string counterpartName, string returnExpression);
 
 	/*
 	 * Adds complementing operators if necessary.
@@ -612,31 +612,33 @@ public unsafe class ClassesGenerator
 			}
 
 			AddComplementingOperatorsFn checkAndAdd =
-				delegate(IList<CodeMemberMethod> ops, IList<CodeMemberMethod> otherOps, string opName, string expr)
+				delegate(IList<CodeMemberMethod> ops, IList<CodeMemberMethod> otherOps, string opName, string counterpartName, string expr)
 					{
 						foreach (CodeMemberMethod op in ops)
 						{
 							if (otherOps.Any(otherOp => op.ParametersEqual(otherOp)))
 								continue;
 
+							CodeMemberMethod counterpart = typeDecl.Members.OfType<CodeMemberMethod>().First(m => m.Name == counterpartName);
 							CodeMemberMethod complement = new CodeMemberMethod();
 							complement.Name = opName;
 							complement.Attributes = op.Attributes;
 							complement.ReturnType = op.ReturnType;
 							complement.Parameters.AddRange(op.Parameters);
-							complement.Statements.Add(new CodeMethodReturnStatement(new CodeSnippetExpression(expr)));
+							string expression = string.Format(expr, counterpart.Parameters[0].Name, counterpart.Parameters[1].Name);
+							complement.Statements.Add(new CodeMethodReturnStatement(new CodeSnippetExpression(expression)));
 							typeDecl.Members.Add(complement);
 						}
 					};
 
-			checkAndAdd(lessThanOperators, greaterThanOperators, "operator>", "!(arg1 < arg2) && arg1 != arg2");
-			checkAndAdd(greaterThanOperators, lessThanOperators, "operator<", "!(arg1 > arg2) && arg1 != arg2");
+			checkAndAdd(lessThanOperators, greaterThanOperators, "operator>", "operator<", "!({0} < {1}) && {0} != {1}");
+			checkAndAdd(greaterThanOperators, lessThanOperators, "operator<", "operator>", "!({0} > {1}) && {0} != {1}");
 
-			checkAndAdd(lessThanOrEqualOperators, greaterThanOrEqualOperators, "operator>=", "!(arg1 < arg2)");
-			checkAndAdd(greaterThanOrEqualOperators, lessThanOrEqualOperators, "operator<=", "!(arg1 > arg2)");
+			checkAndAdd(lessThanOrEqualOperators, greaterThanOrEqualOperators, "operator>=", "operator<", "!({0} < {1})");
+			checkAndAdd(greaterThanOrEqualOperators, lessThanOrEqualOperators, "operator<=", "operator>", "!({0} > {1})");
 
-			checkAndAdd(equalOperators, inequalOperators, "operator!=", "!(arg1 == arg2)");
-			checkAndAdd(inequalOperators, equalOperators, "operator==", "!(arg1 != arg2)");
+			checkAndAdd(equalOperators, inequalOperators, "operator!=", "operator==", "!({0} == {1})");
+			checkAndAdd(inequalOperators, equalOperators, "operator==", "operator!=", "!({0} != {1})");
 
 			if (equalOperators.Count == 0 && inequalOperators.Count == 0)
 				continue; // then we're done
