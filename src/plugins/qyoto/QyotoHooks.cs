@@ -460,10 +460,9 @@ public unsafe class QyotoHooks : IHookProvider
 			signatureRegex.Append(@"\s*\(\s*(?<args>");
 			string[] argTypes = matchSignature.Groups["args"].Value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 			const string separator = @",\s*";
-			foreach (string argType in argTypes)
+			foreach (StringBuilder typeBuilder in argTypes.Select(argType => new StringBuilder(Regex.Escape(argType))))
 			{
-				StringBuilder typeBuilder = new StringBuilder(Regex.Escape(argType));
-				typeBuilder.Replace(@"\*", @"\s*\*").Replace(@"&", @"\s*&").Replace(type.Name + "::", string.Empty);
+				typeBuilder.Replace(@"\*", @"\s*\*").Replace(@"&", @"\s*&").Replace(type.Name + "::", @"(\w+::)?");
 				signatureRegex.Append(Translator.MatchFunctionPointer(typeBuilder.ToString()).Success
 					                      ? @"[^,]+"
 					                      : (typeBuilder + @"\s+(\w+(\s*=\s*\w+)?)?"));
