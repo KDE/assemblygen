@@ -70,6 +70,7 @@ public unsafe class QyotoHooks : IHookProvider
 	public GeneratorData Data { get; set; }
 	private readonly Dictionary<string, CodeMemberMethod> eventMethods = new Dictionary<string, CodeMemberMethod>();
 	private readonly Dictionary<CodeTypeDeclaration, List<string>> memberDocumentation = new Dictionary<CodeTypeDeclaration, List<string>>();
+	private readonly List<string> staticDocumentation = new List<string>();
 
 	public void PreMembersHook(Smoke* smoke, Smoke.Class* klass, CodeTypeDeclaration type)
 	{
@@ -347,7 +348,13 @@ public unsafe class QyotoHooks : IHookProvider
 					type.Comments.Add(new CodeCommentStatement("</summary>", true));
 					string detailed = match.Groups["detailed"].Value.Replace(summary, string.Empty);
 					Util.FormatComment(detailed.Replace("\n/", "\n /"), type, false, "remarks");
-					docs.Add(match.Groups["members"].Value);
+					string members = match.Groups["members"].Value;
+					docs.Add(members);
+					Match matchStatic = Regex.Match(members, "Related Non-Members(?<static>.+)", RegexOptions.Singleline);
+					if (matchStatic.Success)
+					{
+						staticDocumentation.Add(matchStatic.Groups["static"].Value);
+					}
 				}
 				else
 				{
@@ -448,50 +455,65 @@ public unsafe class QyotoHooks : IHookProvider
 
 	private void CommentMember(Smoke* smoke, Smoke.Method* smokeMethod, CodeTypeMember cmm, CodeTypeDeclaration type)
 	{
-		if (this.memberDocumentation.ContainsKey(type))
+		if (type.Name == Data.GlobalSpaceClassName || Translator.NamespacesAsClasses.Contains(type.Name))
 		{
-			IList<string> docs = this.memberDocumentation[type];
-			string typeName = Regex.Escape(type.Name);
-			string signature = smoke->GetMethodSignature(smokeMethod);
-			StringBuilder signatureRegex = new StringBuilder();
-			Match matchSignature = Regex.Match(signature, @"(?<name>[^\(]+)\((?<args>.*)\)");
-			string methodName = Regex.Escape(matchSignature.Groups["name"].Value);
-			signatureRegex.Append(methodName);
-			signatureRegex.Append(@"\s*\(\s*(?<args>");
-			string[] argTypes = matchSignature.Groups["args"].Value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-			const string separator = @",\s*";
-			foreach (StringBuilder typeBuilder in argTypes.Select(argType => new StringBuilder(Regex.Escape(argType))))
+			CommentMember(smoke->GetMethodSignature(smokeMethod), cmm, @"\w+", this.staticDocumentation, false);
+		}
+		else
+		{
+			if (this.memberDocumentation.ContainsKey(type))
 			{
-				typeBuilder.Replace(@"\*", @"\s*\*").Replace(@"&", @"\s*&").Replace(type.Name + "::", @"(\w+::)?");
-				signatureRegex.Append(Translator.MatchFunctionPointer(typeBuilder.ToString()).Success
-					                      ? @"[^,]+"
-					                      : (typeBuilder + @"\s+(\w+(\s*=\s*\w+)?)?"));
-				signatureRegex.Append(separator);
-			}
-			if (argTypes.Length > 0)
-			{
-				signatureRegex.Remove(signatureRegex.Length - separator.Length, separator.Length);
-			}
-			signatureRegex.Append(@")\s*\)\s*");
-			string memberDoc = @"{0}( |(::)){1}( const)?( \[(\w+\s*)+\])?\n\W*(?<docs>.*?)(\n\s*){{1,2}}((&?\S* --)|((\n\s*){{2}}))";
-			for (int i = 0; i < docs.Count; i++)
-			{
-				Match match = Regex.Match(docs[i], string.Format(memberDoc, typeName, signatureRegex), RegexOptions.Singleline);
-				if (match.Success)
-				{
-					Util.FormatComment(match.Groups["docs"].Value, cmm, i > 0);
-					FillMissingParameterNames(cmm, match.Groups["args"].Value);
-					break;
-				}
-				memberDoc = @"{0}( |(::)){1}\s*\([^\n]*\)( const)?( \[(\w+\s*)+\])?\n\W*(?<docs>.*?)(\n\s*){{1,2}}((&?\S* --)|((\n\s*){{2}}))";
-				match = Regex.Match(docs[i], string.Format(memberDoc, typeName, methodName), RegexOptions.Singleline);
-				if (match.Success)
-				{
-					Util.FormatComment(match.Groups["docs"].Value, cmm, i > 0);
-					break;
-				}
+				CommentMember(smoke->GetMethodSignature(smokeMethod), cmm, type.Name, this.memberDocumentation[type]);				
 			}
 		}
+	}
+
+	private static void CommentMember(string signature, CodeTypeMember cmm, string type, IList<string> docs, bool markObsolete = true)
+	{
+		Match matchSignature = Regex.Match(signature, @"(?<name>[^\(]+)\((?<args>.*)\)");
+		string methodName = Regex.Escape(matchSignature.Groups["name"].Value);
+		StringBuilder signatureRegex = GetSignatureRegex(type, methodName, matchSignature);
+		const string memberDoc = @"{0}(\s*&)?( |(::)){1}( const)?( \[(\w+\s*)+\])?\n\W*(?<docs>.*?)(\n\s*){{1,2}}((&?\S* --)|((\n\s*){{2}}))";
+		const string altMemberDoc = @"{0}( |(::)){1}\s*\([^\n]*\)( const)?( \[(\w+\s*)+\])?\n\W*(?<docs>.*?)(\n\s*){{1,2}}((&?\S* --)|((\n\s*){{2}}))";
+		for (int i = 0; i < docs.Count; i++)
+		{
+			Match match = Regex.Match(docs[i], string.Format(memberDoc, type, signatureRegex), RegexOptions.Singleline);
+			if (match.Success)
+			{
+				Util.FormatComment(match.Groups["docs"].Value, cmm, i > 0 && markObsolete);
+				FillMissingParameterNames(cmm, match.Groups["args"].Value);
+				break;
+			}
+			match = Regex.Match(docs[i], string.Format(altMemberDoc, type, methodName), RegexOptions.Singleline);
+			if (match.Success)
+			{
+				Util.FormatComment(match.Groups["docs"].Value, cmm, i > 0 && markObsolete);
+				break;
+			}
+		}
+	}
+
+	private static StringBuilder GetSignatureRegex(string typeName, string methodName, Match matchSignature)
+	{
+		StringBuilder signatureRegex = new StringBuilder();
+		signatureRegex.Append(methodName);
+		signatureRegex.Append(@"\s*\(\s*(?<args>");
+		string[] argTypes = matchSignature.Groups["args"].Value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+		const string separator = @",\s*";
+		foreach (StringBuilder typeBuilder in argTypes.Select(argType => new StringBuilder(Regex.Escape(argType))))
+		{
+			typeBuilder.Replace(@"\*", @"\s*\*").Replace(@"&", @"\s*&").Replace(typeName + "::", @"(\w+::)?");
+			signatureRegex.Append(Translator.MatchFunctionPointer(typeBuilder.ToString()).Success
+				                      ? @"[^,]+"
+				                      : (typeBuilder + @"\s+(\w+(\s*=\s*\w+)?)?"));
+			signatureRegex.Append(separator);
+		}
+		if (argTypes.Length > 0)
+		{
+			signatureRegex.Remove(signatureRegex.Length - separator.Length, separator.Length);
+		}
+		signatureRegex.Append(@")\s*\)\s*");
+		return signatureRegex;
 	}
 
 	private static void FillMissingParameterNames(CodeTypeMember cmm, string signature)

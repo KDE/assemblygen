@@ -171,9 +171,12 @@ public static class Util
 			}
 		}
 		cmp.Comments.Add(new CodeCommentStatement(string.Format("</{0}>", tag), true));
-		if (obsoleteMessageBuilder.Length > 0)
+		if (obsolete)
 		{
-			obsoleteMessageBuilder.Remove(obsoleteMessageBuilder.Length - 1, 1);
+			if (obsoleteMessageBuilder.Length > 0)
+			{
+				obsoleteMessageBuilder.Remove(obsoleteMessageBuilder.Length - 1, 1);				
+			}
 			CodeTypeReference obsoleteAttribute = new CodeTypeReference(typeof(ObsoleteAttribute));
 			CodePrimitiveExpression obsoleteMessage = new CodePrimitiveExpression(obsoleteMessageBuilder.ToString());
 			cmp.CustomAttributes.Add(new CodeAttributeDeclaration(obsoleteAttribute, new CodeAttributeArgument(obsoleteMessage)));
