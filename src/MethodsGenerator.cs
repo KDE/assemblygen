@@ -621,8 +621,6 @@ public unsafe class MethodsGenerator
 						return arg + " = " + GetEnumMembers(argType.BaseType, defaultValue);
 					}
 					goto default;
-				case Smoke.TypeId.t_char:
-					break;
 				default:
 					return arg + " = " + defaultValue;
 			}

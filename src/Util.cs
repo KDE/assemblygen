@@ -61,7 +61,7 @@ public static class Util
 	{
 		if (type == typeof(bool))
 			return "s_bool";
-		if (type == typeof(sbyte))
+		if (type == typeof(char))
 			return "s_char";
 		if (type == typeof(byte))
 			return "s_uchar";

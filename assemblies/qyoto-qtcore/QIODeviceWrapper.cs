@@ -52,7 +52,7 @@ namespace QtCore {
         public override void Write (byte[] buffer, int offset, int count) {
             QByteArray array = new QByteArray();
             for (int i = 0; i < count; i++) {
-                array.Append((sbyte) buffer[i + offset]);
+                array.Append((char) buffer[i + offset]);
             }
             m_device.Write(array);
         }

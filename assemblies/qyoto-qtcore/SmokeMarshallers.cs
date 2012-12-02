@@ -991,8 +991,8 @@ namespace QtCore {
 		        item->s_ulong = (ulong) o;
 		        return TypeId.t_ulong;
 		    }
-		    if (t == typeof(sbyte)) {
-		        item->s_char = (sbyte) o;
+		    if (t == typeof(char)) {
+		        item->s_char = (char) o;
 		        return TypeId.t_uchar;
 		    }
 		    if (t == typeof(byte)) {
@@ -1000,7 +1000,7 @@ namespace QtCore {
 		        return TypeId.t_uchar;
 		    }
 		    if (t == typeof(char)) {
-		        item->s_char = (sbyte) (char) o;
+		        item->s_char = (char) (char) o;
 		        return TypeId.t_char;
 		    }
 			string text = o as string;
@@ -1064,7 +1064,7 @@ namespace QtCore {
 		    if (t == typeof(ulong)) {
 		        return TypeId.t_ulong;
 		    }
-		    if (t == typeof(sbyte)) {
+		    if (t == typeof(char)) {
 		        return TypeId.t_uchar;
 		    }
 		    if (t == typeof(byte)) {
@@ -1118,7 +1118,7 @@ namespace QtCore {
 			    if (t == typeof(ulong)) {
 			        return item->s_ulong;
 			    }
-			    if (t == typeof(sbyte)) {
+			    if (t == typeof(char)) {
 			        return item->s_char;
 			    }
 			    if (t == typeof(byte)) {

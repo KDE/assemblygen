@@ -56,7 +56,7 @@ namespace QtCore {
 	unsafe public struct StackItem {
 		[FieldOffset(0)] public void * s_voidp;
 		[FieldOffset(0)] public bool s_bool;
-		[FieldOffset(0)] public sbyte s_char;
+		[FieldOffset(0)] public char s_char;
 		[FieldOffset(0)] public byte s_uchar;
 		[FieldOffset(0)] public short s_short;
 		[FieldOffset(0)] public ushort s_ushort;

@@ -93,7 +93,7 @@ public unsafe class Translator
 	// map a C++ type string to a .NET type
 	private readonly Dictionary<string, Type> typeMap = new Dictionary<string, Type>
 	                                                    	{
-	                                                    		{"char", typeof(sbyte)},
+	                                                    		{"char", typeof(char)},
 	                                                    		{"uchar", typeof(byte)},
 	                                                    		{"short", typeof(short)},
 	                                                    		{"ushort", typeof(ushort)},
@@ -215,7 +215,7 @@ public unsafe class Translator
 		}
 		if (typeId == Smoke.TypeId.t_char)
 		{
-			return new CodeTypeReference(typeof(sbyte));
+			return new CodeTypeReference(typeof(char));
 		}
 		if (typeId == Smoke.TypeId.t_uchar)
 		{
