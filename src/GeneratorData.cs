@@ -39,6 +39,30 @@ public unsafe class GeneratorData
 	public List<Assembly> References;
 	public List<string> Imports;
 	public IDictionary<string, string[]> ArgumentNames = new Dictionary<string, string[]>();
+	public Dictionary<string, string> TypeDefs = new Dictionary<string, string>();
+
+	private readonly Type smokeClassAttribute;
+	private readonly MethodInfo smokeClassGetSignature;
+
+	public Dictionary<string, Type> ReferencedTypeMap = new Dictionary<string, Type>();
+
+	// maps a C++ class to a .NET interface (needed for multiple inheritance), populated by ClassInterfacesGenerator
+	public readonly Dictionary<string, CodeTypeDeclaration> InterfaceTypeMap =
+		new Dictionary<string, CodeTypeDeclaration>();
+
+	// maps a C++ namespace to a .NET namespace
+	public readonly Dictionary<string, CodeNamespace> NamespaceMap = new Dictionary<string, CodeNamespace>();
+	// maps a Smoke class to a .NET class
+	public readonly Dictionary<IntPtr, CodeTypeDeclaration> SmokeTypeMap = new Dictionary<IntPtr, CodeTypeDeclaration>();
+	// maps a binding class name to a .NET class
+	public readonly Dictionary<string, CodeTypeDeclaration> CSharpTypeMap = new Dictionary<string, CodeTypeDeclaration>();
+	// maps a smoke enum type to a .NET enum
+	public readonly Dictionary<string, CodeTypeDeclaration> EnumTypeMap = new Dictionary<string, CodeTypeDeclaration>();
+	// maps public abstract classes to their internal implemented types
+	public readonly Dictionary<CodeTypeDeclaration, CodeTypeDeclaration> InternalTypeMap =
+		new Dictionary<CodeTypeDeclaration, CodeTypeDeclaration>();
+
+	public bool Debug;
 
 	public GeneratorData(Smoke* smoke, string defaultNamespace, List<string> imports, List<Assembly> references,
 	                     string destination, string docs)
@@ -52,14 +76,8 @@ public unsafe class GeneratorData
 		Destination = destination;
 		Docs = docs;
 		Smoke = smoke;
-		string argNamesFile = GetArgNamesFile(Smoke);
-		if (File.Exists(argNamesFile))
-		{
-			foreach (string[] strings in File.ReadAllLines(argNamesFile).Select(line => line.Split(';')))
-			{
-				ArgumentNames[strings[0]] = strings[1].Split(',');
-			}
-		}
+		this.GetArgNames();
+		this.GetTypeDefs();
 		CompileUnit = unit;
 		Imports = imports;
 
@@ -102,28 +120,29 @@ public unsafe class GeneratorData
 		NamespaceMap[defaultNamespace] = DefaultNamespace;
 	}
 
-	private readonly Type smokeClassAttribute;
-	private readonly MethodInfo smokeClassGetSignature;
+	private void GetTypeDefs()
+	{
+		string typeDefsFile = this.GetTypeDefsFile(this.Smoke);
+		if (File.Exists(typeDefsFile))
+		{
+			foreach (string[] strings in File.ReadAllLines(typeDefsFile).Select(line => line.Split(';')))
+			{
+				this.TypeDefs[strings[0]] = strings[1];
+			}
+		}
+	}
 
-	public Dictionary<string, Type> ReferencedTypeMap = new Dictionary<string, Type>();
-
-	// maps a C++ class to a .NET interface (needed for multiple inheritance), populated by ClassInterfacesGenerator
-	public readonly Dictionary<string, CodeTypeDeclaration> InterfaceTypeMap =
-		new Dictionary<string, CodeTypeDeclaration>();
-
-	// maps a C++ namespace to a .NET namespace
-	public readonly Dictionary<string, CodeNamespace> NamespaceMap = new Dictionary<string, CodeNamespace>();
-	// maps a Smoke class to a .NET class
-	public readonly Dictionary<IntPtr, CodeTypeDeclaration> SmokeTypeMap = new Dictionary<IntPtr, CodeTypeDeclaration>();
-	// maps a binding class name to a .NET class
-	public readonly Dictionary<string, CodeTypeDeclaration> CSharpTypeMap = new Dictionary<string, CodeTypeDeclaration>();
-	// maps a smoke enum type to a .NET enum
-	public readonly Dictionary<string, CodeTypeDeclaration> EnumTypeMap = new Dictionary<string, CodeTypeDeclaration>();
-	// maps public abstract classes to their internal implemented types
-	public readonly Dictionary<CodeTypeDeclaration, CodeTypeDeclaration> InternalTypeMap =
-		new Dictionary<CodeTypeDeclaration, CodeTypeDeclaration>();
-
-	public bool Debug;
+	private void GetArgNames()
+	{
+		string argNamesFile = this.GetArgNamesFile(this.Smoke);
+		if (File.Exists(argNamesFile))
+		{
+			foreach (string[] strings in File.ReadAllLines(argNamesFile).Select(line => line.Split(';')))
+			{
+				this.ArgumentNames[strings[0]] = strings[1].Split(',');
+			}
+		}
+	}
 
 	/*
 	 * Returns the collection of sub-types for a given prefix (which may be a namespace or a class).
@@ -272,7 +291,17 @@ public unsafe class GeneratorData
 
 	public string GetArgNamesFile(Smoke* smoke)
 	{
-		string dest = Destination;
+		return this.GetFile(smoke, "argnames");
+	}
+
+	private string GetTypeDefsFile(Smoke* smoke)
+	{
+		return this.GetFile(smoke, "typedefs");
+	}
+
+	public string GetFile(Smoke* smoke, string name)
+	{
+		string dest = this.Destination;
 		if (string.IsNullOrEmpty(dest))
 		{
 			if (Environment.OSVersion.Platform == PlatformID.Win32NT)
@@ -286,6 +315,6 @@ public unsafe class GeneratorData
 		}
 		dest = Path.Combine(dest, "share");
 		dest = Path.Combine(dest, "smoke");
-		return Path.Combine(dest, ByteArrayManager.GetString(smoke->module_name) + ".argnames.txt");
+		return Path.Combine(dest, string.Format("{0}.{1}.txt", ByteArrayManager.GetString(smoke->module_name), name));
 	}
 }

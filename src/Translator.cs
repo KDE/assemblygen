@@ -24,7 +24,6 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Linq;
-using System.Web.Util;
 
 static class CollectionExtensions {
     public static void AddRange<T, U>(this IDictionary<T, U> self, IDictionary<T, U> dict) {
@@ -193,13 +192,13 @@ public unsafe class Translator
 
 	#region public functions
 
-	public CodeTypeReference CppToCSharp(Smoke.Class* klass)
+	public CodeTypeReference CppToCSharp(Smoke.Class* klass, CodeTypeDeclaration containingType)
 	{
 		bool isRef;
-		return this.CppToCSharp(ByteArrayManager.GetString(klass->className), out isRef);
+		return this.CppToCSharp(ByteArrayManager.GetString(klass->className), containingType, out isRef);
 	}
 
-	public CodeTypeReference CppToCSharp(Smoke.Type* type, out bool isRef)
+	public CodeTypeReference CppToCSharp(Smoke.Type* type, CodeTypeDeclaration containingType, out bool isRef)
 	{
 		string typeString = ByteArrayManager.GetString(type->name);
 		isRef = false;
@@ -257,74 +256,24 @@ public unsafe class Translator
 		{
 			return new CodeTypeReference(typeof(double));
 		}
-		return this.CppToCSharp(typeString, out isRef);
+		return this.CppToCSharp(typeString, containingType, out isRef);
 	}
 
-	public CodeTypeReference CppToCSharp(string typeString)
+	public CodeTypeReference CppToCSharp(string typeString, CodeTypeDeclaration containingType)
 	{
 		bool isRef;
-		return this.CppToCSharp(typeString, out isRef);
+		return this.CppToCSharp(typeString, containingType, out isRef);
 	}
 
-	public CodeTypeReference CppToCSharp(string typeString, out bool isRef)
+	public CodeTypeReference CppToCSharp(string typeString, CodeTypeDeclaration containingType, out bool isRef)
 	{
-		// HACK: some enums - only as typedef flags if used in signals/slots; otherwise cannot be found because meta object only has typedef in method signature; remove when fixed in SMOKE
-		switch (typeString)
-		{
-			case "QDockWidget::DockWidgetFeatures":
-				typeString = "QFlags<QDockWidget::DockWidgetFeature>";
-				break;
-			case "QGraphicsScene::SceneLayers":
-				typeString = "QFlags<QGraphicsScene::SceneLayer>";
-				break;
-			case "Qt::DockWidgetAreas":
-				typeString = "QFlags<Qt::DockWidgetArea>";
-				break;
-			case "Qt::WindowStates":
-				typeString = "QFlags<Qt::WindowState>";
-				break;
-			case "QGraphicsBlurEffect::BlurHints":
-				typeString = "QFlags<QGraphicsBlurEffect::BlurHint>";
-				break;
-			case "QItemSelectionModel::SelectionFlags":
-				typeString = "QFlags<QItemSelectionModel::SelectionFlag>";
-				break;
-			case "Qt::Alignment":
-				typeString = "QFlags<Qt::AlignmentFlag>";
-				break;
-			case "Qt::ToolBarAreas":
-				typeString = "QFlags<Qt::ToolBarArea>";
-				break;
-			case "QIODevice::OpenMode":
-				typeString = "QFlags<QIODevice::OpenModeFlag>";
-				break;
-			case "ColorDialogOptions":
-			case "QColorDialog::ColorDialogOptions":
-				typeString = "QFlags<QColorDialog::ColorDialogOption>";
-				break;
-			case "FontDialogOptions":
-			case "QFontDialog::FontDialogOptions":
-				typeString = "QFlags<QFontDialog::FontDialogOption>";
-				break;
-			case "PageSetupDialogOptions":
-			case "QPageSetupDialog::PageSetupDialogOptions":
-				typeString = "QFlags<QPageSetupDialog::PageSetupDialogOption>";
-				break;
-			case "PrintDialogOptions":
-			case "QAbstractPrintDialog::PrintDialogOptions":
-				typeString = "QFlags<QAbstractPrintDialog::PrintDialogOption>";
-				break;
-			case "WatchMode":
-			case "QDBusServiceWatcher::WatchMode":
-				typeString = "QFlags<QDBusServiceWatcher::WatchModeFlag>";
-				break;
-		}
+		typeString = this.ResolveType(typeString, containingType);
 		// yes, this won't match Foo<...>::Bar - but we can't wrap that anyway
 		isRef = false;
 		Match match = Regex.Match(typeString, @"^(const )?(unsigned |signed )?([\w\s:]+)(<.+>)?(\*)*(&)?$");
 		if (!match.Success)
 		{
-			return this.CheckForFunctionPointer(typeString);
+			return this.CheckForFunctionPointer(typeString, containingType);
 		}
 		bool isConst = match.Groups[1].Value != string.Empty;
 		bool isUnsigned = match.Groups[2].Value == "unsigned ";
@@ -412,7 +361,7 @@ public unsafe class Translator
 			{
 				if (i > 0) ret += ',';
 				bool tmp;
-				ret += this.CppToCSharp(args[i], out tmp).BaseType;
+				ret += this.CppToCSharp(args[i], containingType, out tmp).BaseType;
 			}
 			ret += '>';
 		}
@@ -433,7 +382,25 @@ public unsafe class Translator
 		return new CodeTypeReference(ret);
 	}
 
-	private CodeTypeReference CheckForFunctionPointer(string typeString)
+	private string ResolveType(string typeString, CodeTypeDeclaration containingType)
+	{
+		if (this.data.TypeDefs.ContainsKey(typeString))
+		{
+			return this.data.TypeDefs[typeString];
+		}
+		string key = string.Format("{0}::{1}", containingType.Name, typeString);
+		if (this.data.TypeDefs.ContainsKey(key))
+		{
+			return this.data.TypeDefs[key];
+		}
+		string innerKey = (from CodeTypeReference baseType in containingType.BaseTypes.Cast<CodeTypeReference>()
+		                   let currentKey = string.Format("{0}::{1}", baseType.BaseType, typeString)
+		                   where this.data.TypeDefs.ContainsKey(currentKey)
+		                   select currentKey).FirstOrDefault();
+		return string.IsNullOrEmpty(innerKey) ? typeString : this.data.TypeDefs[innerKey];
+	}
+
+	private CodeTypeReference CheckForFunctionPointer(string typeString, CodeTypeDeclaration containingType)
 	{
 		Match match = MatchFunctionPointer(typeString);
 		if (match.Success)
@@ -441,7 +408,7 @@ public unsafe class Translator
 			string returnType = match.Groups[1].Value;
 			StringBuilder delegateNameBuilder = new StringBuilder();
 			CodeTypeDelegate @delegate = new CodeTypeDelegate();
-			@delegate.ReturnType = this.CppToCSharp(returnType);
+			@delegate.ReturnType = this.CppToCSharp(returnType, containingType);
 			if (returnType == "void")
 			{
 				delegateNameBuilder.Append("Action");
@@ -449,13 +416,13 @@ public unsafe class Translator
 			else
 			{
 				delegateNameBuilder.Append("Func");
-				CodeTypeReference returnTypeReference = this.CppToCSharp(returnType);
+				CodeTypeReference returnTypeReference = this.CppToCSharp(returnType, containingType);
 				delegateNameBuilder.Append(
 					returnTypeReference.BaseType.Substring(returnTypeReference.BaseType.LastIndexOf('.') + 1));
 			}
 			foreach (string argumentType in match.Groups[2].Value.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries))
 			{
-				CodeTypeReference argType = this.CppToCSharp(argumentType);
+				CodeTypeReference argType = this.CppToCSharp(argumentType, containingType);
 				string argTypeName = argType.BaseType.Substring(argType.BaseType.LastIndexOf('.') + 1);
 				string arg = argTypeName[0].ToString(CultureInfo.InvariantCulture).ToLowerInvariant() +
 				             argTypeName.Substring(1);

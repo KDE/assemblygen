@@ -117,7 +117,7 @@ public unsafe class AttributeGenerator
 			try
 			{
 				bool isRef;
-				prop.Type = translator.CppToCSharp(attr.Smoke->types + attr.GetMethod->ret, out isRef);
+				prop.Type = translator.CppToCSharp(attr.Smoke->types + attr.GetMethod->ret, this.type, out isRef);
 			}
 			catch (NotSupportedException)
 			{

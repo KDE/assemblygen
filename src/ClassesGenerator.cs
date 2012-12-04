@@ -296,7 +296,7 @@ public unsafe class ClassesGenerator
 					continue;
 				}
 				// Translator.CppToCSharp() will take care of 'interfacifying' the class name
-				type.BaseTypes.Add(translator.CppToCSharp(data.Smoke->classes + *parent));
+				type.BaseTypes.Add(translator.CppToCSharp(data.Smoke->classes + *parent, type));
 				parent++;
 			}
 		}
@@ -362,7 +362,7 @@ public unsafe class ClassesGenerator
 				continue;
 			}
 
-			CodeTypeReference type = translator.CppToCSharp(ByteArrayManager.GetString(ifaceKlass->className));
+			CodeTypeReference type = translator.CppToCSharp(ByteArrayManager.GetString(ifaceKlass->className), methgen.Type);
 			methgen.GenerateMethod(pair.Key.smoke, meth, pair.Value, type);
 		}
 	}

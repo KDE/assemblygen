@@ -149,7 +149,7 @@ public unsafe class QyotoHooks : IHookProvider
 					if (typeName == string.Empty)
 						signal.ReturnType = new CodeTypeReference(typeof(void));
 					else
-						signal.ReturnType = Translator.CppToCSharp(typeName, out isRef);
+						signal.ReturnType = Translator.CppToCSharp(typeName, type, out isRef);
 				}
 				catch (NotSupportedException)
 				{
@@ -178,7 +178,7 @@ public unsafe class QyotoHooks : IHookProvider
 						CodeTypeReference paramTypeRef;
 						if (id > 0)
 						{
-							paramTypeRef = Translator.CppToCSharp(smoke->types + id, out isRef);
+							paramTypeRef = Translator.CppToCSharp(smoke->types + id, type, out isRef);
 						}
 						else
 						{
@@ -187,16 +187,16 @@ public unsafe class QyotoHooks : IHookProvider
 								id = smoke->IDType(className + "::" + paramType);
 								if (id > 0)
 								{
-									paramTypeRef = Translator.CppToCSharp(smoke->types + id, out isRef);
+									paramTypeRef = Translator.CppToCSharp(smoke->types + id, type, out isRef);
 								}
 								else
 								{
-									paramTypeRef = Translator.CppToCSharp(paramType, out isRef);
+									paramTypeRef = Translator.CppToCSharp(paramType, type, out isRef);
 								}
 							}
 							else
 							{
-								paramTypeRef = Translator.CppToCSharp(paramType, out isRef);
+								paramTypeRef = Translator.CppToCSharp(paramType, type, out isRef);
 							}
 						}
 						param = new CodeParameterDeclarationExpression(paramTypeRef, paramName);

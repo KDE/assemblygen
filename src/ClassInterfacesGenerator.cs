@@ -119,7 +119,7 @@ public unsafe class ClassInterfacesGenerator
 			short* parent = data.Smoke->inheritanceList + klass->parents;
 			while (*parent > 0)
 			{
-				ifaceDecl.BaseTypes.Add(translator.CppToCSharp(data.Smoke->classes + *parent));
+				ifaceDecl.BaseTypes.Add(translator.CppToCSharp(data.Smoke->classes + *parent, ifaceDecl));
 				parent++;
 			}
 

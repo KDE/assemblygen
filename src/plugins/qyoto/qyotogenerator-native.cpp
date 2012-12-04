@@ -45,7 +45,7 @@ const QMetaObject *GetMetaObject(Smoke *smoke, Smoke::Index classId) {
     return (QMetaObject*) ret.s_class;
 }
 
-Q_DECL_EXPORT bool GetProperties(Smoke* smoke, Smoke::Index classId, void (*addProp)(const char*, const char*, const char*, bool, bool))
+Q_DECL_EXPORT bool GetProperties(Smoke* smoke, Smoke::Index classId, void (*addProp)(const char*, const char*, bool, bool))
 {
     const QMetaObject *mo = GetMetaObject(smoke, classId);
     if (!mo) {
@@ -54,18 +54,7 @@ Q_DECL_EXPORT bool GetProperties(Smoke* smoke, Smoke::Index classId, void (*addP
 
     for (int i = mo->propertyOffset(); i < mo->propertyCount(); ++i) {
         const QMetaProperty& prop = mo->property(i);
-        QString realType(prop.typeName());
-        if (prop.isFlagType()) {
-            if (realType == "Qt::WindowFlags") {
-                realType = "Qt::WindowType";
-            } else if (realType.endsWith("s")) {
-                realType.chop(1);
-                realType = "QFlags<" + realType + ">";
-            } else {
-                realType += "Flag";
-            }
-        }
-        (*addProp)(prop.name(), prop.typeName(), realType.toLocal8Bit().data(), prop.isWritable(), prop.isEnumType());
+        (*addProp)(prop.name(), prop.typeName(), prop.isWritable(), prop.isEnumType());
     }
     return true;
 }

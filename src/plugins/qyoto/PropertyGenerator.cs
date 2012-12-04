@@ -32,15 +32,13 @@ public unsafe class PropertyGenerator
 	private class Property
 	{
 		public string Name;
-		public string OriginalType;
 		public string Type;
 		public bool IsWritable;
 		public bool IsEnum;
 
-		public Property(string name, string originalType, string type, bool writable, bool isEnum)
+		public Property(string name, string type, bool writable, bool isEnum)
 		{
 			Name = name;
-			OriginalType = originalType;
 			Type = type;
 			IsWritable = writable;
 			IsEnum = isEnum;
@@ -49,7 +47,7 @@ public unsafe class PropertyGenerator
 
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
 	private delegate void AddProperty(
-		string name, string originalType, string type, [MarshalAs(UnmanagedType.U1)] bool writable,
+		string name, string type, [MarshalAs(UnmanagedType.U1)] bool writable,
 		[MarshalAs(UnmanagedType.U1)] bool isEnum);
 
 	[DllImport("qyotogenerator-native", CallingConvention = CallingConvention.Cdecl)]
@@ -77,8 +75,8 @@ public unsafe class PropertyGenerator
 
 			List<Property> props = new List<Property>();
 			if (!GetProperties(data.Smoke, classId,
-				               (name, originalType, typeName, writable, isEnum) =>
-				               props.Add(new Property(name, originalType, typeName, writable, isEnum))))
+				               (name, typeName, writable, isEnum) =>
+				               props.Add(new Property(name, typeName, writable, isEnum))))
 			{
 				continue;
 			}
@@ -96,7 +94,7 @@ public unsafe class PropertyGenerator
 					short id = data.Smoke->IDType(prop.Type);
 					if (id > 0)
 					{
-						cmp.Type = translator.CppToCSharp(data.Smoke->types + id, out isRef);
+						cmp.Type = translator.CppToCSharp(data.Smoke->types + id, type, out isRef);
 					}
 					else
 					{
@@ -105,14 +103,14 @@ public unsafe class PropertyGenerator
 							id = data.Smoke->IDType(className + "::" + prop.Type);
 							if (id > 0)
 							{
-								cmp.Type = translator.CppToCSharp(data.Smoke->types + id, out isRef);
+								cmp.Type = translator.CppToCSharp(data.Smoke->types + id, type, out isRef);
 							}
 							else
 							{
-								cmp.Type = translator.CppToCSharp(prop.Type, out isRef);
+								cmp.Type = translator.CppToCSharp(prop.Type, type, out isRef);
 							}
 						}
-						cmp.Type = translator.CppToCSharp(prop.Type, out isRef);
+						cmp.Type = translator.CppToCSharp(prop.Type, type, out isRef);
 					}
 				}
 				catch (NotSupportedException)
@@ -127,7 +125,7 @@ public unsafe class PropertyGenerator
 					for (int i = 0; i < docs.Count; i++)
 					{
 						Match match = Regex.Match(docs[i],
-												  prop.Name + " : (const )?" + prop.OriginalType +
+												  prop.Name + " : (const )?" + prop.Type +
 												  @"\n(?<docs>This.*?)\nAccess functions:", RegexOptions.Singleline);
 						if (match.Success)
 						{
@@ -171,7 +169,7 @@ public unsafe class PropertyGenerator
 
 				cmp.CustomAttributes.Add(new CodeAttributeDeclaration("Q_PROPERTY",
 				                                                      new CodeAttributeArgument(
-				                                                      	new CodePrimitiveExpression(prop.OriginalType)),
+				                                                      	new CodePrimitiveExpression(prop.Type)),
 				                                                      new CodeAttributeArgument(
 				                                                      	new CodePrimitiveExpression(prop.Name))));
 

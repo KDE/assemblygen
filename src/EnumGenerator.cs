@@ -56,7 +56,7 @@ public unsafe class EnumGenerator
 		{
 			name = cppName.Substring(colon + 2);
 		}
-		// HACK: in qprinter.h there is a typedef PageSize PaperSize; but PageSize is obsolete; using PaperSize; remove when the typedef maps are added to SMOKE
+		// HACK: qprinter.h - typedef PageSize PaperSize but PageSize is obsolete; typedefs don't help here: this is the only case where the type def and not the real type, should be used
 		if (cppName == "QPrinter::PageSize")
 		{
 			name = "PaperSize";

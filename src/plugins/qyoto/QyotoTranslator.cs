@@ -64,12 +64,11 @@ public class QyotoTranslator : ICustomTranslator {
         { "QHash", "System.Collections.Generic.Dictionary" },
         { "QMap", "System.Collections.Generic.Dictionary" },
         { "QMultiMap", "System.Collections.Generic.Dictionary" },
-        // a hash set would be better, but do we want to depend on System.Core.dll (i.e. .NET 3.5)?
-        { "QSet", "System.Collections.Generic.List" },
+        { "QSet", "System.Collections.Generic.HashSet" },
         { "QQueue", "System.Collections.Generic.Queue" },
         { "QStack", "System.Collections.Generic.Stack" },
 
-        { "QModelIndexList", "System.Collections.Generic.List<QModelIndex>" },
+        { "QModelIndexList", "System.Collections.Generic.List<QModelIndex>" }
     };
 
     Dictionary<string, Translator.TranslateFunc> typeCodeMap = new Dictionary<string, Translator.TranslateFunc>()

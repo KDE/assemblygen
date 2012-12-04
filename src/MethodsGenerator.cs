@@ -96,6 +96,8 @@ public unsafe class MethodsGenerator
 		this.smokeClass = klass;
 	}
 
+	public CodeTypeDeclaration Type { get { return type; } }
+
 	private bool m_internalImplementation;
 	private static readonly CodeDomProvider provider = new CSharpCodeProvider();
 
@@ -239,7 +241,7 @@ public unsafe class MethodsGenerator
 					try
 					{
 						CodeParameterDeclarationExpression exp =
-							new CodeParameterDeclarationExpression(translator.CppToCSharp(className, out isRef), "one");
+							new CodeParameterDeclarationExpression(translator.CppToCSharp(className, type, out isRef), "one");
 						args.Add(exp);
 					}
 					catch (NotSupportedException)
@@ -270,11 +272,11 @@ public unsafe class MethodsGenerator
 				}
 				try
 				{
-					explicitConversionType = translator.CppToCSharp(explicitConversionType, out isRef).GetStringRepresentation();
+					explicitConversionType = translator.CppToCSharp(explicitConversionType, type, out isRef).GetStringRepresentation();
 					if (smoke->classes[method->classId].size > 0)
 					{
 						CodeParameterDeclarationExpression exp =
-							new CodeParameterDeclarationExpression(translator.CppToCSharp(className, out isRef), "value");
+							new CodeParameterDeclarationExpression(translator.CppToCSharp(className, type, out isRef), "value");
 						args.Add(exp);
 					}
 				}
@@ -307,7 +309,7 @@ public unsafe class MethodsGenerator
 		CodeTypeReference returnType;
 		try
 		{
-			returnType = translator.CppToCSharp(smoke->types + method->ret, out isRef);
+			returnType = translator.CppToCSharp(smoke->types + method->ret, type, out isRef);
 		}
 		catch (NotSupportedException)
 		{
@@ -502,7 +504,7 @@ public unsafe class MethodsGenerator
 	private CodeParameterDeclarationExpression GetArgument(Smoke* smoke, short* typeIndex, IList<string> methodArgs, IEnumerable args, ref int count)
 	{
 		bool isRef;
-		CodeTypeReference argType = translator.CppToCSharp(smoke->types + *typeIndex, out isRef);
+		CodeTypeReference argType = translator.CppToCSharp(smoke->types + *typeIndex, type, out isRef);
 		string argName = this.GetArgName(smoke, typeIndex, methodArgs, ref count, isRef, argType);
 		if (!argName.Contains(" = "))
 		{
