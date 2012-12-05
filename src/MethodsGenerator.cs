@@ -1164,13 +1164,13 @@ public unsafe class MethodsGenerator
 					var variableDeclarationStatement = statements.OfType<CodeVariableDeclarationStatement>().First();
 					var arrayCreateExpression = (CodeArrayCreateExpression) variableDeclarationStatement.InitExpression;
 					var argumentReferenceExpression = (CodeArgumentReferenceExpression) arrayCreateExpression.Initializers[2 * i + 1];
-					argumentReferenceExpression.ParameterName = parameter.Name;
+					argumentReferenceExpression.ParameterName = name;
 					foreach (var variable in from assignStatement in statements.OfType<CodeAssignStatement>()
 											 let var = (CodeVariableReferenceExpression) assignStatement.Left
 											 where var.VariableName == oldArgName
 											 select var)
 					{
-						variable.VariableName = parameter.Name;
+						variable.VariableName = name;
 					}
 				}
 			}
