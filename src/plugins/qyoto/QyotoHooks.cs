@@ -513,7 +513,7 @@ public unsafe class QyotoHooks : IHookProvider
 				typeBuilder.Replace(@"\*", @"\s*\*").Replace(@"&", @"\s*&").Replace(typeName + "::", @"(\w+::)?");
 				signatureRegex.Append(Translator.MatchFunctionPointer(typeBuilder.ToString()).Success
 					                      ? @"[^,]+"
-										  : (typeBuilder + @"\s+(\w+(\s*=\s*[^\(,\s]+(\(\s*\)?)?)?)?"));
+										  : (typeBuilder + @"\s+(\w+(\s*=\s*[^\(,\s]+(\(\s*\))?)?)?"));
 				signatureRegex.Append(separator);
 			}
 			signatureRegexes.Add(signatureRegex);

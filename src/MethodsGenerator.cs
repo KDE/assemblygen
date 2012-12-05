@@ -1156,7 +1156,7 @@ public unsafe class MethodsGenerator
 			string nameOnly = index > 0 ? oldArgName.Substring(0, index) : oldArgName;
 			if (nameOnly.Length == 4 && nameOnly.StartsWith("arg") && char.IsDigit(nameOnly[3]))
 			{
-				string name = Regex.Match(args[i], @"(?<name>\w+)(\s*=\s*\w+)?$").Groups["name"].Value;
+				string name = Regex.Match(args[i], @"(?<name>\w+)(\s*=\s*[^\(,\s]+(\(\s*\))?)?$").Groups["name"].Value;
 				if (!string.IsNullOrEmpty(name))
 				{
 					parameter.Name = name + (index > 0 ? oldArgName.Substring(index) : string.Empty);
