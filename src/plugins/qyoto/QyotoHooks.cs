@@ -507,9 +507,7 @@ public unsafe class QyotoHooks : IHookProvider
 		foreach (StringBuilder typeBuilder in typeDef.Select(t => new StringBuilder(Regex.Escape(t))))
 		{
 			typeBuilder.Replace(@"\*", @"\s*\*").Replace(@"&", @"\s*&").Replace(type + "::", @"(\w+::)?");
-			signatureRegex.Append(Translator.MatchFunctionPointer(typeBuilder.ToString()).Success
-				                      ? @"[^,]+"
-				                      : (typeBuilder + @"\s+(\w+(\s*=\s*[^\(,\s]+(\(\s*\))?)?)?"));
+			signatureRegex.Append(typeBuilder + @"\s+(\w+(\s*=\s*[\w'\-:]+(\(\s*\))?)?)?");
 			signatureRegex.Append(separator);
 			anyArgs = true;
 		}
