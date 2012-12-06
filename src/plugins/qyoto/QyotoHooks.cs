@@ -339,7 +339,7 @@ public unsafe class QyotoHooks : IHookProvider
 				Match match = Regex.Match(classDocs, string.Format(@"(?<class>((The {0})|(This class)).+?)More\.\.\..*?\n" +
 				                                              @"Detailed Description\s+(?<detailed>.*?)(\n){{3,}}" +
 				                                              @"((\w+ )*\w+ Documentation\n(?<members>.+))", typeName),
-				                          RegexOptions.Singleline);
+				                          RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 				if (match.Success)
 				{
 					type.Comments.Add(new CodeCommentStatement("<summary>", true));
@@ -350,7 +350,8 @@ public unsafe class QyotoHooks : IHookProvider
 					Util.FormatComment(detailed.Replace("\n/", "\n /"), type, false, "remarks");
 					string members = match.Groups["members"].Value;
 					docs.Add(members);
-					Match matchStatic = Regex.Match(members, "Related Non-Members(?<static>.+)", RegexOptions.Singleline);
+					Match matchStatic = Regex.Match(members, "Related Non-Members(?<static>.+)",
+					                                RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 					if (matchStatic.Success)
 					{
 						staticDocumentation.Add(matchStatic.Groups["static"].Value);
@@ -390,7 +391,8 @@ public unsafe class QyotoHooks : IHookProvider
 				for (int i = 0; i < docs.Count; i++)
 				{
 					const string enumDoc = @"enum {0}(\s*flags {1}::\w+\s+)?(?<docsStart>.*?)(\n){{3}}";
-					Match matchEnum = Regex.Match(docs[i], string.Format(enumDoc, typeName, parentType.Name), RegexOptions.Singleline);
+					Match matchEnum = Regex.Match(docs[i], string.Format(enumDoc, typeName, parentType.Name),
+					                              RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 					if (matchEnum.Success)
 					{
 						string doc = (matchEnum.Groups["docsStart"].Value + matchEnum.Groups["docsEnd1"].Value).Trim();
@@ -399,7 +401,7 @@ public unsafe class QyotoHooks : IHookProvider
 						                    string.Empty);
 						doc = Regex.Replace(doc,
 						                    @"ConstantValue(Description)?.*?(((\n){2})|$)",
-						                    string.Empty, RegexOptions.Singleline).Trim();
+						                    string.Empty, RegexOptions.Singleline | RegexOptions.ExplicitCapture).Trim();
 						if (!string.IsNullOrEmpty(doc))
 						{
 							Util.FormatComment(doc, type, i > 0);
@@ -413,7 +415,8 @@ public unsafe class QyotoHooks : IHookProvider
 			const string memberDoc = @"enum {0}.*{1}\t[^\t\n]+\t(?<docs>.*?)(&\w+;)?(\n)";
 			for (int i = 0; i < docs.Count; i++)
 			{
-				Match match = Regex.Match(docs[i], string.Format(memberDoc, typeName, memberName), RegexOptions.Singleline);
+				Match match = Regex.Match(docs[i], string.Format(memberDoc, typeName, memberName),
+				                          RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 				if (match.Success)
 				{
 					string doc = match.Groups["docs"].Value.Trim();
@@ -443,7 +446,8 @@ public unsafe class QyotoHooks : IHookProvider
 			const string memberDoc = @"{0}::{1}\n\W*(?<docs>.*?)(\n\s*){{3}}";
 			for (int i = 0; i < docs.Count; i++)
 			{
-				Match match = Regex.Match(docs[i], string.Format(memberDoc, typeName, originalName), RegexOptions.Singleline);
+				Match match = Regex.Match(docs[i], string.Format(memberDoc, typeName, originalName),
+				                          RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 				if (match.Success)
 				{
 					Util.FormatComment(match.Groups["docs"].Value, cmm, i > 0);
@@ -479,7 +483,8 @@ public unsafe class QyotoHooks : IHookProvider
 		{
 			int j = i;
 			Match match = (from regex in signatureRegexes
-			               let m = Regex.Match(docs[j], string.Format(memberDoc, type, regex), RegexOptions.Singleline)
+			               let m = Regex.Match(docs[j], string.Format(memberDoc, type, regex),
+			                                   RegexOptions.Singleline | RegexOptions.ExplicitCapture)
 			               where m.Success
 			               select m).FirstOrDefault();
 			if (match != null)
@@ -488,7 +493,8 @@ public unsafe class QyotoHooks : IHookProvider
 				FillMissingParameterNames(cmm, match.Groups["args"].Value);
 				return;
 			}
-			Match alt = Regex.Match(docs[i], string.Format(altMemberDoc, type, methodName), RegexOptions.Singleline);
+			Match alt = Regex.Match(docs[i], string.Format(altMemberDoc, type, methodName),
+			                        RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 			if (alt.Success)
 			{
 				Util.FormatComment(alt.Groups["docs"].Value, cmm, i > 0 && markObsolete);

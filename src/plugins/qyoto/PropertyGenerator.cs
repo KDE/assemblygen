@@ -126,7 +126,7 @@ public unsafe class PropertyGenerator
 					{
 						Match match = Regex.Match(docs[i],
 												  prop.Name + " : (const )?" + prop.Type +
-												  @"\n(?<docs>This.*?)\nAccess functions:", RegexOptions.Singleline);
+												  @"\n(?<docs>This.*?)\nAccess functions:", RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 						if (match.Success)
 						{
 							Util.FormatComment(match.Groups["docs"].Value, cmp, i > 0);
