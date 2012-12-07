@@ -53,7 +53,7 @@ public class Documentation
 			return new Dictionary<string, string>();
 		}
 		return Directory.GetFiles(docs, "*.html").ToDictionary(Path.GetFileName,
-															   f => File.ReadAllText(f).Replace("\r", string.Empty).Replace(@"\", @"\\"));
+															   f => new StringBuilder(File.ReadAllText(f)).Replace("\r", string.Empty).Replace(@"\", @"\\").ToString());
 	}
 
 	private static IDictionary<string, string> GetFromQch(string docsPath)
