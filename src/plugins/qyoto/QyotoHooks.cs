@@ -477,7 +477,7 @@ public unsafe class QyotoHooks : IHookProvider
 		Match matchSignature = Regex.Match(signature, @"(?<name>[^\(]+)\((?<args>.*)\)");
 		string methodName = Regex.Escape(matchSignature.Groups["name"].Value);
 		const string altMemberDoc = @"{0}( |(::)){1}\s*\([^\n]*\)( const)?( \[(\w+\s*)+\])?\n\W*(?<docs>.*?)(\n\s*){{1,2}}((&?\S* --)|((\n\s*){{2}}))";
-		string[] argTypes = matchSignature.Groups["args"].Value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+		string[] argTypes = matchSignature.Groups["args"].Value.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
 		IEnumerable<IEnumerable<string>> typeDefs = argTypes.Select(t => new List<string>(new[] { t }.Union(from typeDef in this.Data.TypeDefs
 																											where typeDef.Value == t
 																											select typeDef.Key)));
@@ -493,7 +493,7 @@ public unsafe class QyotoHooks : IHookProvider
 			if (alt.Success)
 			{
 				Util.FormatComment(alt.Groups["docs"].Value, cmm, i > 0 && markObsolete);
-				break;
+				return;
 			}
 		}
 	}
