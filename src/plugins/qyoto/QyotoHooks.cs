@@ -489,7 +489,7 @@ public unsafe class QyotoHooks : IHookProvider
 				return;
 			}
 			Match alt = Regex.Match(docs[i], string.Format(altMemberDoc, type, methodName),
-			                        RegexOptions.Singleline | RegexOptions.ExplicitCapture);
+									RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 			if (alt.Success)
 			{
 				Util.FormatComment(alt.Groups["docs"].Value, cmm, i > 0 && markObsolete);

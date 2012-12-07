@@ -289,22 +289,6 @@ public unsafe class MethodsGenerator
 			}
 		}
 
-		// translate arguments
-		string[] methodArgs = this.GetMethodArgs(smoke, method);
-		for (short* typeIndex = smoke->argumentList + method->args; *typeIndex > 0; typeIndex++)
-		{
-			try
-			{
-				args.Add(this.GetArgument(smoke, typeIndex, methodArgs, args, ref count));
-			}
-			catch (NotSupportedException)
-			{
-				Debug.Print("  |--Won't wrap method {0}::{1}", className, cppSignature);
-				return null;
-			}
-		}
-		this.RemovePreviousOverload(args, char.ToUpper(methName[0]) + methName.Substring(1));
-
 		// translate return type
 		CodeTypeReference returnType;
 		try
@@ -390,6 +374,22 @@ public unsafe class MethodsGenerator
 				cmm.ReturnType = returnType;
 			}
 		}
+
+		// translate arguments
+		string[] methodArgs = this.GetMethodArgs(smoke, method);
+		for (short* typeIndex = smoke->argumentList + method->args; *typeIndex > 0; typeIndex++)
+		{
+			try
+			{
+				args.Add(this.GetArgument(smoke, typeIndex, methodArgs, args, ref count));
+			}
+			catch (NotSupportedException)
+			{
+				Debug.Print("  |--Won't wrap method {0}::{1}", className, cppSignature);
+				return null;
+			}
+		}
+		this.RemovePreviousOverload(args, cmm.Name);
 
 		// for destructors we already have this stuff set
 		if ((method->flags & (uint) Smoke.MethodFlags.mf_dtor) == 0)
