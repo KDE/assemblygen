@@ -478,9 +478,7 @@ public unsafe class QyotoHooks : IHookProvider
 		string methodName = Regex.Escape(matchSignature.Groups["name"].Value);
 		const string altMemberDoc = @"{0}( |(::)){1}\s*\([^\n]*\)( const)?( \[(\w+\s*)+\])?\n\W*(?<docs>.*?)(\n\s*){{1,2}}((&?\S* --)|((\n\s*){{2}}))";
 		string[] argTypes = matchSignature.Groups["args"].Value.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
-		IEnumerable<IEnumerable<string>> typeDefs = argTypes.Select(t => new List<string>(new[] { t }.Union(from typeDef in this.Data.TypeDefs
-																											where typeDef.Value == t
-																											select typeDef.Key)));
+		IEnumerable<IEnumerable<string>> typeDefs = argTypes.Select(t => new[] { t }.Union(this.Data.TypeDefsPerType.ContainsKey(t) ? this.Data.TypeDefsPerType[t] : Enumerable.Empty<string>()));
 		IEnumerable<IEnumerable<string>> cartesianProduct = CartesianProduct(typeDefs);
 		for (int i = 0; i < docs.Count; i++)
 		{
@@ -498,24 +496,35 @@ public unsafe class QyotoHooks : IHookProvider
 		}
 	}
 
-	private static bool TryMatch(string type, string methodName, CodeTypeMember cmm, string docs, bool markObsolete, IEnumerable<string> typeDef)
+	private static bool TryMatch(string type, string methodName, CodeTypeMember cmm, string docs, bool markObsolete, IEnumerable<string> argTypes)
 	{
-		const string memberDoc = @"{0}(\s*&)?( |(::)){1}(const)?( \[(\w+\s*)+\])?\n\W*(?<docs>.*?)(\n\s*){{1,2}}((&?\S* --)|((\n\s*){{2}}))";
+		const string memberDoc = @"(^|( --)|\n)\n([\w :*&<>]+)?(({0}(\s*&)?::)| ){1}(const)?( \[(\w+\s*)+\])?\n\W*(?<docs>.*?)(\n\s*){{1,2}}((&?\S* --)|((\n\s*){{2}}))";
 		const string separator = @",\s*";
-		StringBuilder signatureRegex = new StringBuilder(methodName).Append(@"\s*\(\s*(?<args>");
+		StringBuilder signatureRegex = new StringBuilder(methodName).Append(@"\s*\(\s*(");
 		bool anyArgs = false;
-		foreach (StringBuilder typeBuilder in typeDef.Select(t => new StringBuilder(Regex.Escape(t))))
+		foreach (StringBuilder typeBuilder in from argType in argTypes 
+											  let t = Regex.Escape(argType)
+											  let i = t.IndexOf("::", StringComparison.Ordinal) 
+											  select i > 0 ? new StringBuilder(@"(const )?(\w+::)?").Append(t.Substring(i + 2)) : new StringBuilder(t))
 		{
-			typeBuilder.Replace(@"\*", @"\s*\*").Replace(@"&", @"\s*&").Replace(type + "::", @"(\w+::)?");
-			signatureRegex.Append(typeBuilder).Append(@"\s+(\w+(\s*=\s*[\w'\-:]+(\(\s*\))?)?)?");
+			if (!anyArgs)
+			{
+				signatureRegex.Append("?<args>");
+				anyArgs = true;
+			}
+			typeBuilder.Replace(@"\*", @"\s*\*").Replace(@"&", @"\s*&").Replace(",", @",\s*");
+			signatureRegex.Append(typeBuilder).Append(@"\s+(\w+(\s*=\s*[^,\r\n]+(\(\s*\))?)?)?");
 			signatureRegex.Append(separator);
-			anyArgs = true;
 		}
 		if (anyArgs)
 		{
-			signatureRegex.Remove(signatureRegex.Length - separator.Length, separator.Length);
+			signatureRegex.Insert(signatureRegex.Length - separator.Length, '(');
 		}
-		signatureRegex.Append(@")\s*\)\s*");
+		else
+		{
+			signatureRegex.Append('(');			
+		}
+		signatureRegex.Append(@"[\w :*&<>]+\s*=\s*[^,\r\n]+(\(\s*\))?(,\s*)?)*)\s*\)\s*");
 		Match match = Regex.Match(docs, string.Format(memberDoc, type, signatureRegex),
 		                          RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 		if (match.Success)
@@ -549,7 +558,9 @@ public unsafe class QyotoHooks : IHookProvider
 			// operator
 			args.Insert(0, "one");
 		}
-		MethodsGenerator.RenameParameters(method, args);
+		const string regex = @"^(.+?\s+)(?<name>\w+)(\s*=\s*[^\(,\s]+(\(\s*\))?)?\s*$";
+		MethodsGenerator.RenameParameters(method, (from arg in args
+		                                           select Regex.Match(arg, regex).Groups["name"].Value).ToList());
 	}
 
 	private static string StripTags(string source)

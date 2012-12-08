@@ -40,6 +40,7 @@ public unsafe class GeneratorData
 	public List<string> Imports;
 	public IDictionary<string, string[]> ArgumentNames = new Dictionary<string, string[]>();
 	public Dictionary<string, string> TypeDefs = new Dictionary<string, string>();
+	public Dictionary<string, IList<string>> TypeDefsPerType = new Dictionary<string, IList<string>>();
 
 	private readonly Type smokeClassAttribute;
 	private readonly MethodInfo smokeClassGetSignature;
@@ -125,9 +126,85 @@ public unsafe class GeneratorData
 		string typeDefsFile = this.GetTypeDefsFile(this.Smoke);
 		if (File.Exists(typeDefsFile))
 		{
+			const string constFormat = "const {0}";
+			const string constRefFormat = "const {0}&";
+			const string constPointerFormat = "const {0}*";
+			const string refFormat = "{0}&";
+			const string pointerFormat = "{0}*";
 			foreach (string[] strings in File.ReadAllLines(typeDefsFile).Select(line => line.Split(';')))
 			{
-				this.TypeDefs[strings[0]] = strings[1];
+				string key = strings[0];
+				string value = strings[1];
+				this.TypeDefs[key] = value;
+				bool isConst = value.StartsWith("const ");
+				bool isRef = value[value.Length - 1] == '&' || value[value.Length - 1] == '*';
+				IList<string> typedefs;
+				IList<string> typedefsConst = null;
+				IList<string> typedefsRef = null;
+				IList<string> typedefsConstPointer = null;
+				IList<string> typedefsPointer = null;
+				string constKey = string.Format(constFormat, value);
+				string constRefKey = string.Format(constRefFormat, value);
+				string constPointerKey = string.Format(constPointerFormat, value);
+				string refKey = string.Format(refFormat, value);
+				string pointerKey = string.Format(pointerFormat, value);
+				if (this.TypeDefsPerType.ContainsKey(value))
+				{
+					typedefs = this.TypeDefsPerType[value];
+					if (isRef)
+					{
+						if (!isConst)
+						{
+							typedefsConst = this.TypeDefsPerType[constKey];							
+						}
+					}
+					else
+					{
+						typedefsConst = this.TypeDefsPerType[constRefKey];
+						typedefsConstPointer = this.TypeDefsPerType[constPointerKey];
+						typedefsPointer = this.TypeDefsPerType[pointerKey];
+						typedefsRef = this.TypeDefsPerType[refKey];
+					}
+				}
+				else
+				{
+					this.TypeDefsPerType[value] = typedefs = new List<string>();
+					if (isRef)
+					{
+						if (!isConst)
+						{
+							this.TypeDefsPerType[constKey] = typedefsConst = new List<string>();							
+						}
+					}
+					else
+					{
+						if (!isConst)
+						{
+							this.TypeDefsPerType[constRefKey] = typedefsConst = new List<string>();
+							this.TypeDefsPerType[constPointerKey] = typedefsConstPointer = new List<string>();	
+						}
+						this.TypeDefsPerType[refKey] = typedefsRef = new List<string>();
+						this.TypeDefsPerType[pointerKey] = typedefsPointer = new List<string>();
+					}
+				}
+				typedefs.Add(key);
+				if (isRef)
+				{
+					if (!isConst)
+					{
+						typedefsConst.Add(string.Format(constFormat, key));						
+					}
+				}
+				else
+				{
+					if (!isConst)
+					{
+						typedefsConst.Add(string.Format(constRefFormat, key));
+						typedefsConstPointer.Add(string.Format(constPointerFormat, key));	
+					}
+					typedefsRef.Add(string.Format(refFormat, key));
+					typedefsPointer.Add(string.Format(pointerFormat, key));
+				}
 			}
 		}
 	}
