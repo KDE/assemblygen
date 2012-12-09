@@ -304,15 +304,29 @@ public unsafe partial struct Smoke
 		StringBuilder str = new StringBuilder();
 		str.Append(ByteArrayManager.GetString(methodNames[meth->name]));
 		str.Append('(');
-		for (short* typeIndex = argumentList + meth->args; *typeIndex > 0;)
-		{
-			str.Append(ByteArrayManager.GetString(types[*typeIndex].name));
-			if (*(++typeIndex) > 0)
-				str.Append(", ");
-		}
+		this.GetArgs(meth, str);
 		str.Append(')');
 		if ((meth->flags & (ushort) MethodFlags.mf_const) != 0)
 			str.Append(" const");
 		return str.ToString();
+	}
+
+	public string GetArgs(Method* meth)
+	{
+		StringBuilder argsBuilder = new StringBuilder();
+		GetArgs(meth, argsBuilder);
+		return argsBuilder.ToString();
+	}
+
+	private void GetArgs(Method* meth, StringBuilder str)
+	{
+		for (short* typeIndex = this.argumentList + meth->args; *typeIndex > 0;)
+		{
+			str.Append(ByteArrayManager.GetString(this.types[*typeIndex].name));
+			if (*(++typeIndex) > 0)
+			{
+				str.Append(", ");
+			}
+		}
 	}
 }

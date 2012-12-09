@@ -461,44 +461,29 @@ public unsafe class QyotoHooks : IHookProvider
 	{
 		if (type.Name == Data.GlobalSpaceClassName || Translator.NamespacesAsClasses.Contains(type.Name))
 		{
-			CommentMember(smoke->GetMethodSignature(smokeMethod), cmm, @"\w+", this.staticDocumentation, false);
+			this.CommentMember(smoke, smokeMethod, cmm, @"\w+", this.staticDocumentation, false);
 		}
 		else
 		{
 			if (this.memberDocumentation.ContainsKey(type))
 			{
-				CommentMember(smoke->GetMethodSignature(smokeMethod), cmm, type.Name, this.memberDocumentation[type]);				
+				this.CommentMember(smoke, smokeMethod, cmm, type.Name, this.memberDocumentation[type]);				
 			}
 		}
 	}
 
-	private void CommentMember(string signature, CodeTypeMember cmm, string type, IList<string> docs, bool markObsolete = true)
+	private void CommentMember(Smoke* smoke, Smoke.Method* smokeMethod, CodeTypeMember cmm, string type, IEnumerable<string> docs, bool markObsolete = true)
 	{
-		Match matchSignature = Regex.Match(signature, @"(?<name>[^\(]+)\((?<args>.*)\)");
-		string methodName = Regex.Escape(matchSignature.Groups["name"].Value);
-		const string altMemberDoc = @"{0}( |(::)){1}\s*\([^\n]*\)( const)?( \[(\w+\s*)+\])?\n\W*(?<docs>.*?)(\n\s*){{1,2}}((&?\S* --)|((\n\s*){{2}}))";
-		string[] argTypes = matchSignature.Groups["args"].Value.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
+		string methodName = Regex.Escape(ByteArrayManager.GetString(smoke->methodNames[smokeMethod->name]));
+		string[] argTypes = smoke->GetArgs(smokeMethod).Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
 		IEnumerable<IEnumerable<string>> typeDefs = argTypes.Select(t => new[] { t }.Union(this.Data.TypeDefsPerType.ContainsKey(t) ? this.Data.TypeDefsPerType[t] : Enumerable.Empty<string>()));
 		IEnumerable<IEnumerable<string>> cartesianProduct = CartesianProduct(typeDefs);
-		for (int i = 0; i < docs.Count; i++)
-		{
-			if (cartesianProduct.Any(typeDef => TryMatch(type, methodName, cmm, docs[i], i > 0 && markObsolete, typeDef)))
-			{
-				return;
-			}
-			Match alt = Regex.Match(docs[i], string.Format(altMemberDoc, type, methodName),
-									RegexOptions.Singleline | RegexOptions.ExplicitCapture);
-			if (alt.Success)
-			{
-				Util.FormatComment(alt.Groups["docs"].Value, cmm, i > 0 && markObsolete);
-				return;
-			}
-		}
+		docs.Where((t, i) => cartesianProduct.Any(typeDef => TryMatch(type, methodName, cmm, t, i > 0 && markObsolete, typeDef))).Any();
 	}
 
 	private static bool TryMatch(string type, string methodName, CodeTypeMember cmm, string docs, bool markObsolete, IEnumerable<string> argTypes)
 	{
-		const string memberDoc = @"(^|( --)|\n)\n([\w :*&<>]+)?(({0}(\s*&)?::)| ){1}(const)?( \[(\w+\s*)+\])?\n\W*(?<docs>.*?)(\n\s*){{1,2}}((&?\S* --)|((\n\s*){{2}}))";
+		const string memberDoc = @"(^|( --)|\n)\n([\w :*&<>,]+)?(({0}(\s*&)?::)| ){1}(const)?( \[(\w+\s*)+\])?\n\W*(?<docs>.*?)(\n\s*){{1,2}}((&?\S* --)|((\n\s*){{2}}))";
 		const string separator = @",\s*";
 		StringBuilder signatureRegex = new StringBuilder(methodName).Append(@"\s*\(\s*(");
 		bool anyArgs = false;
