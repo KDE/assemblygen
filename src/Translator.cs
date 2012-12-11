@@ -188,6 +188,11 @@ public unsafe class Translator
 	// C++ namespaces that should be mapped to .NET classes
 	public List<string> NamespacesAsClasses = new List<string>();
 
+	public IDictionary<string, string> TypeStringMap
+	{
+		get { return typeStringMap; }
+	}
+
 	#endregion
 
 	#region public functions

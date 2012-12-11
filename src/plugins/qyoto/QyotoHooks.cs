@@ -276,8 +276,8 @@ public unsafe class QyotoHooks : IHookProvider
 				CodeSnippetTypeMember implementation = signalEvent.Key;
 				CodeCommentStatementCollection comments = new CodeCommentStatementCollection();
 				foreach (CodeTypeMember current in from CodeTypeMember member in type.Members
-												   where member.Name == implementation.Name
-												   select member)
+				                                   where member.Name == implementation.Name
+				                                   select member)
 				{
 					if (comments.Count == 0)
 					{
@@ -297,7 +297,7 @@ public unsafe class QyotoHooks : IHookProvider
 			}
 			for (int i = members.Count - 1; i >= 0; i--)
 			{
-				type.Members.Insert(index, members[i]);				
+				type.Members.Insert(index, members[i]);
 			}
 		}
 	}
@@ -314,8 +314,8 @@ public unsafe class QyotoHooks : IHookProvider
 	{
 		IDictionary<string, string> documentation = Documentation.Get(Data.Docs);
 		foreach (CodeTypeDeclaration type in from smokeType in this.Data.SmokeTypeMap
-		                                     where string.IsNullOrEmpty((string) smokeType.Value.UserData["parent"])
-		                                     select smokeType.Value)
+											 where string.IsNullOrEmpty((string) smokeType.Value.UserData["parent"])
+											 select smokeType.Value)
 		{
 			foreach (CodeTypeDeclaration nestedType in type.Members.OfType<CodeTypeDeclaration>().Where(t => !t.IsEnum))
 			{
@@ -324,6 +324,10 @@ public unsafe class QyotoHooks : IHookProvider
 			}
 			this.GetClassDocs(type, type.Name, type.Name, documentation);
 		}
+		this.staticDocumentation.AddRange(from k in this.Translator.TypeStringMap.Keys.SelectMany(k => new[] { k + ".html", k + "-obsolete.html" })
+										  let key = k.ToLowerInvariant()
+										  where documentation.ContainsKey(key)
+										  select StripTags(documentation[key]));
 		PropertyGenerator pg = new PropertyGenerator(Data, Translator, this.memberDocumentation);
 		pg.Run();
 	}
@@ -476,29 +480,23 @@ public unsafe class QyotoHooks : IHookProvider
 	{
 		string methodName = Regex.Escape(ByteArrayManager.GetString(smoke->methodNames[smokeMethod->name]));
 		string[] argTypes = smoke->GetArgs(smokeMethod).Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
-		IEnumerable<IEnumerable<string>> typeDefs = argTypes.Select(t => new[] { t }.Union(this.Data.TypeDefsPerType.ContainsKey(t) ? this.Data.TypeDefsPerType[t] : Enumerable.Empty<string>()));
-		IEnumerable<IEnumerable<string>> cartesianProduct = CartesianProduct(typeDefs);
-		docs.Where((t, i) => cartesianProduct.Any(typeDef => TryMatch(type, methodName, cmm, t, i > 0 && markObsolete, typeDef))).Any();
+		docs.Where((t, i) => TryMatch(type, methodName, cmm, t, i > 0 && markObsolete, argTypes)).Any();
 	}
 
-	private static bool TryMatch(string type, string methodName, CodeTypeMember cmm, string docs, bool markObsolete, IEnumerable<string> argTypes)
+	private bool TryMatch(string type, string methodName, CodeTypeMember cmm, string docs, bool markObsolete, IEnumerable<string> argTypes)
 	{
 		const string memberDoc = @"(^|( --)|\n)\n([\w :*&<>,]+)?(({0}(\s*&)?::)| ){1}(const)?( \[(\w+\s*)+\])?\n\W*(?<docs>.*?)(\n\s*){{1,2}}((&?\S* --)|((\n\s*){{2}}))";
 		const string separator = @",\s*";
 		StringBuilder signatureRegex = new StringBuilder(methodName).Append(@"\s*\(\s*(");
 		bool anyArgs = false;
-		foreach (StringBuilder typeBuilder in from argType in argTypes 
-											  let t = Regex.Escape(argType)
-											  let i = t.IndexOf("::", StringComparison.Ordinal) 
-											  select i > 0 ? new StringBuilder(@"(const )?(\w+::)?").Append(t.Substring(i + 2)) : new StringBuilder(t))
+		foreach (string argType in argTypes)
 		{
 			if (!anyArgs)
 			{
 				signatureRegex.Append("?<args>");
 				anyArgs = true;
 			}
-			typeBuilder.Replace(@"\*", @"\s*\*").Replace(@"&", @"\s*&").Replace(",", @",\s*");
-			signatureRegex.Append(typeBuilder).Append(@"\s+(\w+(\s*=\s*[^,\r\n]+(\(\s*\))?)?)?");
+			signatureRegex.Append(this.GetTypeRegex(argType)).Append(@"(\s+\w+(\s*=\s*[^,\r\n]+(\(\s*\))?)?)?");
 			signatureRegex.Append(separator);
 		}
 		if (anyArgs)
@@ -507,7 +505,7 @@ public unsafe class QyotoHooks : IHookProvider
 		}
 		else
 		{
-			signatureRegex.Append('(');			
+			signatureRegex.Append('(');
 		}
 		signatureRegex.Append(@"[\w :*&<>]+\s*=\s*[^,\r\n]+(\(\s*\))?(,\s*)?)*)\s*\)\s*");
 		Match match = Regex.Match(docs, string.Format(memberDoc, type, signatureRegex),
@@ -521,13 +519,85 @@ public unsafe class QyotoHooks : IHookProvider
 		return false;
 	}
 
-	private static IEnumerable<IEnumerable<T>> CartesianProduct<T>(IEnumerable<IEnumerable<T>> sequences)
+	private string GetTypeRegex(string argType)
 	{
-		IEnumerable<IEnumerable<T>> emptyProduct = new[] { Enumerable.Empty<T>() };
-		return sequences.Aggregate(emptyProduct, (accumulator, sequence) =>
-		                                         from accseq in accumulator
-		                                         from item in sequence
-		                                         select accseq.Concat(new[] { item }));
+		StringBuilder typeBuilder = new StringBuilder(argType);
+		FormatType(typeBuilder);
+		typeBuilder.Insert(0, "((");
+		typeBuilder.Append(')');
+		if (this.Data.TypeDefsPerType.ContainsKey(argType))
+		{
+			foreach (StringBuilder typeDefBuilder in from typedef in this.Data.TypeDefsPerType[argType]
+			                                         select new StringBuilder(typedef))
+			{
+				FormatType(typeDefBuilder);
+				typeBuilder.Append("|(").Append(typeDefBuilder).Append(')');
+			}
+		}
+		typeBuilder.Append(')');
+		return typeBuilder.ToString();
+	}
+
+	private void FormatType(StringBuilder typeBuilder)
+	{
+		int indexOfLt = int.MinValue;
+		int indexOfGt = int.MinValue;
+		int indexOfColon = int.MinValue;
+		int firstColonIndex = int.MinValue;
+		List<char> templateType = new List<char>(typeBuilder.Length);
+		for (int i = typeBuilder.Length - 1; i >= 0; i--)
+		{
+			char @char = typeBuilder[i];
+			switch (@char)
+			{
+				case '<':
+					indexOfLt = i;
+					break;
+				case '>':
+					indexOfGt = i;
+					break;
+				case ':':
+					if (firstColonIndex < 0)
+					{
+						firstColonIndex = i;
+					}
+					else
+					{
+						if (i == firstColonIndex - 1)
+						{
+							indexOfColon = firstColonIndex;
+							firstColonIndex = int.MinValue;
+						}
+					}
+					break;
+			}
+			if (i > indexOfLt && i < indexOfGt)
+			{
+				typeBuilder.Remove(i, 1);
+				templateType.Insert(0, @char);
+			}
+		}
+		if (indexOfGt > indexOfLt)
+		{
+			typeBuilder.Replace("(", @"\(").Replace(")", @"\)");
+			typeBuilder.Replace(@"*", @"\s*(\*|(\[\]))").Replace(@"&", @"\s*&").Replace(",", @",\s*");
+			typeBuilder.Insert(indexOfLt + 1, this.GetTypeRegex(new string(templateType.ToArray())));
+		}
+		else
+		{
+			if (indexOfColon > 0)
+			{
+				int parentTypeStart = Math.Max(indexOfLt + 1, 0);
+				typeBuilder.Remove(parentTypeStart, indexOfColon + 1 - parentTypeStart);
+				typeBuilder.Insert(parentTypeStart, @"(const )?(\w+::)?");
+				typeBuilder.Replace(@"*", @"\s*(\*|(\[\]))").Replace(@"&", @"\s*&").Replace(",", @",\s*");
+			}
+			else
+			{
+				typeBuilder.Replace("(", @"\(").Replace(")", @"\)");
+				typeBuilder.Replace(@"*", @"\s*(\*|(\[\]))").Replace(@"&", @"\s*&").Replace(",", @",\s*");	
+			}
+		}
 	}
 
 	private static void FillMissingParameterNames(CodeTypeMember cmm, string signature)
