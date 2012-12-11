@@ -328,6 +328,10 @@ public unsafe class QyotoHooks : IHookProvider
 										  let key = k.ToLowerInvariant()
 										  where documentation.ContainsKey(key)
 										  select StripTags(documentation[key]));
+		this.staticDocumentation.AddRange(from pair in documentation
+		                                  where pair.Key.StartsWith("q", StringComparison.Ordinal) &&
+		                                        pair.Key.EndsWith("-h.html", StringComparison.Ordinal)
+		                                  select StripTags(pair.Value));
 		PropertyGenerator pg = new PropertyGenerator(Data, Translator, this.memberDocumentation);
 		pg.Run();
 	}
@@ -358,7 +362,7 @@ public unsafe class QyotoHooks : IHookProvider
 					                                RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 					if (matchStatic.Success)
 					{
-						staticDocumentation.Add(matchStatic.Groups["static"].Value);
+						this.staticDocumentation.Add(matchStatic.Groups["static"].Value);
 					}
 				}
 				else
