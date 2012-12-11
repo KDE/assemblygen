@@ -324,7 +324,7 @@ public unsafe class QyotoHooks : IHookProvider
 			}
 			this.GetClassDocs(type, type.Name, type.Name, documentation);
 		}
-		this.staticDocumentation.AddRange(from k in this.Translator.TypeStringMap.Keys.SelectMany(k => new[] { k + ".html", k + "-obsolete.html" })
+		this.staticDocumentation.AddRange(from k in this.Translator.TypeStringMap.Keys.SelectMany(k => new[] { k + ".html", k + "-obsolete.html", k + "-qt3.html" })
 										  let key = k.ToLowerInvariant()
 										  where documentation.ContainsKey(key)
 										  select StripTags(documentation[key]));
@@ -335,7 +335,7 @@ public unsafe class QyotoHooks : IHookProvider
 	private void GetClassDocs(CodeTypeDeclaration type, string typeName, string fileName, IDictionary<string, string> documentation)
 	{
 		List<string> docs = new List<string>();
-		foreach (string docFile in new[] { fileName + ".html", fileName + "-obsolete.html" })
+		foreach (string docFile in new[] { fileName + ".html", fileName + "-obsolete.html", fileName + "-qt3.html" })
 		{
 			if (documentation.ContainsKey(docFile.ToLowerInvariant()))
 			{
