@@ -1154,7 +1154,7 @@ public unsafe class MethodsGenerator
 			string oldArgName = parameter.Name;
 			int index = oldArgName.IndexOf(" = ", StringComparison.Ordinal);
 			string nameOnly = index > 0 ? oldArgName.Substring(0, index) : oldArgName;
-			if (nameOnly.Length == 4 && nameOnly.StartsWith("arg") && char.IsDigit(nameOnly[3]))
+			if (nameOnly.Length == 4 && nameOnly.StartsWith("arg", StringComparison.Ordinal) && char.IsDigit(nameOnly[3]))
 			{
 				string name = args[i];
 				if (!string.IsNullOrEmpty(name))
