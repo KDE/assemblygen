@@ -21,7 +21,7 @@ namespace QtGui {
 				args[0] = ((AssemblyTitleAttribute) attrs[0]).Title;
 			} else {
 				QFileInfo info = new QFileInfo(a.Location);
-				args[0] = info.BaseName();
+				args[0] = info.BaseName;
 			}
 			argv.CopyTo(args, 1);
 			

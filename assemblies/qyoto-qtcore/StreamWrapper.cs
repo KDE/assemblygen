@@ -46,9 +46,12 @@ namespace QtCore {
 			}
 		}
 		
-		public override long Size() {
-			if (!m_stream.CanSeek) return base.Size();
-			return m_stream.Length;
+		public override long Size {
+			get
+			{
+				if (!m_stream.CanSeek) return base.Size;
+				return m_stream.Length;
+			}
 		}
 		
 		public override void Close() {

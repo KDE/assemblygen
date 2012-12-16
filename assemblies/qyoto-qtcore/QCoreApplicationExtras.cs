@@ -13,7 +13,7 @@ namespace QtCore {
 		public EventReceiver(QObject parent) : base(parent) {}
 		
 		public override bool OnEvent(QEvent e) {
-			if (e != null && e.type() == QEvent.Type.User) {
+			if (e != null && e.type == QEvent.Type.User) {
 				ThreadEvent my = e as ThreadEvent;
 				if (e != null) {
 					my.dele();
@@ -58,7 +58,7 @@ namespace QtCore {
 				args[0] = ((AssemblyTitleAttribute) attrs[0]).Title;
 			} else {
 				QFileInfo info = new QFileInfo(a.Location);
-				args[0] = info.BaseName();
+				args[0] = info.BaseName;
 			}
 			argv.CopyTo(args, 1);
 

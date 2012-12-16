@@ -294,7 +294,7 @@ void WriteInitialization::LayoutDefaultHandler::writeProperty(int p, const QStri
         // the default value, layout properties were always written
         const bool useLayoutFunctionPre43 = !suppressDefault && (m_state[p] == (HasDefaultFunction|HasDefaultValue)) && value == m_defaultValues[p];
         if (!useLayoutFunctionPre43) {
-            bool ifndefMac = (!(m_state[p] & (HasDefaultFunction|HasDefaultValue)) 
+            bool ifndefMac = (!(m_state[p] & (HasDefaultFunction|HasDefaultValue))
                              && value == defaultStyleValue);
             if (ifndefMac)
                 str << "";
@@ -599,7 +599,7 @@ void WriteInitialization::acceptWidget(DomWidget *node)
     } else if (m_uic->customWidgetsInfo()->extends(parentClass, QLatin1String("Q3WidgetStack"))) {
         m_output << m_option.dindent << parentWidget << ".AddWidget(" << varName << ", " << id << ");\n";
     } else if (m_uic->customWidgetsInfo()->extends(parentClass, QLatin1String("QDockWidget"))) {
-        m_output << m_option.dindent << parentWidget << ".SetWidget(" << varName << ");\n";
+        m_output << m_option.dindent << parentWidget << ".Widget = " << varName << ";\n";
     } else if (m_uic->customWidgetsInfo()->extends(parentClass, QLatin1String("QSplitter"))) {
         m_output << m_option.dindent << parentWidget << ".AddWidget(" << varName << ");\n";
     } else if (m_uic->customWidgetsInfo()->extends(parentClass, QLatin1String("QToolBox"))) {
@@ -672,7 +672,7 @@ void WriteInitialization::acceptLayout(DomLayout *node)
             if (oldLayoutProperties)
                 marginType = m_layoutMarginType;
 
-            m_LayoutDefaultHandler.writeProperties(m_option.indent, 
+            m_LayoutDefaultHandler.writeProperties(m_option.indent,
                                     objectName, properties, marginType, false, m_output);
         }
     }
@@ -687,7 +687,7 @@ void WriteInitialization::acceptLayout(DomLayout *node)
     if (isGroupBox) {
         const QString tempName = m_driver->unique(QLatin1String("boxlayout"));
         m_output << m_option.dindent << "QBoxLayout " << tempName << " = (QBoxLayout)(" <<
-                    m_driver->findOrInsertWidget(m_widgetChain.top()) << ".Layout());\n";
+                    m_driver->findOrInsertWidget(m_widgetChain.top()) << ".Layout);\n";
         m_output << m_option.dindent << "if (" << tempName << ")\n";
         m_output << m_option.dindent << "    " << tempName << ".AddLayout(" << varName << ");\n";
     }
@@ -891,7 +891,7 @@ void WriteInitialization::acceptActionRef(DomActionRef *node)
     }
 
     if (isMenu)
-        actionName += QLatin1String(".MenuAction()");
+        actionName += QLatin1String(".MenuAction");
 
     m_actionOut << m_option.dindent << varName << ".AddAction(" << actionName << ");\n";
 }
@@ -977,8 +977,8 @@ void WriteInitialization::writeProperties(const QString &varName,
 			QString tempName = m_driver->unique(QLatin1String("Size"));
 			m_output << m_option.dindent << "QSize " << tempName << " = new QSize(" << w << ", " << h << ");\n"
                       << m_option.dindent << tempName << " = " << tempName << ".ExpandedTo("
-                      << varName << ".MinimumSizeHint());\n"
-                      << m_option.dindent << varName << ".Size = " << tempName << ";\n";                
+                      << varName << ".MinimumSizeHint);\n"
+                      << m_option.dindent << varName << ".Size = " << tempName << ";\n";
             continue;
         } else if (propertyName == QLatin1String("buttonGroupId") && buttonGroupWidget) { // Q3ButtonGroup support
             m_output << m_option.dindent << m_driver->findOrInsertWidget(buttonGroupWidget) << ".Insert("
@@ -1189,7 +1189,7 @@ void WriteInitialization::writeProperties(const QString &varName,
         case DomProperty::SizePolicy: {
             const QString spName = writeSizePolicy( p->elementSizePolicy());
             m_output << m_option.dindent << spName << QString::fromLatin1(
-                ".SetHeightForWidth(%1.SizePolicy.HasHeightForWidth());\n")
+                ".SetHeightForWidth(%1.SizePolicy.HasHeightForWidth);\n")
                 .arg(varName);
 
             propertyValue = spName;
@@ -1380,45 +1380,45 @@ QString WriteInitialization::writeFontProperties(const DomFont *f)
 
     m_output << m_option.dindent << "QFont " << fontName << " = new QFont();\n";
     if (f->hasElementFamily() && !f->elementFamily().isEmpty()) {
-        m_output << m_option.dindent << fontName << ".SetFamily(" << fixString(f->elementFamily(), m_option.indent)
-            << ");\n";
+        m_output << m_option.dindent << fontName << ".Family = " << fixString(f->elementFamily(), m_option.indent)
+            << ";\n";
     }
     if (f->hasElementPointSize() && f->elementPointSize() > 0) {
-         m_output << m_option.dindent << fontName << ".SetPointSize(" << f->elementPointSize()
-             << ");\n";
+         m_output << m_option.dindent << fontName << ".PointSize = " << f->elementPointSize()
+             << ";\n";
     }
 
     if (f->hasElementBold()) {
-        m_output << m_option.dindent << fontName << ".SetBold("
-            << (f->elementBold() ? "true" : "false") << ");\n";
+        m_output << m_option.dindent << fontName << ".Bold = "
+            << (f->elementBold() ? "true" : "false") << ";\n";
     }
     if (f->hasElementItalic()) {
-        m_output << m_option.dindent << fontName << ".SetItalic("
-            <<  (f->elementItalic() ? "true" : "false") << ");\n";
+        m_output << m_option.dindent << fontName << ".Italic = "
+            <<  (f->elementItalic() ? "true" : "false") << ";\n";
     }
     if (f->hasElementUnderline()) {
-        m_output << m_option.dindent << fontName << ".SetUnderline("
-            << (f->elementUnderline() ? "true" : "false") << ");\n";
+        m_output << m_option.dindent << fontName << ".Underline = "
+            << (f->elementUnderline() ? "true" : "false") << ";\n";
     }
     if (f->hasElementWeight() && f->elementWeight() > 0) {
-        m_output << m_option.dindent << fontName << ".SetWeight("
-            << f->elementWeight() << ");" << endl;
+        m_output << m_option.dindent << fontName << ".weight = "
+            << f->elementWeight() << ";" << endl;
     }
     if (f->hasElementStrikeOut()) {
-         m_output << m_option.dindent << fontName << ".SetStrikeOut("
-            << (f->elementStrikeOut() ? "true" : "false") << ");\n";
+         m_output << m_option.dindent << fontName << ".StrikeOut = "
+            << (f->elementStrikeOut() ? "true" : "false") << ";\n";
     }
     if (f->hasElementKerning()) {
-        m_output << m_option.dindent << fontName << ".SetKerning("
-            << (f->elementKerning() ? "true" : "false") << ");\n";
+        m_output << m_option.dindent << fontName << ".Kerning = "
+            << (f->elementKerning() ? "true" : "false") << ";\n";
     }
     if (f->hasElementAntialiasing()) {
-        m_output << m_option.dindent << fontName << ".SetStyleStrategy("
-            << (f->elementAntialiasing() ? "QFont.StyleStrategy.PreferDefault" : "QFont.StyleStrategy.NoAntialias") << ");\n";
+        m_output << m_option.dindent << fontName << ".styleStrategy = "
+            << (f->elementAntialiasing() ? "QFont.StyleStrategy.PreferDefault" : "QFont.StyleStrategy.NoAntialias") << ";\n";
     }
     if (f->hasElementStyleStrategy()) {
-         m_output << m_option.dindent << fontName << ".SetStyleStrategy(QFont.StyleStrategy."
-            << f->elementStyleStrategy() << ");\n";
+         m_output << m_option.dindent << fontName << ".styleStrategy = QFont.StyleStrategy."
+            << f->elementStyleStrategy() << ";\n";
     }
     return  fontName;
 }
@@ -1521,12 +1521,12 @@ void WriteInitialization::writeBrush(DomBrush *brush, const QString &brushName)
                 << ", " << gradient->attributeAngle() << ");\n";
         }
 
-        m_output << m_option.dindent << gradientName << ".SetSpread(QGradient.Spread."
-            << gradient->attributeSpread() << ");\n";
+        m_output << m_option.dindent << gradientName << ".spread = QGradient.Spread."
+            << gradient->attributeSpread() << ";\n";
 
         if (gradient->hasAttributeCoordinateMode()) {
-            m_output << m_option.dindent << gradientName << ".SetCoordinateMode(QGradient.CoordinateMode."
-                << gradient->attributeCoordinateMode() << ");\n";
+            m_output << m_option.dindent << gradientName << ".coordinateMode = QGradient.CoordinateMode."
+                << gradient->attributeCoordinateMode() << ";\n";
         }
 
         const QList<DomGradientStop *> stops = gradient->elementGradientStop();
@@ -1550,8 +1550,8 @@ void WriteInitialization::writeBrush(DomBrush *brush, const QString &brushName)
         m_output << m_option.dindent << "new QBrush " << brushName << "("
             << domColor2QString(color) << ");\n";
 
-        m_output << m_option.dindent << brushName << ".SetStyle("
-            << "Qt.BrushStyle." << style << ");\n";
+        m_output << m_option.dindent << brushName << ".Style = "
+            << "Qt.BrushStyle." << style << ";\n";
     }
 }
 
@@ -1609,8 +1609,8 @@ void WriteInitialization::initializeTreeWidgetItems(const QString &className, co
         for (int i=0; i<properties.size(); ++i) {
             DomProperty *p = properties.at(i);
             if (p->attributeName() == QLatin1String("text"))
-                m_refreshOut << m_option.dindent << itemName << ".Text = " << textCount++ << ", "
-                           << trCall(p->elementString()) << ";\n";
+                m_refreshOut << m_option.dindent << itemName << ".SetText(" << textCount++ << ", "
+                           << trCall(p->elementString()) << ");\n";
 
             if (p->attributeName() == QLatin1String("icon") && textCount > 0)
                 m_refreshOut << m_option.dindent << itemName << ".SetIcon(" << textCount - 1 << ", "
@@ -1763,19 +1763,19 @@ void WriteInitialization::initializeQ3ListView(DomWidget *w)
 
         QString txt = trCall(text->elementString());
         m_output << m_option.dindent << varName << ".AddColumn(" << txt << ");\n";
-        m_refreshOut << m_option.dindent << varName << ".Header().SetLabel(" << i << ", " << txt << ");\n";
+        m_refreshOut << m_option.dindent << varName << ".Header.SetLabel(" << i << ", " << txt << ");\n";
 
         if (pixmap) {
-            m_output << m_option.dindent << varName << ".Header().SetLabel("
-                   << varName << ".Header().Count() - 1, " << pixCall(pixmap) << ", " << txt << ");\n";
+            m_output << m_option.dindent << varName << ".Header.SetLabel("
+                   << varName << ".Header.Count - 1, " << pixCall(pixmap) << ", " << txt << ");\n";
         }
 
         if (clickable != 0) {
-            m_output << m_option.dindent << varName << ".Header().SetClickEnabled(" << clickable->elementBool() << ", " << varName << ".Header().Count() - 1);\n";
+            m_output << m_option.dindent << varName << ".Header.SetClickEnabled(" << clickable->elementBool() << ", " << varName << ".Header().Count() - 1);\n";
         }
 
         if (resizable != 0) {
-            m_output << m_option.dindent << varName << ".Header().SetResizeEnabled(" << resizable->elementBool() << ", " << varName << ".Header().Count() - 1);\n";
+            m_output << m_option.dindent << varName << ".Header.SetResizeEnabled(" << resizable->elementBool() << ", " << varName << ".Header().Count() - 1);\n";
         }
     }
 
@@ -1834,7 +1834,7 @@ void WriteInitialization::initializeQ3Table(DomWidget *w)
         DomProperty *text = properties.value(QLatin1String("text"));
         DomProperty *pixmap = properties.value(QLatin1String("pixmap"));
 
-        m_refreshOut << m_option.dindent << varName << ".HorizontalHeader().SetLabel(" << i << ", ";
+        m_refreshOut << m_option.dindent << varName << ".HorizontalHeader.SetLabel(" << i << ", ";
         if (pixmap) {
             m_refreshOut << pixCall(pixmap) << ", ";
         }
@@ -1850,7 +1850,7 @@ void WriteInitialization::initializeQ3Table(DomWidget *w)
         DomProperty *text = properties.value(QLatin1String("text"));
         DomProperty *pixmap = properties.value(QLatin1String("pixmap"));
 
-        m_refreshOut << m_option.dindent << varName << ".VerticalHeader().SetLabel(" << i << ", ";
+        m_refreshOut << m_option.dindent << varName << ".VerticalHeader.SetLabel(" << i << ", ";
         if (pixmap) {
             m_refreshOut << pixCall(pixmap) << ", ";
         }
@@ -1918,10 +1918,10 @@ void WriteInitialization::initializeListWidget(DomWidget *w)
             DomProperty *p = properties.at(i);
 
             if (p->attributeName() == QLatin1String("text"))
-                m_refreshOut << m_option.dindent << itemName << ".SetText(" << trCall(p->elementString()) << ");\n";
+                m_refreshOut << m_option.dindent << itemName << ".Text = " << trCall(p->elementString()) << ";\n";
 
             if (p->attributeName() == QLatin1String("icon"))
-                m_refreshOut << m_option.dindent << itemName << ".SetIcon(" << pixCall(p) << ");\n";
+                m_refreshOut << m_option.dindent << itemName << ".Icon = " << pixCall(p) << ";\n";
         }
     }
 }
@@ -1941,10 +1941,10 @@ void WriteInitialization::initializeTreeWidget(DomWidget *w)
         DomProperty *icon = properties.value(QLatin1String("icon"));
 
         QString txt = trCall(text->elementString());
-		m_refreshOut << m_option.dindent << varName << ".HeaderItem.SetText(" << i << ", " << txt << ");\n";
+        m_refreshOut << m_option.dindent << varName << ".HeaderItem.SetText(" << i << ", " << txt << ");\n";
 
         if (icon != 0 && icon->elementIconSet()) {
-			m_output << m_option.dindent << varName << ".HeaderItem.SetIcon("
+            m_output << m_option.dindent << varName << ".HeaderItem.SetIcon("
                    << i << ", " << pixCall(icon) << ");\n";
         }
     }
@@ -2033,7 +2033,7 @@ void WriteInitialization::initializeTableWidget(DomWidget *w)
         tempName = m_driver->unique(QLatin1String("__sortingEnabled"));
         m_refreshOut << "\n";
         m_refreshOut << m_option.dindent << "bool " << tempName
-                   << " = " << varName << ".IsSortingEnabled();\n";
+                   << " = " << varName << ".IsSortingEnabled;\n";
         m_refreshOut << m_option.dindent << varName << ".SetSortingEnabled(false);\n";
     }
     for (int i = 0; i < items.size(); ++i) {
@@ -2187,7 +2187,7 @@ void WriteInitialization::initializeMenu(DomWidget *w, const QString &/*parentWi
 
     DomAction *action = m_driver->actionByName(menuAction);
     if (action && action->hasAttributeMenu()) {
-        m_output << m_option.dindent << menuAction << " = " << menuName << ".MenuAction();\n";
+        m_output << m_option.dindent << menuAction << " = " << menuName << ".MenuAction;\n";
     }
 }
 

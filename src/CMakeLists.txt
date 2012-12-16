@@ -48,6 +48,8 @@ else (MONO_EXECUTABLE)
     install_assembly(NO_GAC assemblygen DESTINATION bin)
 endif (MONO_EXECUTABLE)
 
+add_custom_command(TARGET assemblygen PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/verbs.txt ${LIBRARY_OUTPUT_PATH}/verbs.txt)
+
 install(TARGETS assemblygen-native DESTINATION lib${LIB_SUFFIX}/assemblygen)
 if (WIN32)
     # Get rid of the "lib" prefix on archives/DLLs in Windows.
