@@ -23,7 +23,7 @@ namespace QtCore {
         }
 
         public object Value() {
-            Type valueType = type();
+            Type valueType = type;
             if (valueType == Type.Invalid) {
                 return null;
             } else if (valueType == Type.Bool) {

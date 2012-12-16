@@ -39,8 +39,8 @@ namespace QtCore
 		public override bool EventFilter(QObject arg1, QEvent arg2)
 		{
 			if (arg1 == sender && 
-				(args.EventTypes.Count == 0 || args.EventTypes.Contains(arg2.type()) ||
-				(args.EventTypes.Contains(QEvent.Type.User) && arg2.type() >= QEvent.Type.User)))
+				(args.EventTypes.Count == 0 || args.EventTypes.Contains(arg2.type) ||
+				(args.EventTypes.Contains(QEvent.Type.User) && arg2.type >= QEvent.Type.User)))
 			{
 				args.Event = (T) arg2;
 				handler(sender, args);

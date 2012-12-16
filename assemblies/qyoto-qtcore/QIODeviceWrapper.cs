@@ -15,10 +15,10 @@ namespace QtCore {
         
         public override int Read(byte[] buffer, int offset, int count) {
             QByteArray bytes = m_device.Read(count);
-            for (int i = 0; i < bytes.Length(); i++) {
+            for (int i = 0; i < bytes.Length; i++) {
                 buffer[i + offset] = (byte) bytes.At(i);
             }
-            return bytes.Length();
+            return bytes.Length;
         }
         
         public override long Seek(long offset, SeekOrigin origin) {
@@ -42,7 +42,7 @@ namespace QtCore {
                 break;
             }
             }
-            return m_device.Pos();
+            return m_device.Pos;
         }
         
         public override void SetLength(long value) {
@@ -62,7 +62,7 @@ namespace QtCore {
         }
         
         public override bool CanRead {
-            get { return m_device.IsReadable(); }
+            get { return m_device.IsReadable; }
         }
         
         public override bool CanSeek {
@@ -74,11 +74,11 @@ namespace QtCore {
         }
         
         public override long Length {
-            get { return m_device.Size(); }
+            get { return m_device.Size; }
         }
         
         public override long Position {
-            get { return m_device.Pos(); }
+            get { return m_device.Pos; }
             set { m_device.Seek((int) value); }
         }
     }

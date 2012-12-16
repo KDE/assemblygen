@@ -429,7 +429,7 @@ namespace QtCore
 					if (sig == "")
 						sig = SignatureFromMethodInfo(mi);
 
-					sig = QMetaObject.NormalizedSignature(sig).ConstData();
+					sig = QMetaObject.NormalizedSignature(sig).ConstData;
 					GetCPPMethodInfo(sig, out cppinfo.signature, out cppinfo.type);
 					cppinfo.mi = mi;
 					
@@ -485,7 +485,7 @@ namespace QtCore
 					string sig = attr.Signature;
 					if (sig == "")
 						sig = SignatureFromMethodInfo(mi).Trim();
-					sig = QMetaObject.NormalizedSignature(sig).ConstData();
+					sig = QMetaObject.NormalizedSignature(sig).ConstData;
 					GetCPPMethodInfo(sig, out cppinfo.signature, out cppinfo.type);
 					cppinfo.mi = mi;
 					

@@ -41,6 +41,8 @@ public unsafe class MethodsGenerator
 	private readonly List<CodeMemberMethod> setters = new List<CodeMemberMethod>();
 	private readonly List<CodeMemberMethod> setMethods = new List<CodeMemberMethod>();
 	private readonly List<CodeMemberMethod> nonSetters = new List<CodeMemberMethod>();
+	private readonly HashSet<CodeMemberMethod> getters = new HashSet<CodeMemberMethod>();
+	private static readonly HashSet<string> verbs;
 
 	private static readonly Regex qMethodExp = new Regex("^[a-z][A-Z]");
 
@@ -87,6 +89,12 @@ public unsafe class MethodsGenerator
 	                                                            		"[]",
 	                                                            		"()"
 	                                                            	};
+
+	static MethodsGenerator()
+	{
+		string verbsPath = Path.Combine(Path.GetDirectoryName(Assembly.GetCallingAssembly().Location), "verbs.txt");
+		verbs = new HashSet<string>(File.ReadAllLines(verbsPath));
+	}
 
 	public MethodsGenerator(GeneratorData data, Translator translator, CodeTypeDeclaration type, Smoke.Class* klass)
 	{
@@ -880,7 +888,6 @@ public unsafe class MethodsGenerator
 			containingType.Members.Add(dispose);
 		}
 		this.CorrectParameterNames(cmm);
-		this.DistributeMethod(cmm);
 		return cmm;
 	}
 
@@ -921,6 +928,26 @@ public unsafe class MethodsGenerator
 		List<CodeMemberMethod> methods = type.Members.OfType<CodeMemberMethod>().ToList();
 		this.GenerateProperties(methods, this.setters, false);
 		this.GenerateProperties(methods, this.setMethods, true);
+
+		foreach (CodeMemberMethod getter in from getter in this.getters
+		                                    where this.type.Members.Contains(getter) &&
+		                                          !this.type.Members.OfType<CodeMemberMethod>().Any(m => m != getter && m.Name == getter.Name)
+		                                    select getter)
+		{
+			// Make it a read-only property
+			if (this.type.IsInterface)
+			{
+				CodeSnippetTypeMember property = new CodeSnippetTypeMember();
+				property.Name = getter.Name;
+				property.Text = string.Format("        {0} {1} {{ get; }}", getter.ReturnType.BaseType, getter.Name);
+				this.type.Members.Add(property);
+				this.type.Members.Remove(getter);
+			}
+			else
+			{
+				this.GenerateProperty(getter);
+			}
+		}
 	}
 
 	private void GenerateProperties(ICollection<CodeMemberMethod> methods, IEnumerable<CodeMemberMethod> settersToUse, bool readOnly)
@@ -940,8 +967,7 @@ public unsafe class MethodsGenerator
 					continue;
 				}
 				if (string.Compare(getter.Name, afterSet, StringComparison.OrdinalIgnoreCase) == 0 &&
-				    getter.Parameters.Count == 0 && getter.ReturnType.BaseType == setter.Parameters[0].Type.BaseType &&
-				    (getter.Attributes & MemberAttributes.Public) == (setter.Attributes & MemberAttributes.Public) &&
+					getter.ReturnType.BaseType == setter.Parameters[0].Type.BaseType &&
 				    !methods.Any(m => m != getter && string.Compare(getter.Name, m.Name, StringComparison.OrdinalIgnoreCase) == 0))
 				{
 					methods.Remove(getter);
@@ -1003,15 +1029,26 @@ public unsafe class MethodsGenerator
 			comments.AddRange(setter.Comments);
 			setter.Comments.Clear();
 		}
-		if (type.Members.OfType<CodeSnippetTypeMember>().All(
-				p => string.Compare(getter.Name, p.Name, StringComparison.OrdinalIgnoreCase) != 0) &&
-			type.Members.OfType<CodeMemberProperty>().All(
-				p => string.Compare(getter.Name, p.Name, StringComparison.OrdinalIgnoreCase) != 0))
+		if (this.type.Members.OfType<CodeSnippetTypeMember>().All(
+			p => string.Compare(getter.Name, p.Name, StringComparison.OrdinalIgnoreCase) != 0 ||
+			     p.UserData["interface"] != getter.PrivateImplementationType) &&
+		    this.type.Members.OfType<CodeMemberProperty>().All(
+			    p => string.Compare(getter.Name, p.Name, StringComparison.OrdinalIgnoreCase) != 0 ||
+			         p.PrivateImplementationType != getter.PrivateImplementationType))
 		{
 			CodeMemberProperty property = new CodeMemberProperty();
 			property.Name = getter.Name;
 			property.Type = getter.ReturnType;
-			property.Attributes = setter == null ? getter.Attributes : setter.Attributes;
+			property.Attributes = MemberAttributes.Public;
+			if ((getter.Attributes & MemberAttributes.Static) == MemberAttributes.Static)
+			{
+				property.Attributes |= MemberAttributes.Static;	
+			}
+			if ((getter.Attributes & MemberAttributes.Final) == MemberAttributes.Final &&
+			    (setter == null || (setter.Attributes & MemberAttributes.Final) == MemberAttributes.Final))
+			{
+				property.Attributes |= MemberAttributes.Final;
+			}
 			property.GetStatements.AddRange(getter.Statements);
 			if (setter != null)
 			{
@@ -1022,6 +1059,11 @@ public unsafe class MethodsGenerator
 					arrayExpression.Initializers.OfType<CodeArgumentReferenceExpression>().First();
 				argExpression.ParameterName = "value";
 				property.SetStatements.AddRange(setter.Statements);
+			}
+			property.PrivateImplementationType = getter.PrivateImplementationType;
+			if (property.PrivateImplementationType == null && setter != null)
+			{
+				property.PrivateImplementationType = setter.PrivateImplementationType;
 			}
 			CodeSnippetTypeMember completeProperty = AddAttributes(getter, setter, property);
 			AddComments(completeProperty, comments, setter == null);
@@ -1037,7 +1079,7 @@ public unsafe class MethodsGenerator
 		}
 	}
 
-	private static CodeSnippetTypeMember AddAttributes(CodeTypeMember getter, CodeTypeMember setter, CodeTypeMember property)
+	private static CodeSnippetTypeMember AddAttributes(CodeTypeMember getter, CodeTypeMember setter, CodeMemberProperty property)
 	{
 		CodeSnippetTypeMember propertySnippet = new CodeSnippetTypeMember();
 		AddAttributes(getter, property, propertySnippet, @"{(\s*)get", @"{{$1{0}$1get");
@@ -1045,6 +1087,7 @@ public unsafe class MethodsGenerator
 		{
 			AddAttributes(setter, property, propertySnippet, @"}(\s*)set", @"}}$1{0}$1set");
 		}
+		propertySnippet.UserData["interface"] = property.PrivateImplementationType;
 		return propertySnippet;
 	}
 
@@ -1194,8 +1237,34 @@ public unsafe class MethodsGenerator
 			}
 			else
 			{
-				nonSetters.Add(method);
+				if (IsGetter(method))
+				{
+					getters.Add(method);
+				}
+				if (method.Parameters.Count == 0)
+				{
+					nonSetters.Add(method);					
+				}
 			}
 		}
+	}
+
+	private static bool IsBooleanGetterName(string name)
+	{
+		return Regex.IsMatch(name, @"^(Is|Has|Can|Supports|Accepts|Filters|Collides|Allows)(\p{Lu}|\d).*$");
+	}
+
+	private static bool IsGetter(CodeMemberMethod method)
+	{
+		if (method.ReturnType.BaseType == "System.Void" || method.Parameters.Count > 0 ||
+			method.Name.StartsWith("~", StringComparison.Ordinal))
+		{
+			return false;
+		}
+		List<char> firstVerb = new List<char>(method.Name.Length) { char.ToLowerInvariant(method.Name[0]) };
+		firstVerb.AddRange(method.Name.Skip(1).TakeWhile(char.IsLower));
+		string result = new string(firstVerb.ToArray());
+		return result == "is" || result == "has" || result == "can" ||
+		       (result != "to" && result != "new" && !verbs.Contains(result));
 	}
 }
