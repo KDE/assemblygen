@@ -10439,7 +10439,7 @@ tailgated
 tailor-make
 tailor-making
 tailor1-make
-taken
+take
 tallyho
 tame
 tangent-saw
