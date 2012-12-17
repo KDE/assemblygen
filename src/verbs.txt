@@ -1061,6 +1061,7 @@ buffeted
 bugged
 bugger
 bugled
+build
 built
 bulged
 bull-tongue
@@ -5101,6 +5102,7 @@ magnetize
 magnify
 mainline
 maintain
+make
 make one's way
 make up one's mind
 maladminister
