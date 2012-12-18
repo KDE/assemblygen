@@ -1096,6 +1096,8 @@ void WriteInitialization::writeProperties(const QString &varName,
                     csname = "Shape";
                 } else if (csname == "FirstDayOfWeek") {
                     csname = "DayOfWeek";
+                } else if (csname == "VerticalScrollBarPolicy" || csname == "HorizontalScrollBarPolicy") {
+                    csname = "ScrollBarPolicy";
                 }
                 propertyValue = parts[0] + QLatin1String(".") + csname + QLatin1String(".") + parts[1];
             }
@@ -1112,6 +1114,11 @@ void WriteInitialization::writeProperties(const QString &varName,
                     csname = "WindowType";
                 } else if (csname.endsWith("s")) {
                     csname.chop(1);
+                    if (csname == "AllowedArea") {
+                        csname = "DockWidgetArea";
+                    } else if (csname == "Feature") {
+                        csname = "DockWidgetFeature";
+                    }
                 } else {
                     csname += "Flag";
                 }
@@ -1312,8 +1319,7 @@ void WriteInitialization::writeProperties(const QString &varName,
             (*o) << m_option.dindent << varName << setFunction << propertyValue;
             if (!stdset)
                 (*o) << "";
-            (*o) << ";\n";
-//            (*o) << ");\n";
+            (*o) << "; \n";
         }
     }
     if (leftMargin != -1 || topMargin != -1 || rightMargin != -1 || bottomMargin != -1) {
