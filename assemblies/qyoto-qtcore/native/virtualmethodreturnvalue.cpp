@@ -31,7 +31,7 @@ void
 VirtualMethodReturnValue::unsupported()
 {
 	qFatal("Cannot handle '%s' as return-type of virtual method %s::%s",
-	        type().name(),
+		type().name(),
 	        _smoke->className(method().classId),
 	        _smoke->methodNames[method().name] );
 }

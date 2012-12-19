@@ -21,7 +21,7 @@ public:
     virtual Smoke::StackItem &item() = 0;
     virtual Smoke::StackItem &var() = 0;
 	virtual Smoke::TypeId typeID() = 0;
-	virtual Smoke::TypeId* typeIDs() = 0;
+	virtual void setTypeID(Smoke::TypeId const &type) = 0;
     virtual void unsupported() = 0;
     virtual Smoke *smoke() = 0;
 	inline virtual bool shouldMapPointer() { return true; }

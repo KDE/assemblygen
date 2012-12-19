@@ -1146,47 +1146,47 @@ static void marshall_QVariant(Marshall *m) {
 			switch (variant->type()) {
 				case QVariant::Bool:
 					m->var().s_bool = variant->value<bool>();
-					*m->typeIDs() = Smoke::t_bool;
+					m->setTypeID(Smoke::t_bool);
 					break;
 				case QVariant::Char:
 					m->var().s_char = variant->value<char>();
-					*m->typeIDs() = Smoke::t_char;
+					m->setTypeID(Smoke::t_char);
 					break;
 				case QVariant::Double:
 					m->var().s_double = variant->value<double>();
-					*m->typeIDs() = Smoke::t_double;
+					m->setTypeID(Smoke::t_double);
 					break;
 				case QVariant::Int:
 					m->var().s_int = variant->value<int>();
-					*m->typeIDs() = Smoke::t_int;
+					m->setTypeID(Smoke::t_int);
 					break;
 				case QVariant::LongLong:
 					m->var().s_long = variant->value<qlonglong>();
-					*m->typeIDs() = Smoke::t_long;
+					m->setTypeID(Smoke::t_long);
 					break;
 				case QVariant::UInt:
 					m->var().s_uint = variant->value<uint>();
-					*m->typeIDs() = Smoke::t_uint;
+					m->setTypeID(Smoke::t_uint);
 					break;
 				case QVariant::ULongLong:
 					m->var().s_ulong = variant->value<qulonglong>();
-					*m->typeIDs() = Smoke::t_ulong;
+					m->setTypeID(Smoke::t_ulong);
 					break;
 				case QMetaType::Float:
 					m->var().s_float = variant->value<float>();
-					*m->typeIDs() = Smoke::t_float;
+					m->setTypeID(Smoke::t_float);
 					break;
 				case QVariant::String:
 				{
 					QString* s = new QString(variant->value<QString>());
 					m->var().s_voidp = (void*) StringFromQString((void*) s);
 					delete s;
-					*m->typeIDs() = (Smoke::TypeId) 15;
+					m->setTypeID((Smoke::TypeId) 15);
 					break;
 				}
 				case QVariant::Invalid:
 					m->var().s_voidp = 0;
-					*m->typeIDs() = Smoke::t_voidp;
+					m->setTypeID(Smoke::t_voidp);
 					break;
 				default:
 					if (variant->data() == 0) {
@@ -1194,7 +1194,7 @@ static void marshall_QVariant(Marshall *m) {
 					} else {
 						m->var().s_voidp = variant->data();
 					}
-					*m->typeIDs() = Smoke::t_voidp;
+					m->setTypeID(Smoke::t_voidp);
 					break;
 			}
             break;

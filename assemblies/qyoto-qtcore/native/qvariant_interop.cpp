@@ -23,13 +23,17 @@
 #include <QMetaType>
 #include <QVariant>
 
+#ifdef DEBUG
+#include <stdio.h>
+#endif
+
 extern "C" {
 
 Q_DECL_EXPORT void *
 QVariantValue(char * typeName, void * variant)
 {
 #ifdef DEBUG
-    printf("ENTER QVariantValue(typeName: %s variant: 0x%8.8x)\n", typeName, variant);
+    printf("ENTER QVariantValue(typeName: %s variant: %p)\n", typeName, variant);
 #endif
     smokeqyoto_object *o = (smokeqyoto_object*) (*GetSmokeObject)(variant);
     (*FreeGCHandle)(variant);
@@ -60,7 +64,7 @@ Q_DECL_EXPORT void *
 QVariantFromValue(int type, void * value)
 {
 #ifdef DEBUG
-    printf("ENTER QVariantFromValue(type: %d value: 0x%8.8x)\n", type, value);
+    printf("ENTER QVariantFromValue(type: %d value: %p)\n", type, value);
 #endif
     smokeqyoto_object *o = (smokeqyoto_object*) (*GetSmokeObject)(value);
     if (o) (*FreeGCHandle)(value);

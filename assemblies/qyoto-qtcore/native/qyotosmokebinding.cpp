@@ -110,7 +110,7 @@ Binding::callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool isAb
 		return true;
 	}
 
-	Smoke::TypeId typeIDs[meth.numArgs];
+	Smoke::TypeId typeIDs[meth.numArgs + 1 /* return value */];
 	void * overridenMethod = (*OverridenMethod)(obj, (const char *) signature);
 	if (overridenMethod == 0) {
 		(*FreeGCHandle)(obj);

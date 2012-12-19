@@ -41,7 +41,7 @@ public:
 	inline Smoke::StackItem &item() { return _stack[0]; }
 	inline Smoke::StackItem &var() { return *_result; }
 	inline Smoke::TypeId typeID() { return Smoke::t_class; }
-	inline Smoke::TypeId* typeIDs() { return 0; }
+	inline void setTypeID(Smoke::TypeId const &) {}
 	inline Smoke *smoke() { return type().smoke(); }
 	inline bool cleanup() { return false; }
 	

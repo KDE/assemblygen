@@ -86,6 +86,7 @@ Any options not listed here are directly passed to the compiler (leading dashes 
 			pluginDirectory = Path.Combine(baseDirectory, "plugins");
 		}
 
+		List<string> codeFiles = new List<string>();
 		List<CodeCompileUnit> codeSnippets = new List<CodeCompileUnit>();
 		List<Assembly> references = new List<Assembly>();
 		List<string> imports = new List<string>();
@@ -199,6 +200,7 @@ Any options not listed here are directly passed to the compiler (leading dashes 
 				continue;
 			}
 
+			codeFiles.Add(arg.Replace('/', Path.DirectorySeparatorChar));
 			FileStream fs = new FileStream(arg, FileMode.Open);
 			StreamReader sr = new StreamReader(fs);
 			codeSnippets.Add(new CodeSnippetCompileUnit(sr.ReadToEnd()));
@@ -209,6 +211,8 @@ Any options not listed here are directly passed to the compiler (leading dashes 
 		{
 			compilerOptions.Append(" /doc:" + Path.ChangeExtension(Path.GetFileName(assemblyFile), ".xml"));
 		}
+
+		compilerOptions.Append(" /debug:pdbonly");
 
 		if (smokeLib == null)
 		{
@@ -259,6 +263,7 @@ Any options not listed here are directly passed to the compiler (leading dashes 
 			csharp.GenerateCodeFromCompileUnit(data.CompileUnit, sw, cgo);
 			sw.Close();
 			fs.Close();
+			codeFiles.Add(codeFile);
 		}
 
 		if (codeOnly)
@@ -287,7 +292,15 @@ Any options not listed here are directly passed to the compiler (leading dashes 
 		{
 			cp.ReferencedAssemblies.Add(assembly.Location);
 		}
-		CompilerResults cr = csharp.CompileAssemblyFromDom(cp, codeSnippets.ToArray());
+		CompilerResults cr;
+		if (string.IsNullOrEmpty(codeFile))
+		{
+			cr = csharp.CompileAssemblyFromDom(cp, codeSnippets.ToArray());
+		}
+		else
+		{
+			cr = csharp.CompileAssemblyFromFile(cp, codeFiles.ToArray());
+		}
 
 		bool errorsOccured = false;
 		foreach (CompilerError error in cr.Errors)

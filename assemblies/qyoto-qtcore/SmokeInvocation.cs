@@ -185,14 +185,15 @@ namespace QtCore {
 				StackItem * stackPtr = (StackItem*) stack;
 				ParameterInfo[] parameters = method.GetParameters();
 				object[] args = new object[parameters.Length];
+				TypeId* typeIDsPtr = (TypeId*) typeIDs;
 
 				for (int i = 0; i < args.Length; i++) {
-					args[i] = SmokeMarshallers.BoxFromStackItem(parameters[i].ParameterType, 0, stackPtr + i + 1);
+					args[i] = SmokeMarshallers.BoxFromStackItem(parameters[i].ParameterType, (int)typeIDsPtr[i + 1], stackPtr + i + 1);
 				}
 				object returnValue = method.Invoke(instance, args);
-				TypeId* typeIDsPtr = (TypeId*) typeIDs;
 				*typeIDsPtr = SmokeMarshallers.GetTypeId(returnValue == null ? typeof(object) : returnValue.GetType());
 
+				//TODO: should this always be unboxing something?
 				if (method.ReturnType != typeof(void)) {
 					SmokeMarshallers.UnboxToStackItem(returnValue, stackPtr);
 				}

@@ -56,9 +56,11 @@ VirtualMethodCall::callMethod() {
 void
 VirtualMethodCall::next() {
 	int oldcur = _cur;
+	setTypeID((Smoke::TypeId)0);
 	_cur++;
 	while(!_called && _cur < method().numArgs) {
 		Marshall::HandlerFn fn = getMarshallFn(type());
+		setTypeID((Smoke::TypeId)0);
 		(*fn)(this);
 		_cur++;
 	}
