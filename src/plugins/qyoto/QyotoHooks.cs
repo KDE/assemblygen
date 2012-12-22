@@ -314,10 +314,11 @@ public unsafe class QyotoHooks : IHookProvider
 		}
 	}
 
-	public void PreClassesHook()
+	public void PreClassesHook(List<IntPtr> excludedMethods)
 	{
 		PropertyGenerator pg = new PropertyGenerator(Data, Translator, this.Documentation);
 		pg.Run();
+		excludedMethods.AddRange(pg.PropertyMethods);
 	}
 
 	void PostClassesHook()

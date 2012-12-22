@@ -62,7 +62,10 @@ public unsafe class PropertyGenerator
 		this.data = data;
 		this.translator = translator;
 		this.documentation = documentation;
+		this.PropertyMethods = new List<IntPtr>();
 	}
+
+	public ICollection<IntPtr> PropertyMethods { get; private set; }
 
 	public void Run()
 	{
@@ -188,6 +191,7 @@ public unsafe class PropertyGenerator
 					if ((getter->flags & (uint) Smoke.MethodFlags.mf_virtual) == 0
 					    && (getter->flags & (uint) Smoke.MethodFlags.mf_purevirtual) == 0)
 					{
+						this.PropertyMethods.Add((IntPtr) getter);
 						cmp.GetStatements.Add(new CodeMethodReturnStatement(new CodeCastExpression(cmp.Type,
 						                                                                           new CodeMethodInvokeExpression(
 						                                                                           	SmokeSupport.interceptor_Invoke,
@@ -202,6 +206,18 @@ public unsafe class PropertyGenerator
 					}
 					else
 					{
+						if ((getter->flags & (uint) Smoke.MethodFlags.mf_virtual) == (int) Smoke.MethodFlags.mf_virtual)
+						{
+							cmp.Attributes &= ~MemberAttributes.Final;
+						}
+						else
+						{
+							if ((getter->flags & (uint) Smoke.MethodFlags.mf_purevirtual) == (int) Smoke.MethodFlags.mf_purevirtual)
+							{
+								cmp.Attributes &= ~MemberAttributes.Final;
+								cmp.Attributes |= MemberAttributes.Abstract;
+							}
+						}
 						cmp.HasGet = false;
 						if (!cmp.HasSet)
 						{
@@ -232,6 +248,18 @@ public unsafe class PropertyGenerator
 				else
 				{
 					Smoke.Method* setter = data.Smoke->methods + setterMethId;
+					if ((setter->flags & (uint) Smoke.MethodFlags.mf_virtual) == (int) Smoke.MethodFlags.mf_virtual)
+					{
+						cmp.Attributes &= ~MemberAttributes.Final;
+					}
+					else
+					{
+						if ((setter->flags & (uint) Smoke.MethodFlags.mf_purevirtual) == (int) Smoke.MethodFlags.mf_purevirtual)
+						{
+							cmp.Attributes &= ~MemberAttributes.Final;
+							cmp.Attributes |= MemberAttributes.Abstract;
+						}
+					}
 					if (setter->classId != classId)
 					{
 						// defined in parent class, continue
@@ -246,6 +274,7 @@ public unsafe class PropertyGenerator
 						mg.GenerateMethod(setterMethId, setterName + mungedSuffix);
 						continue;
 					}
+					this.PropertyMethods.Add((IntPtr) setter);
 					cmp.SetStatements.Add(new CodeExpressionStatement(
 					                      	new CodeMethodInvokeExpression(SmokeSupport.interceptor_Invoke,
 					                      	                               new CodePrimitiveExpression(setterName + mungedSuffix),

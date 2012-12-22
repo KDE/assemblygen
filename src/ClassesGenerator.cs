@@ -53,7 +53,7 @@ public unsafe class ClassesGenerator
 	public static event ClassHook PreMembersHooks;
 	public static event ClassHook PostMembersHooks;
 	public static event MethodHook SupportingMethodsHooks;
-	public static event Action PreClassesHook;
+	public static event Action<List<IntPtr>> PreClassesHook;
 	public static event Action PostClassesHook;
 
 	/*
@@ -301,12 +301,13 @@ public unsafe class ClassesGenerator
 			}
 		}
 
+		List<IntPtr> excludedMethods = new List<IntPtr>();
 		if (PreClassesHook != null)
 		{
-			PreClassesHook();
+			PreClassesHook(excludedMethods);
 		}
 
-		GenerateMethods();
+		GenerateMethods(excludedMethods);
 		GenerateInternalImplementationMethods();
 
 		if (PostClassesHook != null)
@@ -399,7 +400,7 @@ public unsafe class ClassesGenerator
 	 * Adds the methods to the classes created by Run()
 	 */
 
-	private void GenerateMethods()
+	private void GenerateMethods(IList<IntPtr> excludedMethods)
 	{
 		List<Smoke.ModuleIndex> alreadyImplemented = new List<Smoke.ModuleIndex>();
 
@@ -447,7 +448,7 @@ public unsafe class ClassesGenerator
 				if (map.method > 0)
 				{
 					Smoke.Method* meth = data.Smoke->methods + map.method;
-					if ((meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0)
+					if (excludedMethods.Contains((IntPtr) meth) || (meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0)
 					{
 						continue;
 					}
@@ -472,7 +473,7 @@ public unsafe class ClassesGenerator
 					for (short* overload = data.Smoke->ambiguousMethodList + (-map.method); *overload > 0; overload++)
 					{
 						Smoke.Method* meth = data.Smoke->methods + *overload;
-						if ((meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0)
+						if (excludedMethods.Contains((IntPtr) meth) || (meth->flags & (ushort) Smoke.MethodFlags.mf_enum) > 0)
 						{
 							continue;
 						}
