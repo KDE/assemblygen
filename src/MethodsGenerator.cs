@@ -1049,6 +1049,11 @@ public unsafe class MethodsGenerator
 			{
 				property.Attributes |= MemberAttributes.Final;
 			}
+			if ((getter.Attributes & MemberAttributes.Override) == MemberAttributes.Override ||
+				(setter != null && (setter.Attributes & MemberAttributes.Override) == MemberAttributes.Override))
+			{
+				property.Attributes |= MemberAttributes.Override;
+			}
 			property.GetStatements.AddRange(getter.Statements);
 			if (setter != null)
 			{
