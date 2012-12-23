@@ -936,6 +936,7 @@ public unsafe class MethodsGenerator
 				CodeSnippetTypeMember property = new CodeSnippetTypeMember();
 				property.Name = getter.Name;
 				property.Text = string.Format("        {0} {1} {{ get; }}", getter.ReturnType.BaseType, getter.Name);
+				property.Comments.AddRange(getter.Comments);
 				this.type.Members.Add(property);
 				this.type.Members.Remove(getter);
 			}
@@ -973,6 +974,12 @@ public unsafe class MethodsGenerator
 						property.Name = getter.Name;
 						string template = readOnly ? "        {0} {1} {{ get; }}" : "        {0} {1} {{ get; set; }}";
 						property.Text = string.Format(template, getter.ReturnType.BaseType, getter.Name);
+						CodeCommentStatementCollection comments = new CodeCommentStatementCollection(getter.Comments);
+						if (!readOnly)
+						{
+							comments.AddRange(setter.Comments);
+						}
+						AddComments(property, comments, readOnly);
 						this.type.Members.Add(property);
 						this.type.Members.Remove(getter);
 						if (!readOnly)

@@ -144,7 +144,8 @@ public unsafe class Documentation
 		{
 			if (this.memberDocumentation.ContainsKey(type))
 			{
-				this.DocumentMember(smoke, smokeMethod, cmm, type.Name, this.memberDocumentation[type]);
+				this.DocumentMember(smoke, smokeMethod, cmm, type.Name.Substring(type.IsInterface ? 1 : 0),
+				                    this.memberDocumentation[type]);
 			}
 		}
 	}
@@ -318,6 +319,11 @@ public unsafe class Documentation
 	private void GetClassDocs(CodeTypeDeclaration type, string typeName, string fileName, IDictionary<string, string> documentation)
 	{
 		List<string> docs = new List<string>();
+		CodeTypeDeclaration @interface = null;
+		if (this.data.InterfaceTypeMap.ContainsKey(typeName))
+		{
+			@interface = this.data.InterfaceTypeMap[typeName];
+		}
 		foreach (string docFile in new[] { fileName + ".html", fileName + "-obsolete.html", fileName + "-qt3.html" })
 		{
 			if (documentation.ContainsKey(docFile.ToLowerInvariant()))
@@ -329,14 +335,12 @@ public unsafe class Documentation
 										  RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 				if (match.Success)
 				{
-					type.Comments.Add(new CodeCommentStatement("<summary>", true));
-					string summary = match.Groups["class"].Value.Trim();
-					type.Comments.Add(new CodeCommentStatement(HtmlEncoder.HtmlEncode(summary), true));
-					type.Comments.Add(new CodeCommentStatement("</summary>", true));
-					string detailed = match.Groups["detailed"].Value.Replace(summary, string.Empty);
-					FormatComment(detailed.Replace("\n/", "\n /"), type, false, "remarks");
-					string members = match.Groups["members"].Value;
+					string members = CommentType(type, match);
 					docs.Add(members);
+					if (@interface != null)
+					{
+						CommentType(@interface, match);
+					}
 					Match matchStatic = Regex.Match(members, "Related Non-Members(?<static>.+)",
 													RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 					if (matchStatic.Success)
@@ -351,6 +355,21 @@ public unsafe class Documentation
 			}
 		}
 		this.memberDocumentation[type] = docs;
+		if (@interface != null)
+		{
+			this.memberDocumentation[@interface] = docs;
+		}
+	}
+
+	private static string CommentType(CodeTypeMember type, Match match)
+	{
+		type.Comments.Add(new CodeCommentStatement("<summary>", true));
+		string summary = match.Groups["class"].Value.Trim();
+		type.Comments.Add(new CodeCommentStatement(HtmlEncoder.HtmlEncode(summary), true));
+		type.Comments.Add(new CodeCommentStatement("</summary>", true));
+		string detailed = match.Groups["detailed"].Value.Replace(summary, string.Empty);
+		FormatComment(detailed.Replace("\n/", "\n /"), type, false, "remarks");
+		return match.Groups["members"].Value;
 	}
 
 	private static string StripTags(string source)
