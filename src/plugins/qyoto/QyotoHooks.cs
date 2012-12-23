@@ -59,7 +59,7 @@ public unsafe class QyotoHooks : IHookProvider
 		ClassesGenerator.PreClassesHook += PreClassesHook;
 		ClassesGenerator.PostClassesHook += PostClassesHook;
 		EnumGenerator.PostEnumMemberHook += this.PostEnumMemberHook;
-		MethodsGenerator.PostMethodBodyHooks += this.PostMethodBodyHooks;
+		MethodsGenerator.PostMethodDefinitionHooks += this.PostMethodDefinitionHooks;
 		AttributeGenerator.PostAttributeProperty += this.PostAttributePropertyHook;
 		Console.WriteLine("Registered Qyoto hooks.");
 	}
@@ -337,7 +337,7 @@ public unsafe class QyotoHooks : IHookProvider
 		this.Documentation.DocumentEnumMember(smoke, smokeMethod, cmm, type);
 	}
 
-	private void PostMethodBodyHooks(Smoke* smoke, Smoke.Method* smokeMethod, CodeMemberMethod cmm, CodeTypeDeclaration type)
+	private void PostMethodDefinitionHooks(Smoke* smoke, Smoke.Method* smokeMethod, CodeMemberMethod cmm, CodeTypeDeclaration type)
 	{
 		this.Documentation.DocumentMember(smoke, smokeMethod, cmm, type);
 		GenerateEvent(cmm, cmm.Name, type, true);

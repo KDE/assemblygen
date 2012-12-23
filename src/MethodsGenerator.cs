@@ -119,7 +119,7 @@ public unsafe class MethodsGenerator
 	}
 
 	public static event MethodHook PreMethodBodyHooks;
-	public static event MethodHook PostMethodBodyHooks;
+	public static event MethodHook PostMethodDefinitionHooks;
 
 	private static bool MethodOverrides(Smoke* smoke, Smoke.Method* method, out MemberAttributes access, out bool foundInInterface)
 	{
@@ -482,6 +482,11 @@ public unsafe class MethodsGenerator
 			cmm.Parameters.Add(exp);
 		}
 		this.DistributeMethod(cmm);
+		if (PostMethodDefinitionHooks != null)
+		{
+			PostMethodDefinitionHooks(smoke, method, cmm, this.type);
+		}
+		this.CorrectParameterNames(cmm);
 		return cmm;
 	}
 
@@ -864,12 +869,6 @@ public unsafe class MethodsGenerator
 				cmm.Statements.Add(new CodeMethodReturnStatement(new CodeVariableReferenceExpression("smokeRetval")));
 			}
 		}
-
-		if (PostMethodBodyHooks != null)
-		{
-			PostMethodBodyHooks(smoke, method, cmm, containingType);
-		}
-
 		containingType.Members.Add(cmm);
 
 		if ((method->flags & (uint) Smoke.MethodFlags.mf_dtor) != 0)
@@ -885,7 +884,6 @@ public unsafe class MethodsGenerator
 			                                                   	)));
 			containingType.Members.Add(dispose);
 		}
-		this.CorrectParameterNames(cmm);
 		return cmm;
 	}
 
@@ -1105,6 +1103,15 @@ public unsafe class MethodsGenerator
 					                      ? GetMemberCode(property, writer)
 					                      : propertySnippet.Text;
 				writer.GetStringBuilder().Length = 0;
+				for (int i = method.CustomAttributes.Count - 1; i >= 0; i--)
+				{
+					CodeAttributeDeclaration attributeDeclaration = method.CustomAttributes[i];
+					if (attributeDeclaration.AttributeType.BaseType != "SmokeMethod")
+					{
+						propertySnippet.CustomAttributes.Insert(0, attributeDeclaration);
+						method.CustomAttributes.RemoveAt(i);
+					}
+				}
 				string getterCode = GetMemberCode(method, writer);
 				string attribute = string.Format(replaceRegex, Regex.Match(getterCode, @"(\[.+\])").Groups[1].Value);
 				string propertyWithAttribute = Regex.Replace(propertyCode, findRegex, attribute);
@@ -1206,18 +1213,6 @@ public unsafe class MethodsGenerator
 				if (!string.IsNullOrEmpty(name))
 				{
 					parameter.Name = name + (index > 0 ? oldArgName.Substring(index) : string.Empty);
-					IEnumerable<CodeStatement> statements = method.Statements.Cast<CodeStatement>().ToList();
-					var variableDeclarationStatement = statements.OfType<CodeVariableDeclarationStatement>().First();
-					var arrayCreateExpression = (CodeArrayCreateExpression) variableDeclarationStatement.InitExpression;
-					var argumentReferenceExpression = (CodeArgumentReferenceExpression) arrayCreateExpression.Initializers[2 * i + 1];
-					argumentReferenceExpression.ParameterName = name;
-					foreach (var variable in from assignStatement in statements.OfType<CodeAssignStatement>()
-											 let var = (CodeVariableReferenceExpression) assignStatement.Left
-											 where var.VariableName == oldArgName
-											 select var)
-					{
-						variable.VariableName = name;
-					}
 				}
 			}
 		}
