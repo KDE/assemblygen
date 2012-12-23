@@ -26,8 +26,6 @@ using System.Text;
 using System.Collections;
 using System.Runtime.InteropServices;
 using System.CodeDom;
-using System.Text.RegularExpressions;
-using System.Web.Util;
 
 public unsafe class QyotoHooks : IHookProvider
 {

@@ -44,8 +44,6 @@ public unsafe class MethodsGenerator
 	private readonly HashSet<CodeMemberMethod> getters = new HashSet<CodeMemberMethod>();
 	private static readonly HashSet<string> verbs;
 
-	private static readonly Regex qMethodExp = new Regex("^[a-z][A-Z]");
-
 	private static readonly List<string> binaryOperators = new List<string>
 		{
 	                                                       		"!=",
@@ -322,7 +320,7 @@ public unsafe class MethodsGenerator
 			cmm.Attributes = 0; // initialize to 0 so we can do |=
 
 			string csName = methName;
-			if (!isOperator && methName != "finalize" && !qMethodExp.IsMatch(methName))
+			if (!isOperator && methName != "finalize")
 			{
 				// capitalize the first letter
 				StringBuilder builder = new StringBuilder(csName);
