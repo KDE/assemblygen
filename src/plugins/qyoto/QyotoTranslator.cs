@@ -143,6 +143,8 @@ public class QyotoTranslator : ICustomTranslator {
         { "Phonon::ObjectDescription", delegate { throw new NotSupportedException(); } },
         { "Phonon::ObjectDescriptionPrivate", delegate { throw new NotSupportedException(); } },
         { "Phonon::VideoWidgetPrivate", delegate { throw new NotSupportedException(); } },
+		
+		{ "__darwin_va_list", delegate { throw new NotSupportedException(); } },
 
         { "void", delegate(Translator.TypeInfo type, GeneratorData data, Translator translator) {
                     if (type.PointerDepth == 0) {
