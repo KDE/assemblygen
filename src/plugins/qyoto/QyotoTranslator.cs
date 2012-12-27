@@ -49,10 +49,13 @@ public class QyotoTranslator : ICustomTranslator {
 
         // OpenGL types
         { "GLint", typeof(int) },
+        { "GLsizei", typeof(int) },
         { "GLuint", typeof(uint) },
         { "GLfloat", typeof(float) },
+        { "GLclampf", typeof(float) },
         { "GLenum", typeof(int) },
         { "GLbitfield", typeof(int) },
+        { "GLboolean", typeof(bool) }
     };
 
     Dictionary<string, string> typeStringMap = new Dictionary<string, string>()
@@ -84,6 +87,7 @@ public class QyotoTranslator : ICustomTranslator {
         { "QFlags", delegate { throw new NotSupportedException(); } },
         { "QFlag", delegate { throw new NotSupportedException(); } },
         { "QIncompatibleFlag", delegate { throw new NotSupportedException(); } },
+        { "QPointer", delegate { throw new NotSupportedException(); } },
 
         { "QString::Null", delegate { throw new NotSupportedException(); } },
         { "QHashDummyValue", delegate { throw new NotSupportedException(); } },
