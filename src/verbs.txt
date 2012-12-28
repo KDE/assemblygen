@@ -854,6 +854,7 @@ bigged
 biked
 bilged
 billeted
+bind
 binned
 bioassayed
 bird's-nest
@@ -11154,6 +11155,7 @@ unloose
 unmade
 unmake
 unman
+unmap
 unmarbelize
 unmarbleize
 unmask
