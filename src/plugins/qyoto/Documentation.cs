@@ -311,9 +311,10 @@ public unsafe class Documentation
 										  where documentation.ContainsKey(key)
 										  select StripTags(documentation[key]));
 		this.staticDocumentation.AddRange(from pair in documentation
-										  where pair.Key.StartsWith("q", StringComparison.Ordinal) &&
-												pair.Key.EndsWith("-h.html", StringComparison.Ordinal)
-										  select StripTags(pair.Value));
+		                                  where (pair.Key.StartsWith("q", StringComparison.Ordinal) &&
+		                                         pair.Key.EndsWith("-h.html", StringComparison.Ordinal)) ||
+		                                        pair.Key == "qtglobal.html"
+		                                  select StripTags(pair.Value));
 	}
 
 	private void GetClassDocs(CodeTypeDeclaration type, string typeName, string fileName, IDictionary<string, string> documentation)
