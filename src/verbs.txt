@@ -2977,6 +2977,7 @@ encrypt
 enculturate
 encumber
 encyst
+end
 endamage
 endanger
 enddamage
@@ -3511,6 +3512,7 @@ flyte
 fobbed
 focalise
 focalize
+focus
 focused
 focussed
 foist
@@ -3769,6 +3771,7 @@ germinate
 gestate
 gesticulate
 gestured
+get
 ghettoize
 ghostwrite
 ghostwritten
@@ -9628,6 +9631,7 @@ serry
 served
 serviced
 servoed
+set
 settled
 sever
 severalize
@@ -10057,6 +10061,7 @@ staned
 stapled
 stared
 stargaze
+start
 startled
 starve
 staved
