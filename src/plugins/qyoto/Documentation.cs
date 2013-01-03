@@ -331,9 +331,9 @@ public unsafe class Documentation
 			{
 				string classDocs = StripTags(documentation[docFile.ToLowerInvariant()]);
 				Match match = Regex.Match(classDocs, string.Format(@"(?<class>((The {0})|(This class)).+?)More\.\.\..*?\n" +
-															  @"Detailed Description\s+(?<detailed>.*?)(\n){{3,}}" +
-															  @"((\w+ )*\w+ Documentation\n(?<members>.+))", typeName),
-										  RegexOptions.Singleline | RegexOptions.ExplicitCapture);
+				                                                   @"Detailed Description\s+(?<detailed>.*?)(\n){{3,}}" +
+				                                                   @"((\w+ )*\w+ Documentation\n(?<members>.+))", typeName),
+				                          RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 				if (match.Success)
 				{
 					string members = CommentType(type, match);
@@ -343,7 +343,7 @@ public unsafe class Documentation
 						CommentType(@interface, match);
 					}
 					Match matchStatic = Regex.Match(members, "Related Non-Members(?<static>.+)",
-													RegexOptions.Singleline | RegexOptions.ExplicitCapture);
+					                                RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 					if (matchStatic.Success)
 					{
 						this.staticDocumentation.Add(matchStatic.Groups["static"].Value);
@@ -483,7 +483,7 @@ public unsafe class Documentation
 	{
 		StringBuilder obsoleteMessageBuilder = new StringBuilder();
 		cmp.Comments.Add(new CodeCommentStatement(string.Format("<{0}>", tag), true));
-		foreach (string line in HtmlEncoder.HtmlEncode(docs).Split(Environment.NewLine.ToCharArray(), StringSplitOptions.None))
+		foreach (string line in HtmlEncoder.HtmlEncode(docs).Split(Environment.NewLine.ToCharArray()))
 		{
 			cmp.Comments.Add(new CodeCommentStatement(string.Format("<para>{0}</para>", line), true));
 			if (obsolete && (line.Contains("instead") || line.Contains("deprecated")))
