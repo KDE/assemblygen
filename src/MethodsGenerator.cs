@@ -499,19 +499,6 @@ public unsafe class MethodsGenerator
 		}
 	}
 
-	private class ParameterTypeComparer : IEqualityComparer<CodeParameterDeclarationExpression>
-	{
-		public bool Equals(CodeParameterDeclarationExpression x, CodeParameterDeclarationExpression y)
-		{
-			return x.Type.BaseType == y.Type.BaseType;
-		}
-
-		public int GetHashCode(CodeParameterDeclarationExpression obj)
-		{
-			return obj.Type.GetHashCode();
-		}
-	}
-
 	private CodeParameterDeclarationExpression GetArgument(Smoke* smoke, short* typeIndex, IList<string> methodArgs, IEnumerable args, ref int count)
 	{
 		bool isRef;
@@ -1252,11 +1239,6 @@ public unsafe class MethodsGenerator
 				}
 			}
 		}
-	}
-
-	private static bool IsBooleanGetterName(string name)
-	{
-		return Regex.IsMatch(name, @"^(Is|Has|Can|Supports|Accepts|Filters|Collides|Allows)(\p{Lu}|\d).*$");
 	}
 
 	private static bool IsGetter(CodeMemberMethod method)

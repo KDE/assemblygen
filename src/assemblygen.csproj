@@ -49,6 +49,7 @@
     <Compile Include="GeneratorData.cs" />
     <Compile Include="main.cs" />
     <Compile Include="MethodsGenerator.cs" />
+    <Compile Include="ParameterTypeComparer.cs" />
     <Compile Include="PluginInterfaces.cs" />
     <Compile Include="HtmlEncoder.cs" />
     <Compile Include="Smoke.cs" />

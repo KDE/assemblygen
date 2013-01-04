@@ -20,6 +20,7 @@ set(assemblygen_SRC
 	HtmlEncoder.cs
     main.cs
     MethodsGenerator.cs
+	ParameterTypeComparer.cs
     PluginInterfaces.cs
     Smoke.cs
     SmokeMethodEqualityComparer.cs

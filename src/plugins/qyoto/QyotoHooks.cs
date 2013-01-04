@@ -114,7 +114,7 @@ public unsafe class QyotoHooks : IHookProvider
 			int colon = className.LastIndexOf("::", StringComparison.Ordinal);
 			string prefix = (colon != -1) ? className.Substring(0, colon) : string.Empty;
 
-			IList typeCollection = Data.GetTypeCollection(prefix);
+			IList typeCollection = this.Data.GetTypeCollection(prefix);
 			CodeTypeDeclaration ifaceDecl = new CodeTypeDeclaration(signalsIfaceName);
 			ifaceDecl.IsInterface = true;
 
@@ -134,6 +134,7 @@ public unsafe class QyotoHooks : IHookProvider
 				ifaceDecl.BaseTypes.Add(new CodeTypeReference(parentInterface));
 			}
 			Dictionary<CodeSnippetTypeMember, CodeMemberMethod> signalEvents = new Dictionary<CodeSnippetTypeMember, CodeMemberMethod>();
+			IEnumerable<CodeMemberMethod> methods = type.Members.OfType<CodeMemberMethod>().ToList();
 			GetSignals(smoke, klass, delegate(string signature, string name, string typeName, IntPtr metaMethod)
 			{
 				CodeMemberMethod signal = new CodeMemberMethod();
@@ -151,7 +152,7 @@ public unsafe class QyotoHooks : IHookProvider
 					if (typeName == string.Empty)
 						signal.ReturnType = new CodeTypeReference(typeof(void));
 					else
-						signal.ReturnType = Translator.CppToCSharp(typeName, type, out isRef);
+						signal.ReturnType = this.Translator.CppToCSharp(typeName, type, out isRef);
 				}
 				catch (NotSupportedException)
 				{
@@ -180,7 +181,7 @@ public unsafe class QyotoHooks : IHookProvider
 						CodeTypeReference paramTypeRef;
 						if (id > 0)
 						{
-							paramTypeRef = Translator.CppToCSharp(smoke->types + id, type, out isRef);
+							paramTypeRef = this.Translator.CppToCSharp(smoke->types + id, type, out isRef);
 						}
 						else
 						{
@@ -189,16 +190,16 @@ public unsafe class QyotoHooks : IHookProvider
 								id = smoke->IDType(className + "::" + paramType);
 								if (id > 0)
 								{
-									paramTypeRef = Translator.CppToCSharp(smoke->types + id, type, out isRef);
+									paramTypeRef = this.Translator.CppToCSharp(smoke->types + id, type, out isRef);
 								}
 								else
 								{
-									paramTypeRef = Translator.CppToCSharp(paramType, type, out isRef);
+									paramTypeRef = this.Translator.CppToCSharp(paramType, type, out isRef);
 								}
 							}
 							else
 							{
-								paramTypeRef = Translator.CppToCSharp(paramType, type, out isRef);
+								paramTypeRef = this.Translator.CppToCSharp(paramType, type, out isRef);
 							}
 						}
 						param = new CodeParameterDeclarationExpression(paramTypeRef, paramName);
@@ -227,6 +228,13 @@ public unsafe class QyotoHooks : IHookProvider
 				ifaceDecl.Members.Add(signal);
 				CodeSnippetTypeMember signalEvent = new CodeSnippetTypeMember();
 				signalEvent.Name = signal.Name;
+				DocumentSignalEvent(signal, methods, signalEvent);
+				foreach (CodeMemberMethod current in from method in methods
+													 where method.Name == signal.Name && method.ReturnType.BaseType == signal.ReturnType.BaseType
+													 select method)
+				{
+					current.Name = "On" + current.Name;
+				}
 				CodeSnippetTypeMember existing = signalEvents.Keys.FirstOrDefault(m => m.Name == signal.Name);
 				if (existing != null)
 				{
@@ -242,19 +250,15 @@ public unsafe class QyotoHooks : IHookProvider
 						signalEventToUse = signalEvent;
 						signalToUse = signal;
 					}
-					string suffix = signalToUse.Parameters.Cast<CodeParameterDeclarationExpression>().Last().Name;
-					if (suffix.StartsWith("arg") && suffix.Length > 3 && char.IsDigit(suffix[3]))
-					{
-						string lastType = signalToUse.Parameters.Cast<CodeParameterDeclarationExpression>().Last().Type.BaseType;
-						suffix = lastType.Substring(lastType.LastIndexOf('.') + 1);
-					}
-					else
-					{
-						StringBuilder lastParamBuilder = new StringBuilder(suffix);
-						lastParamBuilder[0] = char.ToUpper(lastParamBuilder[0]);
-						suffix = lastParamBuilder.ToString();
-					}
+					string suffix = GetSignalEventSuffix(signalToUse);
 					signalEventToUse.Text = signalEventToUse.Text.Replace(signalEventToUse.Name, signalEventToUse.Name += suffix);
+				}
+				else
+				{
+					if (signal.Parameters.Count > 0 && methods.Any(m => m.Name == signal.Name))
+					{
+						signalEvent.Name += GetSignalEventSuffix(signal);
+					}
 				}
 				signalEvent.Text = string.Format(@"
         public event {0} {1}
@@ -275,20 +279,6 @@ public unsafe class QyotoHooks : IHookProvider
 			CodeTypeMemberCollection members = new CodeTypeMemberCollection();
 			foreach (KeyValuePair<CodeSnippetTypeMember, CodeMemberMethod> signalEvent in signalEvents)
 			{
-				CodeSnippetTypeMember implementation = signalEvent.Key;
-				CodeCommentStatementCollection comments = new CodeCommentStatementCollection();
-				foreach (CodeTypeMember current in from CodeTypeMember member in type.Members
-				                                   where member.Name == implementation.Name
-				                                   select member)
-				{
-					if (comments.Count == 0)
-					{
-						comments.AddRange(current.Comments);
-					}
-					current.Name = "On" + current.Name;
-				}
-				signalEvent.Value.Comments.AddRange(comments);
-				signalEvent.Key.Comments.AddRange(comments);
 				members.Add(signalEvent.Key);
 			}
 			int index = 0;
@@ -302,6 +292,51 @@ public unsafe class QyotoHooks : IHookProvider
 				type.Members.Insert(index, members[i]);
 			}
 		}
+	}
+
+	private static void DocumentSignalEvent(CodeMemberMethod signal, IEnumerable<CodeMemberMethod> methods, CodeTypeMember signalEvent)
+	{
+		IEqualityComparer<CodeParameterDeclarationExpression> parameterTypeComparer = new ParameterTypeComparer();
+		var signalArgs = signal.Parameters.Cast<CodeParameterDeclarationExpression>().ToList();
+		foreach (CodeMemberMethod method in from method in methods
+		                                    where (method.Name == signal.Name || method.Name == "On" + signal.Name)
+		                                    select method)
+		{
+			int skip = 0;
+			var args = method.Parameters.Cast<CodeParameterDeclarationExpression>().ToList();
+			while (true)
+			{
+				if ((method.Parameters.Count - skip == signal.Parameters.Count &&
+				     args.Take(args.Count - skip).SequenceEqual(signalArgs.Take(signalArgs.Count), parameterTypeComparer)))
+				{
+					signalEvent.Comments.AddRange(method.Comments);
+					signal.Comments.AddRange(method.Comments);
+					return;
+				}
+				if (args.Count == 0 || !args[args.Count - 1 - skip].Name.Contains(" = ") || skip >= args.Count)
+				{
+					break;
+				}
+				++skip;
+			}
+		}
+	}
+
+	private static string GetSignalEventSuffix(CodeMemberMethod signalToUse)
+	{
+		string suffix = signalToUse.Parameters.Cast<CodeParameterDeclarationExpression>().Last().Name;
+		if (suffix.StartsWith("arg") && suffix.Length > 3 && char.IsDigit(suffix[3]))
+		{
+			string lastType = signalToUse.Parameters.Cast<CodeParameterDeclarationExpression>().Last().Type.BaseType;
+			suffix = lastType.Substring(lastType.LastIndexOf('.') + 1);
+		}
+		else
+		{
+			StringBuilder lastParamBuilder = new StringBuilder(suffix);
+			lastParamBuilder[0] = char.ToUpper(lastParamBuilder[0]);
+			suffix = lastParamBuilder.ToString();
+		}
+		return suffix;
 	}
 
 	public void SupportingMethodsHook(Smoke* smoke, Smoke.Method* method, CodeMemberMethod cmm, CodeTypeDeclaration type)
