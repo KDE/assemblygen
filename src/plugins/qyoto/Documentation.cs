@@ -46,49 +46,59 @@ public unsafe class Documentation
 	public void DocumentEnumMember(Smoke* smoke, Smoke.Method* smokeMethod, CodeMemberField cmm, CodeTypeDeclaration type)
 	{
 		CodeTypeDeclaration parentType = this.memberDocumentation.Keys.FirstOrDefault(t => t.Name == (string) type.UserData["parent"]);
-		if (parentType != null)
+		IList<string> docs;
+		string typeName;
+		string parentName;
+		if (parentType == null)
 		{
-			IList<string> docs = this.memberDocumentation[parentType];
-			string typeName = Regex.Escape(parentType.Name) + "::" + Regex.Escape(type.Name);
-			if (type.Comments.Count == 0)
+			docs = this.staticDocumentation;
+			typeName = type.Name;
+			parentName = string.Empty;
+		}
+		else
+		{
+			docs = this.memberDocumentation[parentType];
+			typeName = Regex.Escape(parentType.Name) + "::" + Regex.Escape(type.Name);
+			parentName = parentType.Name;
+		}
+		if (type.Comments.Count == 0)
+		{
+			for (int i = 0; i < docs.Count; i++)
 			{
-				for (int i = 0; i < docs.Count; i++)
+				const string enumDoc = @"enum {0}(\s*flags {1}::\w+\s+)?(?<docsStart>.*?)(\n){{3}}";
+				Match matchEnum = Regex.Match(docs[i], string.Format(enumDoc, typeName, parentName),
+				                              RegexOptions.Singleline | RegexOptions.ExplicitCapture);
+				if (matchEnum.Success)
 				{
-					const string enumDoc = @"enum {0}(\s*flags {1}::\w+\s+)?(?<docsStart>.*?)(\n){{3}}";
-					Match matchEnum = Regex.Match(docs[i], string.Format(enumDoc, typeName, parentType.Name),
-												  RegexOptions.Singleline | RegexOptions.ExplicitCapture);
-					if (matchEnum.Success)
+					string doc = (matchEnum.Groups["docsStart"].Value + matchEnum.Groups["docsEnd1"].Value).Trim();
+					doc = Regex.Replace(doc,
+					                    @"(The \S+ type is a typedef for QFlags<\S+>\. It stores an OR combination of \S+ values\.)",
+					                    string.Empty);
+					doc = Regex.Replace(doc,
+					                    @"ConstantValue(Description)?.*?(((\n){2})|$)",
+					                    string.Empty, RegexOptions.Singleline | RegexOptions.ExplicitCapture).Trim();
+					if (!string.IsNullOrEmpty(doc))
 					{
-						string doc = (matchEnum.Groups["docsStart"].Value + matchEnum.Groups["docsEnd1"].Value).Trim();
-						doc = Regex.Replace(doc,
-											@"(The \S+ type is a typedef for QFlags<\S+>\. It stores an OR combination of \S+ values\.)",
-											string.Empty);
-						doc = Regex.Replace(doc,
-											@"ConstantValue(Description)?.*?(((\n){2})|$)",
-											string.Empty, RegexOptions.Singleline | RegexOptions.ExplicitCapture).Trim();
-						if (!string.IsNullOrEmpty(doc))
-						{
-							FormatComment(doc, type, i > 0);
-							break;
-						}
+						FormatComment(doc, type, i > 0 && parentType != null);
+						break;
 					}
 				}
 			}
-			string memberName = Regex.Escape(parentType.Name) + "::" +
-								Regex.Escape(ByteArrayManager.GetString(smoke->methodNames[smokeMethod->name]));
-			const string memberDoc = @"enum {0}.*{1}\t[^\t\n]+\t(?<docs>.*?)(&\w+;)?(\n)";
-			for (int i = 0; i < docs.Count; i++)
+		}
+		string memberName = (parentType == null ? parentName : Regex.Escape(parentName) + "::") +
+		                    Regex.Escape(ByteArrayManager.GetString(smoke->methodNames[smokeMethod->name]));
+		const string memberDoc = @"enum {0}.*{1}\t[^\t\n]+\t(?<docs>.*?)(&\w+;)?(\n)";
+		for (int i = 0; i < docs.Count; i++)
+		{
+			Match match = Regex.Match(docs[i], string.Format(memberDoc, typeName, memberName),
+			                          RegexOptions.Singleline | RegexOptions.ExplicitCapture);
+			if (match.Success)
 			{
-				Match match = Regex.Match(docs[i], string.Format(memberDoc, typeName, memberName),
-										  RegexOptions.Singleline | RegexOptions.ExplicitCapture);
-				if (match.Success)
+				string doc = match.Groups["docs"].Value.Trim();
+				if (!string.IsNullOrEmpty(doc))
 				{
-					string doc = match.Groups["docs"].Value.Trim();
-					if (!string.IsNullOrEmpty(doc))
-					{
-						FormatComment(Char.ToUpper(doc[0]) + doc.Substring(1), cmm, i > 0);
-						break;
-					}
+					FormatComment(Char.ToUpper(doc[0]) + doc.Substring(1), cmm, i > 0 && parentType != null);
+					break;
 				}
 			}
 		}
