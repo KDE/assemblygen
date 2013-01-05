@@ -229,11 +229,11 @@ public unsafe class QyotoHooks : IHookProvider
 				CodeSnippetTypeMember signalEvent = new CodeSnippetTypeMember();
 				signalEvent.Name = signal.Name;
 				DocumentSignalEvent(signal, methods, signalEvent);
-				foreach (CodeMemberMethod current in from method in methods
-													 where method.Name == signal.Name && method.ReturnType.BaseType == signal.ReturnType.BaseType
-													 select method)
+				foreach (CodeMemberMethod method in from method in methods
+													where method.Name == signal.Name && method.ReturnType.BaseType == signal.ReturnType.BaseType
+													select method)
 				{
-					current.Name = "On" + current.Name;
+					method.Name = "On" + method.Name;
 				}
 				CodeSnippetTypeMember existing = signalEvents.Keys.FirstOrDefault(m => m.Name == signal.Name);
 				if (existing != null)
@@ -309,6 +309,14 @@ public unsafe class QyotoHooks : IHookProvider
 				if ((method.Parameters.Count - skip == signal.Parameters.Count &&
 				     args.Take(args.Count - skip).SequenceEqual(signalArgs.Take(signalArgs.Count), parameterTypeComparer)))
 				{
+					for (int i = 0; i < signal.Parameters.Count; i++)
+					{
+						CodeParameterDeclarationExpression parameter = signal.Parameters[i];
+						if (parameter.Name.StartsWith("arg") && parameter.Name.Length > 3 && char.IsDigit(parameter.Name[3]))
+						{
+							parameter.Name = method.Parameters[i].Name;
+						}
+					}
 					signalEvent.Comments.AddRange(method.Comments);
 					signal.Comments.AddRange(method.Comments);
 					return;
@@ -325,6 +333,11 @@ public unsafe class QyotoHooks : IHookProvider
 	private static string GetSignalEventSuffix(CodeMemberMethod signalToUse)
 	{
 		string suffix = signalToUse.Parameters.Cast<CodeParameterDeclarationExpression>().Last().Name;
+		int indexOfSpace = suffix.IndexOf(' ');
+		if (indexOfSpace > 0)
+		{
+			suffix = suffix.Substring(0, indexOfSpace);
+		}
 		if (suffix.StartsWith("arg") && suffix.Length > 3 && char.IsDigit(suffix[3]))
 		{
 			string lastType = signalToUse.Parameters.Cast<CodeParameterDeclarationExpression>().Last().Type.BaseType;
