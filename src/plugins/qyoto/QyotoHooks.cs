@@ -260,7 +260,7 @@ public unsafe class QyotoHooks : IHookProvider
 						signalEvent.Name += GetSignalEventSuffix(signal);
 					}
 				}
-				signalEvent.Text = string.Format(@"
+				signalEvent.Text += string.Format(@"
         public event {0} {1}
 		{{
 			add

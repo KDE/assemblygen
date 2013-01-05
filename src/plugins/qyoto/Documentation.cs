@@ -532,9 +532,18 @@ public unsafe class Documentation
 			{
 				obsoleteMessageBuilder.Remove(obsoleteMessageBuilder.Length - 1, 1);
 			}
-			CodeTypeReference obsoleteAttribute = new CodeTypeReference(typeof(ObsoleteAttribute));
-			CodePrimitiveExpression obsoleteMessage = new CodePrimitiveExpression(obsoleteMessageBuilder.ToString());
-			cmp.CustomAttributes.Add(new CodeAttributeDeclaration(obsoleteAttribute, new CodeAttributeArgument(obsoleteMessage)));
+			CodeSnippetTypeMember snippet = cmp as CodeSnippetTypeMember;
+			if (snippet != null)
+			{
+				const string template = "        [System.ObsoleteAttribute(\"{0}\")]{1}";
+				snippet.Text = snippet.Text.Insert(0, string.Format(template, obsoleteMessageBuilder, Environment.NewLine));
+			}
+			else
+			{
+				CodeTypeReference obsoleteAttribute = new CodeTypeReference(typeof(ObsoleteAttribute));
+				CodePrimitiveExpression obsoleteMessage = new CodePrimitiveExpression(obsoleteMessageBuilder.ToString());
+				cmp.CustomAttributes.Add(new CodeAttributeDeclaration(obsoleteAttribute, new CodeAttributeArgument(obsoleteMessage)));
+			}
 		}
 	}
 }
