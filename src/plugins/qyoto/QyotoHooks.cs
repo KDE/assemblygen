@@ -228,7 +228,7 @@ public unsafe class QyotoHooks : IHookProvider
 				ifaceDecl.Members.Add(signal);
 				CodeSnippetTypeMember signalEvent = new CodeSnippetTypeMember();
 				signalEvent.Name = signal.Name;
-				DocumentSignalEvent(signal, methods, signalEvent);
+				DocumentSignalEvent(type, signal, methods, signalEvent, signature);
 				foreach (CodeMemberMethod method in from method in methods
 													where method.Name == signal.Name && method.ReturnType.BaseType == signal.ReturnType.BaseType
 													select method)
@@ -294,7 +294,8 @@ public unsafe class QyotoHooks : IHookProvider
 		}
 	}
 
-	private static void DocumentSignalEvent(CodeMemberMethod signal, IEnumerable<CodeMemberMethod> methods, CodeTypeMember signalEvent)
+	private void DocumentSignalEvent(CodeTypeDeclaration type, CodeMemberMethod signal,
+	                                 IEnumerable<CodeMemberMethod> methods, CodeTypeMember signalEvent, string signature)
 	{
 		IEqualityComparer<CodeParameterDeclarationExpression> parameterTypeComparer = new ParameterTypeComparer();
 		var signalArgs = signal.Parameters.Cast<CodeParameterDeclarationExpression>().ToList();
@@ -328,6 +329,7 @@ public unsafe class QyotoHooks : IHookProvider
 				++skip;
 			}
 		}
+		this.documentation.DocumentMember(signature, signalEvent, type);
 	}
 
 	private static string GetSignalEventSuffix(CodeMemberMethod signalToUse)

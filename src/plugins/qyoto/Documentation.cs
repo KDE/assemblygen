@@ -34,6 +34,7 @@ public unsafe class Documentation
 	private readonly Translator translator;
 	private readonly Dictionary<CodeTypeDeclaration, List<string>> memberDocumentation = new Dictionary<CodeTypeDeclaration, List<string>>();
 	private readonly List<string> staticDocumentation = new List<string>();
+	private readonly Regex typeNameRegex = new Regex(@"^(const +)?(?<name>((un)?signed +)?.+?(__\*)?)( *(&|((\*|(\[\]))+)) *)?$", RegexOptions.ExplicitCapture | RegexOptions.Compiled);
 
 	public Documentation(GeneratorData data, Translator translator)
 	{
@@ -150,6 +151,18 @@ public unsafe class Documentation
 		}
 	}
 
+	public void DocumentMember(string signature, CodeTypeMember cmm, CodeTypeDeclaration type)
+	{
+		if (this.memberDocumentation.ContainsKey(type))
+		{
+			int index = signature.IndexOf('(');
+			string methodName = signature.Substring(0, signature.IndexOf('('));
+			string[] argTypes = signature.Substring(index + 1, signature.Length - index - 2)
+			                             .Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries);
+			this.memberDocumentation[type].Where((t, i) => this.TryMatch(type.Name, methodName, cmm, t, i > 0, argTypes, false)).Any();
+		}
+	}
+
 	private void DocumentMember(Smoke* smoke, Smoke.Method* smokeMethod, CodeTypeMember cmm, string type, IEnumerable<string> docs, bool markObsolete = true)
 	{
 		string methodName = Regex.Escape(ByteArrayManager.GetString(smoke->methodNames[smokeMethod->name]));
@@ -157,7 +170,8 @@ public unsafe class Documentation
 		docs.Where((t, i) => this.TryMatch(type, methodName, cmm, t, i > 0 && markObsolete, argTypes)).Any();
 	}
 
-	private bool TryMatch(string type, string methodName, CodeTypeMember cmm, string docs, bool markObsolete, IEnumerable<string> argTypes)
+	private bool TryMatch(string type, string methodName, CodeTypeMember cmm, string docs, bool markObsolete,
+	                      IEnumerable<string> argTypes, bool completeSignature = true)
 	{
 		const string memberDoc = @"(^|( --)|\n)\n([\w :*&<>,]+)?(({0}(\s*&)?::)| ){1}(const)?( \[(\w+\s*)+\])?\n\W*(?<docs>.*?)(\n\s*){{1,2}}((&?\S* --)|((\n\s*){{2}}))";
 		const string separator = @",\s*";
@@ -170,7 +184,7 @@ public unsafe class Documentation
 				signatureRegex.Append("?<args>");
 				anyArgs = true;
 			}
-			signatureRegex.Append(this.GetTypeRegex(argType)).Append(@"(\s+\w+(\s*=\s*[^,\r\n]+(\(\s*\))?)?)?");
+			signatureRegex.Append(this.GetTypeRegex(argType, completeSignature)).Append(@"(\s+\w+(\s*=\s*[^,\r\n]+(\(\s*\))?)?)?");
 			signatureRegex.Append(separator);
 		}
 		if (anyArgs)
@@ -183,7 +197,7 @@ public unsafe class Documentation
 		}
 		signatureRegex.Append(@"[\w :*&<>]+\s*=\s*[^,\r\n]+(\(\s*\))?(,\s*)?)*)\s*\)\s*");
 		Match match = Regex.Match(docs, string.Format(memberDoc, type, signatureRegex),
-								  RegexOptions.Singleline | RegexOptions.ExplicitCapture);
+		                          RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 		if (match.Success)
 		{
 			FormatComment(match.Groups["docs"].Value, cmm, markObsolete);
@@ -193,22 +207,41 @@ public unsafe class Documentation
 		return false;
 	}
 
-	private string GetTypeRegex(string argType)
+	private string GetTypeRegex(string argType, bool completeSignature = true)
 	{
-		StringBuilder typeBuilder = new StringBuilder(argType);
+		string typeName = typeNameRegex.Match(argType).Groups["name"].Value;
+		StringBuilder typeBuilder = new StringBuilder(typeName);
 		this.FormatType(typeBuilder);
-		typeBuilder.Insert(0, "((");
+		typeBuilder.Insert(0, "(const +)?((");
 		typeBuilder.Append(')');
-		if (this.data.TypeDefsPerType.ContainsKey(argType))
+		if (this.data.TypeDefsPerType.ContainsKey(typeName))
 		{
-			foreach (StringBuilder typeDefBuilder in from typedef in this.data.TypeDefsPerType[argType]
+			foreach (StringBuilder typeDefBuilder in from typedef in this.data.TypeDefsPerType[typeName]
 													 select new StringBuilder(typedef))
 			{
 				this.FormatType(typeDefBuilder);
 				typeBuilder.Append("|(").Append(typeDefBuilder).Append(')');
 			}
 		}
-		typeBuilder.Append(')');
+		typeBuilder.Append(@")");
+		if (completeSignature)
+		{
+			if (argType.EndsWith("&", StringComparison.Ordinal) && !typeName.EndsWith("&", StringComparison.Ordinal))
+			{
+				typeBuilder.Append(@" *& *");
+			}
+			else
+			{
+				if (argType.EndsWith("*", StringComparison.Ordinal) && !typeName.EndsWith("*", StringComparison.Ordinal))
+				{
+					typeBuilder.Append(@" *(\*|(\[\]))+ *");
+				}
+			}
+		}
+		else
+		{
+			typeBuilder.Append(@"( *(&|((\*|(\[\]))+)) *)?");	
+		}
 		return typeBuilder.ToString();
 	}
 
@@ -263,7 +296,7 @@ public unsafe class Documentation
 			{
 				int parentTypeStart = Math.Max(indexOfLt + 1, 0);
 				typeBuilder.Remove(parentTypeStart, indexOfColon + 1 - parentTypeStart);
-				typeBuilder.Insert(parentTypeStart, @"(const )?(\w+::)?");
+				typeBuilder.Insert(parentTypeStart, @"(\w+::)?");
 				typeBuilder.Replace(@"*", @"\s*(\*|(\[\]))").Replace(@"&", @"\s*&").Replace(",", @",\s*");
 			}
 			else
