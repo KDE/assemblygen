@@ -149,6 +149,7 @@ public class QyotoTranslator : ICustomTranslator {
         { "Phonon::VideoWidgetPrivate", delegate { throw new NotSupportedException(); } },
 		
 		{ "__darwin_va_list", delegate { throw new NotSupportedException(); } },
+		{ "__gnuc_va_list", delegate { throw new NotSupportedException(); } },
 
         { "void", delegate(Translator.TypeInfo type, GeneratorData data, Translator translator) {
                     if (type.PointerDepth == 0) {
