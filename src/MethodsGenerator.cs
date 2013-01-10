@@ -481,6 +481,7 @@ public unsafe class MethodsGenerator
 		{
 			cmm.Parameters.Add(exp);
 		}
+		this.DocumentMemberFromInterface(iface, cmm);
 		this.DistributeMethod(cmm);
 		if (PostMethodDefinitionHooks != null)
 		{
@@ -488,6 +489,31 @@ public unsafe class MethodsGenerator
 		}
 		this.CorrectParameterNames(cmm);
 		return cmm;
+	}
+
+	private void DocumentMemberFromInterface(CodeTypeReference iface, CodeMemberMethod cmm)
+	{
+		if (iface != null && this.data.InterfaceTypeMap.ContainsKey(iface.BaseType.Substring(1)))
+		{
+			CodeTypeMember interfaceMember = (from m in this.data.InterfaceTypeMap[iface.BaseType.Substring(1)].Members.OfType<CodeMemberMethod>()
+											  where m.Name == cmm.Name && cmm.Parameters.Cast<CodeParameterDeclarationExpression>().SequenceEqual(
+												  m.Parameters.Cast<CodeParameterDeclarationExpression>(), new ParameterTypeComparer())
+											  select m).FirstOrDefault();
+			if (interfaceMember != null)
+			{
+				cmm.Comments.AddRange(interfaceMember.Comments);
+			}
+			else
+			{
+				interfaceMember = (from CodeTypeMember m in this.data.InterfaceTypeMap[iface.BaseType.Substring(1)].Members
+				                   where m.Name == cmm.Name
+				                   select m).FirstOrDefault();
+				if (interfaceMember != null)
+				{
+					cmm.Comments.AddRange(interfaceMember.Comments);
+				}
+			}
+		}
 	}
 
 	private void CorrectParameterNames(CodeMemberMethod cmm)
