@@ -1319,7 +1319,7 @@ void WriteInitialization::writeProperties(const QString &varName,
             (*o) << m_option.dindent << varName << setFunction << propertyValue;
             if (!stdset)
                 (*o) << "";
-            (*o) << "; \n";
+            (*o) << ";\n";
         }
     }
     if (leftMargin != -1 || topMargin != -1 || rightMargin != -1 || bottomMargin != -1) {
