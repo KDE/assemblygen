@@ -261,6 +261,7 @@ public unsafe class Documentation
 		int indexOfGt = Int32.MinValue;
 		int indexOfColon = Int32.MinValue;
 		int firstColonIndex = Int32.MinValue;
+		List<int> commas = new List<int>();
 		List<char> templateType = new List<char>(typeBuilder.Length);
 		for (int i = typeBuilder.Length - 1; i >= 0; i--)
 		{
@@ -287,6 +288,9 @@ public unsafe class Documentation
 						}
 					}
 					break;
+				case ',':
+					commas.Add(i);
+					break;
 			}
 			if (i > indexOfLt && i < indexOfGt)
 			{
@@ -304,7 +308,13 @@ public unsafe class Documentation
 		{
 			if (indexOfColon > 0)
 			{
-				int parentTypeStart = Math.Max(indexOfLt + 1, 0);
+				int comma = int.MinValue;
+				IEnumerable<int> last = commas.Where(i => i < indexOfColon).ToList();
+				if (last.Any())
+				{
+					comma = last.Last();
+				}
+				int parentTypeStart = Math.Max(Math.Max(indexOfLt + 1, 0), comma + 1);
 				typeBuilder.Remove(parentTypeStart, indexOfColon + 1 - parentTypeStart);
 				typeBuilder.Insert(parentTypeStart, @"(\w+::)?");
 				typeBuilder.Replace(@"*", @"\s*(\*|(\[\]))").Replace(@"&", @"\s*&").Replace(",", @",\s*");
