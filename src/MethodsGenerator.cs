@@ -337,7 +337,8 @@ public unsafe class MethodsGenerator
 				                              select member).ToList();
 
 				if (iface != null && propertiesWithSameName.Count() == 1 &&
-				    (method->flags & (uint) Smoke.MethodFlags.mf_protected) == 0)
+					(method->flags & (uint) Smoke.MethodFlags.mf_protected) == 0 && 
+					(method->flags & (uint) Smoke.MethodFlags.mf_virtual) == 0)
 				{
 					cmm.PrivateImplementationType = iface;
 					csName = tmp;
