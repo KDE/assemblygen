@@ -88,6 +88,11 @@ public unsafe class MethodsGenerator
 	                                                            		"()"
 	                                                            	};
 
+	private static	readonly Regex regexDefaultEnumValue = new Regex(@"::(\w+)(.*)", RegexOptions.Compiled);
+	private static readonly Regex regexEnumValue = new Regex(@"(\w+)", RegexOptions.Compiled);
+	private static readonly Regex regexPropertySetter = new Regex(@"\s+set\s*{", RegexOptions.Compiled);
+	private static readonly Regex regexAttribute = new Regex(@"(\[.+\])", RegexOptions.Compiled);
+
 	static MethodsGenerator()
 	{
 		string verbsPath = Path.Combine(Path.GetDirectoryName(Assembly.GetCallingAssembly().Location), "verbs.txt");
@@ -599,7 +604,7 @@ public unsafe class MethodsGenerator
 						if (indexOfColon > 0)
 						{
 							containingType = defaultValue.Substring(0, indexOfColon);
-							Match match = Regex.Match(defaultValue, @"::(\w+)(.*)");
+							Match match = regexDefaultEnumValue.Match(defaultValue);
 							enumMember = match.Groups[1].Value;
 							additional = match.Groups[2].Value;
 						}
@@ -695,7 +700,7 @@ public unsafe class MethodsGenerator
 		{
 			enumValueBuilder.Append(type);
 			enumValueBuilder.Append('.');
-			MatchCollection matches = Regex.Matches(enumValue, @"(\w+)");
+			MatchCollection matches = regexEnumValue.Matches(enumValue);
 			enumValueBuilder.Append(matches[matches.Count - 1].Groups[1].Value);
 			enumValueBuilder.Append('|');
 		}
@@ -1025,7 +1030,7 @@ public unsafe class MethodsGenerator
 			if (!this.type.IsInterface && baseVirtualProperty != null)
 			{
 				bool isReadOnly = (baseVirtualProperty is CodeMemberProperty && !((CodeMemberProperty) baseVirtualProperty).HasSet) ||
-								  !Regex.IsMatch(((CodeSnippetTypeMember) baseVirtualProperty).Text, @"\s+set\s*{");
+								  !regexPropertySetter.IsMatch(((CodeSnippetTypeMember) baseVirtualProperty).Text);
 				if (readOnly == isReadOnly)
 				{
 					CodeMemberMethod setter = new CodeMemberMethod { Name = baseVirtualProperty.Name };
@@ -1134,7 +1139,7 @@ public unsafe class MethodsGenerator
 					}
 				}
 				string getterCode = GetMemberCode(method, writer);
-				string attribute = string.Format(replaceRegex, Regex.Match(getterCode, @"(\[.+\])").Groups[1].Value);
+				string attribute = string.Format(replaceRegex, regexAttribute.Match(getterCode).Groups[1].Value);
 				string propertyWithAttribute = Regex.Replace(propertyCode, findRegex, attribute);
 				propertySnippet.Name = property.Name;
 				propertySnippet.Attributes = property.Attributes;

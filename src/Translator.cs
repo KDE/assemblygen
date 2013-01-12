@@ -40,6 +40,8 @@ static class CollectionExtensions {
 public unsafe class Translator
 {
 	private readonly GeneratorData data;
+	private static readonly Regex regexType = new Regex(@"^(const )?(unsigned |signed )?([\w\s:]+)(<.+>)?(\*)*(&)?$", RegexOptions.Compiled);
+	private static readonly Regex regexFunction = new Regex(@"^([^(]+)\(\*\)\(([^)]*)\)$", RegexOptions.Compiled);
 
 	public Translator(GeneratorData data)
 		: this(data, new List<ICustomTranslator>())
@@ -275,7 +277,7 @@ public unsafe class Translator
 		typeString = this.ResolveType(typeString, containingType);
 		// yes, this won't match Foo<...>::Bar - but we can't wrap that anyway
 		isRef = false;
-		Match match = Regex.Match(typeString, @"^(const )?(unsigned |signed )?([\w\s:]+)(<.+>)?(\*)*(&)?$");
+		Match match = regexType.Match(typeString);
 		if (!match.Success)
 		{
 			return this.CheckForFunctionPointer(typeString, containingType);
@@ -407,7 +409,7 @@ public unsafe class Translator
 
 	private CodeTypeReference CheckForFunctionPointer(string typeString, CodeTypeDeclaration containingType)
 	{
-		Match match = MatchFunctionPointer(typeString);
+		Match match = regexFunction.Match(typeString);
 		if (match.Success)
 		{
 			string returnType = match.Groups[1].Value;
@@ -448,11 +450,6 @@ public unsafe class Translator
 			return new CodeTypeReference(delegateNameBuilder.ToString());
 		}
 		throw new NotSupportedException(typeString);
-	}
-
-	public static Match MatchFunctionPointer(string typeString)
-	{
-		return Regex.Match(typeString, @"^([^(]+)\(\*\)\(([^)]*)\)$");
 	}
 
 	#endregion

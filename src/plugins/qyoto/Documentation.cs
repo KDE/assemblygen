@@ -34,7 +34,16 @@ public unsafe class Documentation
 	private readonly Translator translator;
 	private readonly Dictionary<CodeTypeDeclaration, List<string>> memberDocumentation = new Dictionary<CodeTypeDeclaration, List<string>>();
 	private readonly List<string> staticDocumentation = new List<string>();
-	private readonly Regex typeNameRegex = new Regex(@"^(const +)?(?<name>((un)?signed +)?.+?(__\*)?)( *(&|((\*|(\[\]))+)) *)?$", RegexOptions.ExplicitCapture | RegexOptions.Compiled);
+
+	private static readonly Regex regexTypeName =
+		new Regex(@"^(const +)?(?<name>((un)?signed +)?.+?(__\*)?)( *(&|((\*|(\[\]))+)) *)?$",
+		          RegexOptions.ExplicitCapture | RegexOptions.Compiled);
+
+	private static readonly Regex regexArg = new Regex(@"^(.+?\s+)(?<name>\w+)(\s*=\s*[^\(,\s]+(\(\s*\))?)?\s*$",
+	                                                   RegexOptions.ExplicitCapture | RegexOptions.Compiled);
+
+	private static readonly Regex regexStaticDocs = new Regex("Related Non-Members(?<static>.+)",
+	                                                          RegexOptions.Singleline | RegexOptions.ExplicitCapture | RegexOptions.Compiled);
 
 	public Documentation(GeneratorData data, Translator translator)
 	{
@@ -219,7 +228,7 @@ public unsafe class Documentation
 
 	private string GetTypeRegex(string argType, bool completeSignature = true)
 	{
-		string typeName = typeNameRegex.Match(argType).Groups["name"].Value;
+		string typeName = regexTypeName.Match(argType).Groups["name"].Value;
 		StringBuilder typeBuilder = new StringBuilder(typeName);
 		this.FormatType(typeBuilder);
 		typeBuilder.Insert(0, "(const +)?((");
@@ -340,9 +349,8 @@ public unsafe class Documentation
 			// operator
 			args.Insert(0, "one");
 		}
-		const string regex = @"^(.+?\s+)(?<name>\w+)(\s*=\s*[^\(,\s]+(\(\s*\))?)?\s*$";
 		MethodsGenerator.RenameParameters(method, (from arg in args
-												   select Regex.Match(arg, regex).Groups["name"].Value).ToList());
+												   select regexArg.Match(arg).Groups["name"].Value).ToList());
 	}
 
 	private void GatherDocs()
@@ -395,8 +403,7 @@ public unsafe class Documentation
 					{
 						CommentType(@interface, match);
 					}
-					Match matchStatic = Regex.Match(members, "Related Non-Members(?<static>.+)",
-					                                RegexOptions.Singleline | RegexOptions.ExplicitCapture);
+					Match matchStatic = regexStaticDocs.Match(members);
 					if (matchStatic.Success)
 					{
 						this.staticDocumentation.Add(matchStatic.Groups["static"].Value);
