@@ -131,10 +131,6 @@ public class QyotoTranslator : ICustomTranslator
 			{ "QGenericMatrix", delegate { throw new NotSupportedException(); } },
 			{ "QScopedPointer", delegate { throw new NotSupportedException(); } },
 			{ "QExplicitlySharedDataPointer", delegate { throw new NotSupportedException(); } },
-			{ "QX11EmbedContainer", delegate { throw new NotSupportedException(); } },
-			{ "QX11EmbedContainer::Error", delegate { throw new NotSupportedException(); } },
-			{ "QX11EmbedWidget", delegate { throw new NotSupportedException(); } },
-			{ "QX11EmbedWidget::Error", delegate { throw new NotSupportedException(); } },
 
 			// phonon stuff
 			{ "AudioOutputDevice", delegate { throw new NotSupportedException(); } },

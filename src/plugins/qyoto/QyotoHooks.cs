@@ -143,9 +143,12 @@ public unsafe class QyotoHooks : IHookProvider
 				// capitalize the first letter
 				StringBuilder builder = new StringBuilder(name);
 				builder[0] = char.ToUpper(builder[0]);
-				string tmp = builder.ToString();
-
-				signal.Name = tmp;
+				string signalName = builder.ToString();
+				if (type.Members.OfType<CodeTypeDeclaration>().Any(t => t.Name == signalName))
+				{
+					builder[0] = name[0];
+				}
+				signal.Name = builder.ToString();
 				bool isRef;
 				try
 				{
