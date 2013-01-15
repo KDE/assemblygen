@@ -33,11 +33,9 @@ set(assemblygen_SRC
 if (WIN32)
     # Build assemblygen as an x86 application, so that it can
     # dynamically load smokeqt DLLs.
-    csharp_add_executable(assemblygen ${assemblygen_SRC}
-		COMPILE_FLAGS /platform:x86 UNSAFE COMPILE_DEFINITIONS DEBUG)
+    csharp_add_executable(assemblygen ${assemblygen_SRC} COMPILE_FLAGS /platform:x86 UNSAFE REFERENCES Mono.Cecil.dll)
 else (WIN32)
-    csharp_add_executable(assemblygen ${assemblygen_SRC} UNSAFE
-        COMPILE_DEFINITIONS DEBUG)
+    csharp_add_executable(assemblygen ${assemblygen_SRC} UNSAFE REFERENCES Mono.Cecil.dll)
 endif (WIN32)
 
 if (MONO_EXECUTABLE)
@@ -50,6 +48,7 @@ else (MONO_EXECUTABLE)
 endif (MONO_EXECUTABLE)
 
 add_custom_command(TARGET assemblygen PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/verbs.txt ${LIBRARY_OUTPUT_PATH}/verbs.txt)
+add_custom_command(TARGET assemblygen PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/Mono.Cecil.dll ${LIBRARY_OUTPUT_PATH}/Mono.Cecil.dll)
 
 install(TARGETS assemblygen-native DESTINATION lib${LIB_SUFFIX}/assemblygen)
 if (WIN32)

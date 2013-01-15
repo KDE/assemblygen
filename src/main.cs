@@ -30,6 +30,7 @@ using System.Runtime.InteropServices;
 using System.CodeDom;
 using System.CodeDom.Compiler;
 using Microsoft.CSharp;
+using Mono.Cecil;
 
 internal class MainClass
 {
@@ -315,6 +316,12 @@ Any options not listed here are directly passed to the compiler (leading dashes 
 			Console.Error.WriteLine("Errors occured. No assembly was generated.");
 			return CompilationError;
 		}
+		AssemblyDefinition assemblyDefinition = AssemblyDefinition.ReadAssembly(cr.PathToAssembly);
+		foreach (ModuleDefinition moduleDefinition in assemblyDefinition.Modules)
+		{
+			moduleDefinition.Runtime = TargetRuntime.Net_2_0;
+		}
+		assemblyDefinition.Write(cr.PathToAssembly);
 		Console.Error.WriteLine("Done.");
 		return NoError;
 	}
