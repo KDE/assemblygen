@@ -4052,7 +4052,7 @@ hiccough
 hiccuped
 hiccupped
 hid
-hidden
+hide
 hided
 hie
 hierarchise
@@ -9708,6 +9708,7 @@ shouldst
 shoved
 shoveled
 shovelled
+show
 showed
 shown
 shrank
