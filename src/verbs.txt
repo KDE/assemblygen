@@ -925,7 +925,6 @@ bravo
 braze
 brazen
 break
-break one's back
 breastfeed
 breathalyse
 breathalyze
@@ -1122,8 +1121,6 @@ catabolize
 catalogued
 catalyse
 catalyze
-catch one's breath
-catch some z's
 catechise
 catechize
 categorise
@@ -1671,7 +1668,6 @@ criticize
 crizzle
 cronk
 cropped
-cross one's eyes
 crossbbred
 crowed
 crucify
@@ -2449,7 +2445,6 @@ divvied
 divvies
 dizen
 dizzy
-do one's best
 doat
 docketed
 dodged
@@ -2491,7 +2486,6 @@ dowsed
 dozed
 drabbed
 drabble
-drag one's feet
 dragged
 draggle
 dramatise
@@ -3464,7 +3458,6 @@ gipped
 girded
 girdled
 girt
-give one's best
 glaca
 glace
 glaciate
@@ -3724,7 +3717,6 @@ hogtie
 hoick
 hoise
 hoke
-hold one's own
 holden
 holed
 hollo
@@ -4445,9 +4437,6 @@ kaolinize
 katalyze
 kedged
 keelhaul
-keep one's eyes open
-keep one's eyes peeled
-keep one's eyes skinned
 kenneled
 kennelled
 kep
@@ -4461,7 +4450,6 @@ keypunch
 kibbitz
 kibbled
 kibitz
-kick one's heels
 kidded
 kidnap
 kindle
@@ -4481,8 +4469,6 @@ knelt
 knew
 knobbed
 knobbled
-know what's going on
-know what's what
 knuckled
 kvetch
 kyanise
@@ -4595,7 +4581,6 @@ liked
 liken
 limed
 limn
-line one's pockets
 linearise
 linearize
 lined
@@ -4626,7 +4611,6 @@ localize
 locate
 locomote
 lodged
-log z's
 logged
 logicise
 logicize
@@ -4687,8 +4671,6 @@ magnify
 mainline
 maintain
 make
-make one's way
-make up one's mind
 maladminister
 maledict
 malign
@@ -5226,7 +5208,6 @@ nodded
 noddled
 nogged
 noised
-nol. pros.
 nomadise
 nomadize
 nominalize
@@ -6555,7 +6536,6 @@ picturize
 piddled
 pieced
 piffled
-pig's ear
 pigeonholed
 pigged
 pigstick
@@ -7558,7 +7538,6 @@ reaccredit
 reaccumulate
 reaccuse
 reaccustom
-reach one's nostrils
 reacidify
 reacknowledge
 reacquaint
@@ -9099,7 +9078,6 @@ shogged
 shone
 shoo
 shoot
-shoot one's mouth off
 shoplift
 shored
 shorn
@@ -9216,7 +9194,6 @@ slidden
 slim
 slimmed
 slimmest
-slip one's mind
 slogged
 sloked
 sloped
@@ -9304,8 +9281,6 @@ sought
 soundproof
 soused
 sovietize
-sow one's oats
-sow one's wild oats
 sowed
 sown
 spackled
@@ -10778,7 +10753,6 @@ warsled
 warstled
 was
 wast
-waste one's time
 wasted
 wattled
 waul
@@ -10869,7 +10843,6 @@ woodshedded
 woof
 woolgather
 wore
-work one's way
 worn
 worrit
 worsen
