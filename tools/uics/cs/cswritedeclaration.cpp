@@ -29,6 +29,7 @@
 #include "databaseinfo.h"
 #include "customwidgetsinfo.h"
 
+#include <QFileInfo>
 #include <QTextStream>
 
 namespace CS {
@@ -43,6 +44,7 @@ void WriteDeclaration::acceptUI(DomUI *node)
 {
     QString qualifiedClassName = node->elementClass() + option.postfix;
     QString className = qualifiedClassName;
+    QString access = QString("public").trimmed();
 
     QString varName = driver->findOrInsertWidget(node->elementWidget());
     QString widgetClassName = node->elementWidget()->attributeClass();
@@ -55,6 +57,17 @@ void WriteDeclaration::acceptUI(DomUI *node)
     if (nsList.count()) {
         className = nsList.last();
         nsList.removeLast();
+    }
+    QString prefix = option.prefix;
+    if (!option.name_space.isEmpty()) {
+        nsList.append(option.name_space);
+        prefix = "";
+    }
+    if (!option.klass.isEmpty()) {
+        className = option.klass;
+    }
+    if (!option.access.isEmpty()) {
+        access = option.access;
     }
 
     QListIterator<QString> it(nsList);
@@ -69,10 +82,10 @@ void WriteDeclaration::acceptUI(DomUI *node)
     if (nsList.count())
         output << "\n";
     if (option.execCode) {
-        output << "public partial class " << exportMacro << option.prefix << className << "\n"
+        output << access << " partial class " << exportMacro << prefix << className << "\n"
                << "{\n";
     } else {
-        output << "public class " << exportMacro << option.prefix << className << "\n"
+        output << access << " partial class " << exportMacro << prefix << className << "\n"
                << "{\n";
     }
 
@@ -119,7 +132,7 @@ void WriteDeclaration::acceptUI(DomUI *node)
     if (nsList.count())
         output << "\n";
 
-    if (option.generateNamespace && !option.prefix.isEmpty()) {
+    if (option.generateNamespace && !option.prefix.isEmpty() && option.name_space.isEmpty()) {
         nsList.append(QLatin1String("Ui"));
 
         QListIterator<QString> it(nsList);
@@ -131,7 +144,7 @@ void WriteDeclaration::acceptUI(DomUI *node)
             output << "namespace " << ns << " {\n";
         }
 
-        output << option.indent << "public class " << exportMacro << className << " : " << option.prefix << className << " {}\n";
+        output << option.indent << access << " class " << exportMacro << className << " : " << option.prefix << className << " {}\n";
 
         it.toBack();
         while (it.hasPrevious()) {

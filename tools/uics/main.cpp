@@ -43,6 +43,9 @@ void showHelp(const char *appName)
             "  -p, -no-protection        disable header protection\n"
             "  -g <name>                 change generator\n"
             "  -x                        generate extra code to test the class\n"
+            "  -n, -namespace            generate the class in this namespace\n"
+            "  -c, -class                generate the class with this name\n"
+            "  -a, -access               the access modofier of the class\n"
             "\n", appName);
 }
 
@@ -105,6 +108,27 @@ int main(int argc, char *argv[])
             }
             QString name = QString::fromLocal8Bit(argv[arg]).toLower ();
             driver.option().generator = (name == QLatin1String ("java")) ? Option::JavaGenerator : Option::CppGenerator;
+        } else if (opt == QLatin1String("-n") || opt == QLatin1String("-namespace")) {
+            ++arg;
+            if (!argv[arg]) {
+                showHelp(argv[0]);
+                return 1;
+            }
+            driver.option().name_space = QLatin1String(argv[arg]);
+        } else if (opt == QLatin1String("-c") || opt == QLatin1String("-class")) {
+            ++arg;
+            if (!argv[arg]) {
+                showHelp(argv[0]);
+                return 1;
+            }
+            driver.option().klass = QLatin1String(argv[arg]);
+        } else if (opt == QLatin1String("-a") || opt == QLatin1String("-access")) {
+            ++arg;
+            if (!argv[arg]) {
+                showHelp(argv[0]);
+                return 1;
+            }
+            driver.option().access = QLatin1String(argv[arg]);
         } else if (!fileName) {
             fileName = argv[arg];
         } else {

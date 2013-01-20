@@ -46,6 +46,9 @@ struct Option
     QString indent, dindent;
     QString prefix;
     QString postfix;
+    QString name_space;
+    QString klass;
+    QString access;
     QString translateFunction;
     QString uic3;
 #ifdef QT_UIC_JAVA_GENERATOR
