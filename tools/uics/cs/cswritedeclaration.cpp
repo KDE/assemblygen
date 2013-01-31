@@ -163,10 +163,13 @@ void WriteDeclaration::acceptUI(DomUI *node)
 void WriteDeclaration::acceptWidget(DomWidget *node)
 {
     QString className = QLatin1String("QWidget");
+    QString memberAccess = QString("public").trimmed();
     if (node->hasAttributeClass())
         className = node->attributeClass();
+    if (!option.memberAccess.isEmpty())
+        memberAccess = option.memberAccess;
 
-    output << option.indent << "public " << uic->customWidgetsInfo()->realClassName(className) << " " << driver->findOrInsertWidget(node) << ";\n";
+    output << option.indent << memberAccess << " " << uic->customWidgetsInfo()->realClassName(className) << " " << driver->findOrInsertWidget(node) << ";\n";
 
     TreeWalker::acceptWidget(node);
 }
@@ -174,31 +177,46 @@ void WriteDeclaration::acceptWidget(DomWidget *node)
 void WriteDeclaration::acceptLayout(DomLayout *node)
 {
     QString className = QLatin1String("QLayout");
+    QString memberAccess = QString("public").trimmed();
     if (node->hasAttributeClass())
         className = node->attributeClass();
+    if (!option.memberAccess.isEmpty())
+        memberAccess = option.memberAccess;
 
-    output << option.indent << "public " << className << " " << driver->findOrInsertLayout(node) << ";\n";
+    output << option.indent << memberAccess << " " << className << " " << driver->findOrInsertLayout(node) << ";\n";
 
     TreeWalker::acceptLayout(node);
 }
 
 void WriteDeclaration::acceptSpacer(DomSpacer *node)
 {
-    output << option.indent << "public QSpacerItem " << driver->findOrInsertSpacer(node) << ";\n";
+    QString memberAccess = QString("public").trimmed();
+    if (!option.memberAccess.isEmpty())
+        memberAccess = option.memberAccess;
+
+    output << option.indent << memberAccess << " QSpacerItem " << driver->findOrInsertSpacer(node) << ";\n";
 
     TreeWalker::acceptSpacer(node);
 }
 
 void WriteDeclaration::acceptActionGroup(DomActionGroup *node)
 {
-    output << option.indent << "public QActionGroup " << driver->findOrInsertActionGroup(node) << ";\n";
+    QString memberAccess = QString("public").trimmed();
+    if (!option.memberAccess.isEmpty())
+        memberAccess = option.memberAccess;
+
+    output << option.indent << memberAccess << " QActionGroup " << driver->findOrInsertActionGroup(node) << ";\n";
 
     TreeWalker::acceptActionGroup(node);
 }
 
 void WriteDeclaration::acceptAction(DomAction *node)
 {
-    output << option.indent << "public QAction " << driver->findOrInsertAction(node) << ";\n";
+    QString memberAccess = QString("public").trimmed();
+    if (!option.memberAccess.isEmpty())
+        memberAccess = option.memberAccess;
+
+    output << option.indent << memberAccess << " QAction " << driver->findOrInsertAction(node) << ";\n";
 
     TreeWalker::acceptAction(node);
 }

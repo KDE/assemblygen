@@ -49,6 +49,7 @@ struct Option
     QString name_space;
     QString klass;
     QString access;
+    QString memberAccess;
     QString translateFunction;
     QString uic3;
 #ifdef QT_UIC_JAVA_GENERATOR

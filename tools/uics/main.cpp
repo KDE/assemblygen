@@ -45,7 +45,8 @@ void showHelp(const char *appName)
             "  -x                        generate extra code to test the class\n"
             "  -n, -namespace            generate the class in this namespace\n"
             "  -c, -class                generate the class with this name\n"
-            "  -a, -access               the access modofier of the class\n"
+            "  -a, -access               the access modifier of the class\n"
+            "  -ma, -member-access       the access modifier of the member variables\n"
             "\n", appName);
 }
 
@@ -129,6 +130,13 @@ int main(int argc, char *argv[])
                 return 1;
             }
             driver.option().access = QLatin1String(argv[arg]);
+        } else if (opt == QLatin1String("-ma") || opt == QLatin1String("-member-access")) {
+            ++arg;
+            if (!argv[arg]) {
+                showHelp(argv[0]);
+                return 1;
+            }
+            driver.option().memberAccess = QLatin1String(argv[arg]);
         } else if (!fileName) {
             fileName = argv[arg];
         } else {
