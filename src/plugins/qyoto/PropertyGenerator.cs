@@ -115,8 +115,7 @@ public unsafe class PropertyGenerator
 					Debug.Print("  |--Won't wrap Property {0}::{1}", className, prop.Name);
 					continue;
 				}
-
-				this.documentation.DocumentProperty(type, prop.Name, prop.Type, cmp);
+				this.DocumentProperty(type, prop, cmp);
 				string capitalized = NameProperty(cmp, prop, type, members, className);
 
 				cmp.HasGet = true;
@@ -259,6 +258,29 @@ public unsafe class PropertyGenerator
 		}
 	}
 
+	private void DocumentProperty(CodeTypeDeclaration type, Property prop, CodeMemberProperty cmp)
+	{
+		if (type.Name == "QSvgGenerator")
+		{
+			switch (prop.Name)
+			{
+				case "viewBox":
+					this.documentation.DocumentProperty(type, prop.Name, prop.Type + "F", cmp);
+					break;
+				case "viewBoxF":
+					this.documentation.DocumentProperty(type, "viewBox", prop.Type, cmp);
+					break;
+				default:
+					this.documentation.DocumentProperty(type, prop.Name, prop.Type, cmp);
+					break;
+			}
+		}
+		else
+		{
+			this.documentation.DocumentProperty(type, prop.Name, prop.Type, cmp);
+		}
+	}
+
 	private static string NameProperty(CodeTypeMember cmp, Property prop, CodeTypeDeclaration type,
 	                                   IEnumerable<GeneratorData.InternalMemberInfo> members, string className)
 	{
@@ -282,24 +304,14 @@ public unsafe class PropertyGenerator
 				builder[0] = char.ToLowerInvariant(builder[0]);
 				cmp.Name = builder.ToString(); // lower case the property if necessary
 			}
-			if (existing != null)
-			{
-				if (existing.Comments.Count == 0)
-				{
-					existing.Comments.AddRange(cmp.Comments);
-				}
-				else
-				{
-					if (cmp.Comments.Count == 0)
-					{
-						cmp.Comments.AddRange(existing.Comments);
-					}
-				}
-			}
 		}
 		else
 		{
 			cmp.Name = capitalized;
+		}
+		if (type.Name == "QSvgGenerator" && capitalized == "ViewBoxF")
+		{
+			return "ViewBox";
 		}
 		return capitalized;
 	}
@@ -337,7 +349,7 @@ public unsafe class PropertyGenerator
 														(className == "QSvgGenerator" && originalName == "setViewBox")
 					                              select meth)
 					{
-						Smoke.Type propType;
+						short propTypeId;
 						bool writable = false;
 						string name = originalName;
 						string prefix = new string(name.TakeWhile(char.IsLower).ToArray());
@@ -345,18 +357,17 @@ public unsafe class PropertyGenerator
 						{
 							case "set":
 								name = name.Substring(prefix.Length);
-								propType = this.data.Smoke->types[*(this.data.Smoke->argumentList + meth.args)];
+								propTypeId = *(this.data.Smoke->argumentList + meth.args);
 								writable = true;
 								break;
 							case "is":
 								name = name.Substring(prefix.Length);
 								goto default;
 							default:
-								propType = this.data.Smoke->types[meth.ret];
+								propTypeId = meth.ret;
 								break;
 						}
 						name = char.ToLower(name[0]) + name.Substring(1);
-						bool isEnum = propType.flags == ((uint) Smoke.TypeId.t_enum | (uint) Smoke.TypeFlags.tf_stack);
 						Property existing = props.FirstOrDefault(p => p.Name == name);
 						if (existing == null || writable)
 						{
@@ -364,10 +375,14 @@ public unsafe class PropertyGenerator
 							{
 								props.Remove(existing);
 							}
-							StringBuilder typeBuilder = new StringBuilder(ByteArrayManager.GetString(propType.name));
-							typeBuilder.Replace("const ", string.Empty);
-							typeBuilder.Replace("&", string.Empty);
-							props.Add(new Property(name, typeBuilder.ToString(), writable, isEnum));
+							Smoke.Type propType = this.data.Smoke->types[propTypeId];
+							string type = GetPropertyType(propTypeId);
+							if (className == "QSvgGenerator" && originalName == "setViewBox" && type == "QRectF")
+							{
+								name += "F";
+							}
+							props.Add(new Property(name, type, writable,
+							                       propType.flags == ((uint) Smoke.TypeId.t_enum | (uint) Smoke.TypeFlags.tf_stack)));
 						}
 					}
 				}
@@ -432,21 +447,30 @@ public unsafe class PropertyGenerator
 		while (setterMethId == 0 && classId > 0)
 		{
 			mungedSuffix = firstMungedSuffix;
-			setterMethId = TryMungedNames(classId, name, ref mungedSuffix);
+			setterMethId = TryMungedNames(classId, name, prop.Type, ref mungedSuffix);
 			if (setterMethId == 0)
 			{
 				// try with 're' prefix
 				mungedSuffix = firstMungedSuffix;
-				setterMethId = TryMungedNames(classId, otherPrefixName, ref mungedSuffix);
+				setterMethId = TryMungedNames(classId, otherPrefixName, prop.Type, ref mungedSuffix);
 			}
 			classId = *(parents++);
 		}
 		return setterMethId;
 	}
 
-	private static char[] mungedSuffixes = {'#', '$', '?'};
+	private string GetPropertyType(short propTypeId)
+	{
+		Smoke.Type type = this.data.Smoke->types[propTypeId];
+		StringBuilder typeBuilder = new StringBuilder(ByteArrayManager.GetString(type.name));
+		typeBuilder.Replace("const ", string.Empty);
+		typeBuilder.Replace("&", string.Empty);
+		return typeBuilder.ToString();
+	}
 
-	private short TryMungedNames(short classId, string name, ref char mungedSuffix)
+	private static readonly char[] mungedSuffixes = {'#', '$', '?'};
+
+	private short TryMungedNames(short classId, string name, string type, ref char mungedSuffix)
 	{
 		int idx = Array.IndexOf(mungedSuffixes, mungedSuffix);
 		int i = idx;
@@ -454,25 +478,47 @@ public unsafe class PropertyGenerator
 		{
 			// loop through the other elements, try various munged names
 			mungedSuffix = mungedSuffixes[i];
-			short methNameId = data.Smoke->IDMethodName(name + mungedSuffix);
-			short methMapId = data.Smoke->IDMethod(classId, methNameId);
+			short methNameId = this.data.Smoke->IDMethodName(name + mungedSuffix);
+			short methMapId = this.data.Smoke->IDMethod(classId, methNameId);
 			if (methMapId == 0)
 				continue;
-			short methId = data.Smoke->methodMaps[methMapId].method;
+			short methId = this.data.Smoke->methodMaps[methMapId].method;
 			if (methId < 0)
 			{
-				for (short* id = data.Smoke->ambiguousMethodList + (-methId); *id > 0; id++)
+				for (short* id = this.data.Smoke->ambiguousMethodList + (-methId); *id > 0; id++)
 				{
-					///TODO: check parameters
-					return *id;
+					if (this.CompareTypes(type, *id))
+					{
+						return *id;
+					}
 				}
 			}
 			else
 			{
-				///TODO: check parameters
-				return methId;
+				if (this.CompareTypes(type, methId))
+				{
+					return methId;
+				}
 			}
-		} while ((i = (i + 1)%mungedSuffixes.Length) != idx); // automatically moves from the end to the beginning
+		} while ((i = (i + 1) % mungedSuffixes.Length) != idx); // automatically moves from the end to the beginning
 		return 0;
+	}
+
+	private bool CompareTypes(string type, short methId)
+	{
+		string propertyType = this.GetPropertyType(*(this.data.Smoke->argumentList + (this.data.Smoke->methods + methId)->args));
+		if (type == propertyType || (type.Contains("::") && propertyType == "int"))
+		{
+			return true;
+		}
+		if (propertyType.Contains("::") && type == propertyType.Substring(propertyType.IndexOf("::", StringComparison.Ordinal) + 2))
+		{
+			return true;
+		}
+		if (!this.data.TypeDefsPerType.ContainsKey(propertyType))
+		{
+			return false;
+		}
+		return this.data.TypeDefsPerType[propertyType].Any(t => type == t || type == t.Substring(t.IndexOf("::", StringComparison.Ordinal) + 2));
 	}
 }
