@@ -126,7 +126,7 @@ public unsafe class MethodsGenerator
 	public static event MethodHook PreMethodBodyHooks;
 	public static event MethodHook PostMethodDefinitionHooks;
 
-	private static bool MethodOverrides(Smoke* smoke, Smoke.Method* method, out MemberAttributes access, out bool foundInInterface)
+	public static bool MethodOverrides(Smoke* smoke, Smoke.Method* method, out MemberAttributes access, out bool foundInInterface)
 	{
 		access = MemberAttributes.Public;
 		foundInInterface = false;
@@ -438,7 +438,7 @@ public unsafe class MethodsGenerator
 					bool isOverride = MethodOverrides(smoke, method, out access, out foundInInterface);
 
 					// methods that have to be implemented from interfaces can't override anything
-					if (iface == null && (isOverride = MethodOverrides(smoke, method, out access, out foundInInterface)))
+					if (iface == null && isOverride)
 					{
 						cmm.Attributes = access | MemberAttributes.Override;
 					}

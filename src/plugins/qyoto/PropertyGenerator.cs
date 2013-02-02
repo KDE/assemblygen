@@ -155,43 +155,15 @@ public unsafe class PropertyGenerator
 						// The actual get method is defined in a parent class - don't create a property for it.
 						continue;
 					}
-					if ((getter->flags & (uint) Smoke.MethodFlags.mf_virtual) == 0
-					    && (getter->flags & (uint) Smoke.MethodFlags.mf_purevirtual) == 0)
-					{
-						this.PropertyMethods.Add((IntPtr) getter);
-						cmp.GetStatements.Add(new CodeMethodReturnStatement(new CodeCastExpression(cmp.Type,
-						                                                                           new CodeMethodInvokeExpression(
-						                                                                           	SmokeSupport.interceptor_Invoke,
-						                                                                           	new CodePrimitiveExpression(
-						                                                                           		ByteArrayManager.GetString(
-						                                                                           			data.Smoke->methodNames[getter->name
-						                                                                           				])),
-						                                                                           	new CodePrimitiveExpression(
-						                                                                           		data.Smoke->GetMethodSignature(getter)),
-						                                                                           	new CodeTypeOfExpression(cmp.Type),
-						                                                                           	new CodePrimitiveExpression(false)))));
-					}
-					else
-					{
-						if ((getter->flags & (uint) Smoke.MethodFlags.mf_virtual) == (int) Smoke.MethodFlags.mf_virtual)
-						{
-							cmp.Attributes &= ~MemberAttributes.Final;
-						}
-						else
-						{
-							if ((getter->flags & (uint) Smoke.MethodFlags.mf_purevirtual) == (int) Smoke.MethodFlags.mf_purevirtual)
-							{
-								cmp.Attributes &= ~MemberAttributes.Final;
-								cmp.Attributes |= MemberAttributes.Abstract;
-							}
-						}
-						cmp.HasGet = false;
-						if (!cmp.HasSet)
-						{
-							// the get accessor is virtual and there's no set accessor => continue
-							continue;
-						}
-					}
+					this.PropertyMethods.Add((IntPtr) getter);
+					cmp.GetStatements.Add(
+						new CodeMethodReturnStatement(
+							new CodeCastExpression(cmp.Type,
+								new CodeMethodInvokeExpression(SmokeSupport.interceptor_Invoke,
+									new CodePrimitiveExpression(ByteArrayManager.GetString(data.Smoke->methodNames[getter->name])),
+									new CodePrimitiveExpression(data.Smoke->GetMethodSignature(getter)),
+									new CodeTypeOfExpression(cmp.Type), new CodePrimitiveExpression(false)))));
+					this.SetPropertyModifiers(getter, cmp);
 				}
 
 				// ===== set-method =====
@@ -215,18 +187,7 @@ public unsafe class PropertyGenerator
 				else
 				{
 					Smoke.Method* setter = data.Smoke->methods + setterMethId;
-					if ((setter->flags & (uint) Smoke.MethodFlags.mf_virtual) == (int) Smoke.MethodFlags.mf_virtual)
-					{
-						cmp.Attributes &= ~MemberAttributes.Final;
-					}
-					else
-					{
-						if ((setter->flags & (uint) Smoke.MethodFlags.mf_purevirtual) == (int) Smoke.MethodFlags.mf_purevirtual)
-						{
-							cmp.Attributes &= ~MemberAttributes.Final;
-							cmp.Attributes |= MemberAttributes.Abstract;
-						}
-					}
+					this.SetPropertyModifiers(setter, cmp);
 					if (setter->classId != classId)
 					{
 						// defined in parent class, continue
@@ -234,13 +195,6 @@ public unsafe class PropertyGenerator
 						continue;
 					}
 					string setterName = ByteArrayManager.GetString(data.Smoke->methodNames[setter->name]);
-					if (!cmp.HasGet)
-					{
-						// so the 'get' method is virtual - generating a property for only the 'set' method is a bad idea
-						MethodsGenerator mg = new MethodsGenerator(data, translator, type, klass);
-						mg.GenerateMethod(setterMethId, setterName + mungedSuffix);
-						continue;
-					}
 					this.PropertyMethods.Add((IntPtr) setter);
 					cmp.SetStatements.Add(new CodeExpressionStatement(
 					                      	new CodeMethodInvokeExpression(SmokeSupport.interceptor_Invoke,
@@ -254,6 +208,43 @@ public unsafe class PropertyGenerator
 				}
 
 				type.Members.Add(cmp);
+			}
+		}
+	}
+
+	private void SetPropertyModifiers(Smoke.Method* method, CodeTypeMember cmp)
+	{
+		MemberAttributes access = 0;
+		bool foundInInterface;
+		bool? isOverride = null;
+		if ((cmp.Attributes & MemberAttributes.Override) == MemberAttributes.Override)
+		{
+			isOverride = MethodsGenerator.MethodOverrides(this.data.Smoke, method, out access, out foundInInterface);
+			if (!isOverride.Value)
+			{
+				cmp.Attributes &= ~MemberAttributes.Override;
+			}
+		}
+		if ((method->flags & (uint) Smoke.MethodFlags.mf_virtual) == (int) Smoke.MethodFlags.mf_virtual)
+		{
+			if (!isOverride.HasValue)
+			{
+				isOverride = MethodsGenerator.MethodOverrides(this.data.Smoke, method, out access, out foundInInterface);
+			}
+			if (isOverride.Value)
+			{
+				cmp.Attributes = access | MemberAttributes.Override;
+			}
+			else
+			{
+				cmp.Attributes &= ~MemberAttributes.Final;
+			}
+		}
+		else
+		{
+			if ((method->flags & (uint) Smoke.MethodFlags.mf_purevirtual) == (int) Smoke.MethodFlags.mf_purevirtual)
+			{
+				cmp.Attributes |= MemberAttributes.Abstract;
 			}
 		}
 	}
