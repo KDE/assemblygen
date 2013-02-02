@@ -122,7 +122,7 @@ public unsafe class Documentation
 			{
 				Match match = Regex.Match(docs[i],
 										  propertyName + " : (const )?" + propertyType.Replace("*", @"\s*\*") +
-										  @"\n(?<docs>This.*?)\nAccess functions:",
+										  @"\n(?<docs>.*?)\nAccess functions:",
 										  RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 				if (match.Success)
 				{
