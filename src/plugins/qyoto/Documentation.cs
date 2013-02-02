@@ -121,7 +121,7 @@ public unsafe class Documentation
 			for (int i = 0; i < docs.Count; i++)
 			{
 				Match match = Regex.Match(docs[i],
-										  propertyName + " : (const )?" + propertyType +
+										  propertyName + " : (const )?" + propertyType.Replace("*", @"\s*\*") +
 										  @"\n(?<docs>This.*?)\nAccess functions:",
 										  RegexOptions.Singleline | RegexOptions.ExplicitCapture);
 				if (match.Success)

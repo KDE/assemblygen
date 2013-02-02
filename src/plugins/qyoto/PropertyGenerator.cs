@@ -75,16 +75,11 @@ public unsafe class PropertyGenerator
 			if (klass->external)
 				continue;
 
-			List<Property> props = new List<Property>();
-			if (!GetProperties(data.Smoke, classId,
-				               (name, typeName, writable, isEnum) =>
-				               props.Add(new Property(name, typeName, writable, isEnum))))
-			{
-				continue;
-			}
+			string className = ByteArrayManager.GetString(klass->className);
+			IEnumerable<Property> props = this.GetProperties(classId, className);
+			List<GeneratorData.InternalMemberInfo> members = data.GetAccessibleMembers(data.Smoke->classes + classId);
 
 			CodeTypeDeclaration type = data.SmokeTypeMap[(IntPtr) klass];
-			string className = ByteArrayManager.GetString(klass->className);
 
 			foreach (Property prop in props)
 			{
@@ -122,34 +117,7 @@ public unsafe class PropertyGenerator
 				}
 
 				this.documentation.DocumentProperty(type, prop.Name, prop.Type, cmp);
-				cmp.Name = prop.Name;
-				// capitalize the first letter
-				StringBuilder builder = new StringBuilder(cmp.Name);
-				builder[0] = char.ToUpper(builder[0]);
-				string capitalized = builder.ToString();
-
-				// If the new name clashes with a name of a type declaration, keep the lower-case name (or even make the name lower-case).
-				var typesWithSameName = from member in data.GetAccessibleMembers(data.Smoke->classes + classId)
-				                        where (member.Type == MemberTypes.NestedType
-				                               || member.Type == MemberTypes.Method)
-				                              && member.Name == capitalized
-				                        select member;
-				if (typesWithSameName.Any())
-				{
-					Debug.Print(
-						"  |--Conflicting names: property/(type or method): {0} in class {1} - keeping original property name",
-						capitalized, className);
-
-					if (capitalized == cmp.Name)
-					{
-						builder[0] = char.ToLower(builder[0]);
-						cmp.Name = builder.ToString(); // lower case the property if necessary
-					}
-				}
-				else
-				{
-					cmp.Name = capitalized;
-				}
+				string capitalized = NameProperty(cmp, prop, type, members, className);
 
 				cmp.HasGet = true;
 				cmp.HasSet = prop.IsWritable;
@@ -289,6 +257,123 @@ public unsafe class PropertyGenerator
 				type.Members.Add(cmp);
 			}
 		}
+	}
+
+	private static string NameProperty(CodeTypeMember cmp, Property prop, CodeTypeDeclaration type,
+	                                   IEnumerable<GeneratorData.InternalMemberInfo> members, string className)
+	{
+		cmp.Name = prop.Name;
+		// capitalize the first letter
+		StringBuilder builder = new StringBuilder(cmp.Name);
+		builder[0] = char.ToUpperInvariant(builder[0]);
+		string capitalized = builder.ToString();
+
+		// If the new name clashes with a name of a type declaration, keep the lower-case name (or even make the name lower-case).
+		CodeMemberProperty existing = type.Members.OfType<CodeMemberProperty>().FirstOrDefault(p => p.Name == capitalized);
+		if (members.Any(m => m.Name == capitalized && (m.Type == MemberTypes.NestedType || m.Type == MemberTypes.Method)) ||
+		    existing != null)
+		{
+			Debug.Print(
+				"  |--Conflicting names: property/(type or method): {0} in class {1} - keeping original property name",
+				capitalized, className);
+
+			if (capitalized == cmp.Name)
+			{
+				builder[0] = char.ToLowerInvariant(builder[0]);
+				cmp.Name = builder.ToString(); // lower case the property if necessary
+			}
+			if (existing != null)
+			{
+				if (existing.Comments.Count == 0)
+				{
+					existing.Comments.AddRange(cmp.Comments);
+				}
+				else
+				{
+					if (cmp.Comments.Count == 0)
+					{
+						cmp.Comments.AddRange(existing.Comments);
+					}
+				}
+			}
+		}
+		else
+		{
+			cmp.Name = capitalized;
+		}
+		return capitalized;
+	}
+
+	private IEnumerable<Property> GetProperties(short classId, string className)
+	{
+		List<Property> props = new List<Property>();
+		if (!GetProperties(this.data.Smoke, classId,
+		                   (name, typeName, writable, isEnum) =>
+		                   props.Add(new Property(name, typeName, writable, isEnum))))
+		{
+			for (short i = 1; i < this.data.Smoke->numMethodMaps; i++)
+			{
+				Smoke.MethodMap* map = this.data.Smoke->methodMaps + i;
+				if (map->classId == classId && map->method != 0)
+				{
+					List<Smoke.Method> methods = new List<Smoke.Method>();
+					if (map->method > 0)
+					{
+						methods.Add(*(this.data.Smoke->methods + map->method));
+					}
+					else
+					{
+						for (short* overload = this.data.Smoke->ambiguousMethodList + (-map->method); *overload > 0; overload++)
+						{
+							methods.Add(*(this.data.Smoke->methods + *overload));
+						}
+					}
+					string originalName = ByteArrayManager.GetString(this.data.Smoke->methodNames[methods[0].name]);
+					foreach (Smoke.Method meth in from meth in methods
+					                              where ((meth.flags & (ushort) Smoke.MethodFlags.mf_property) > 0 &&
+					                                    (meth.flags & (ushort) Smoke.MethodFlags.mf_virtual) == 0 &&
+					                                    (meth.flags & (ushort) Smoke.MethodFlags.mf_purevirtual) == 0) ||
+														// HACK: working around a SMOKE bug: a setter isn't marked as a property (this property is special, one getter and 2 setters)
+														(className == "QSvgGenerator" && originalName == "setViewBox")
+					                              select meth)
+					{
+						Smoke.Type propType;
+						bool writable = false;
+						string name = originalName;
+						string prefix = new string(name.TakeWhile(char.IsLower).ToArray());
+						switch (prefix)
+						{
+							case "set":
+								name = name.Substring(prefix.Length);
+								propType = this.data.Smoke->types[*(this.data.Smoke->argumentList + meth.args)];
+								writable = true;
+								break;
+							case "is":
+								name = name.Substring(prefix.Length);
+								goto default;
+							default:
+								propType = this.data.Smoke->types[meth.ret];
+								break;
+						}
+						name = char.ToLower(name[0]) + name.Substring(1);
+						bool isEnum = propType.flags == ((uint) Smoke.TypeId.t_enum | (uint) Smoke.TypeFlags.tf_stack);
+						Property existing = props.FirstOrDefault(p => p.Name == name);
+						if (existing == null || writable)
+						{
+							if (existing != null && !existing.IsWritable)
+							{
+								props.Remove(existing);
+							}
+							StringBuilder typeBuilder = new StringBuilder(ByteArrayManager.GetString(propType.name));
+							typeBuilder.Replace("const ", string.Empty);
+							typeBuilder.Replace("&", string.Empty);
+							props.Add(new Property(name, typeBuilder.ToString(), writable, isEnum));
+						}
+					}
+				}
+			}
+		}
+		return props;
 	}
 
 	private short FindQPropertyGetAccessorMethodMapId(short classId, Property prop, string capitalized)
