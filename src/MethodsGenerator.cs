@@ -811,6 +811,8 @@ public unsafe class MethodsGenerator
 		invoke.Parameters.Add(new CodePrimitiveExpression(generateInvokeForRefParams));
 		invoke.Parameters.Add(new CodeVariableReferenceExpression("smokeArgs"));
 
+		ProcessEqualityOperators(cmm);
+
 		CodeArrayCreateExpression argsInitializer = new CodeArrayCreateExpression(typeof(object[]));
 
 		// add the parameters
@@ -904,6 +906,33 @@ public unsafe class MethodsGenerator
 			containingType.Members.Add(dispose);
 		}
 		return cmm;
+	}
+
+	private static void ProcessEqualityOperators(CodeMemberMethod cmm)
+	{
+		if (cmm.Name == "operator==" || cmm.Name == "operator!=")
+		{
+			CodeMethodInvokeExpression methodInvokeExpression =
+				new CodeMethodInvokeExpression(null, "ReferenceEquals",
+				                               new CodeArgumentReferenceExpression(cmm.Parameters[0].Name),
+				                               new CodeArgumentReferenceExpression(cmm.Parameters[1].Name));
+			CodeConditionStatement conditionStatement =
+				new CodeConditionStatement(
+					new CodeBinaryOperatorExpression(
+						new CodeMethodInvokeExpression(null, "ReferenceEquals",
+						                               new CodeArgumentReferenceExpression(cmm.Parameters[0].Name),
+						                               new CodePrimitiveExpression(null)),
+						CodeBinaryOperatorType.BooleanOr,
+						new CodeMethodInvokeExpression(null, "ReferenceEquals",
+						                               new CodeArgumentReferenceExpression(cmm.Parameters[1].Name),
+						                               new CodePrimitiveExpression(null))),
+					new CodeMethodReturnStatement(
+						cmm.Name == "operator=="
+							? (CodeExpression) methodInvokeExpression
+							: new CodeBinaryOperatorExpression(
+								  methodInvokeExpression, CodeBinaryOperatorType.ValueEquality, new CodePrimitiveExpression(false))));
+			cmm.Statements.Add(conditionStatement);
+		}
 	}
 
 	private string[] GetMethodArgs(Smoke* smoke, Smoke.Method* method)
