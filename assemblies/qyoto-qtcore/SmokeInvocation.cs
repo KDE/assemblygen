@@ -316,13 +316,6 @@ namespace QtCore {
 									args.Length / 2 );
 			}
 #endif
-
-			if (signature.StartsWith("operator==")) {
-				if (args[1] == null && args[3] == null)
-					return true;
-				else if (args[1] == null || args[3] == null)
-					return false;
-			}
 			ModuleIndex methodId;
 			methodId.smoke = IntPtr.Zero;
 			methodId.index = -1;
