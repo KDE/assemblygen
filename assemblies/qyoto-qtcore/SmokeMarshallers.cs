@@ -359,7 +359,6 @@ namespace QtCore {
 		
 		public static void SetSmokeObject(IntPtr instancePtr, IntPtr smokeObjectPtr) {
 			Object instance = ((GCHandle) instancePtr).Target;
-// 			Debug.Assert(instance != null);
             ((ISmokeObject) instance).SmokeObject = smokeObjectPtr;
 		}
 		
@@ -379,26 +378,24 @@ namespace QtCore {
 #if DEBUG
 		    return (IntPtr) DebugGCHandle.Alloc(variant);
 #else
-				return (IntPtr) GCHandle.Alloc(variant);
+			return (IntPtr) GCHandle.Alloc(variant);
 #endif
 		}
 
-	    public static void SetProperty(IntPtr obj, string propertyName, IntPtr variant) {
-			object o = ((GCHandle) obj).Target;
-			Type t = o.GetType();
-			object v = ((GCHandle) variant).Target;
-			PropertyInfo pi = t.GetProperty(propertyName, BindingFlags.Public | BindingFlags.NonPublic |
-									BindingFlags.Instance | BindingFlags.Static);
-									
-			MethodInfo value = typeof(QVariant).GetMethod("Value", BindingFlags.Public | BindingFlags.Instance);
-			if (value == null) throw new Exception("Couldn't find QVariant.Value<T> method");
-			value = value.MakeGenericMethod( new Type[]{ pi.PropertyType } );
+	    public static void SetProperty(IntPtr obj, string propertyName, IntPtr variant)
+	    {
+		    object o = ((GCHandle) obj).Target;
+		    Type t = o.GetType();
+		    object v = ((GCHandle) variant).Target;
+		    PropertyInfo pi = t.GetProperty(propertyName, BindingFlags.Public | BindingFlags.NonPublic |
+		                                                  BindingFlags.Instance | BindingFlags.Static);
 
-			if (pi != null) {
-				object ret = value.Invoke(v, null);
-				pi.SetValue(o, ret, null);
-			}
-		}
+		    MethodInfo value = typeof(QVariant).GetMethod("Value", BindingFlags.Public | BindingFlags.Instance);
+		    if (value == null) throw new Exception("Couldn't find QVariant.Value<T> method");
+		    value = value.MakeGenericMethod(new Type[] { pi.PropertyType });
+		    object ret = value.Invoke(v, null);
+		    pi.SetValue(o, ret, null);
+	    }
 
 		// The key is an IntPtr corresponding to the address of the C++ instance,
 		// and the value is the C# instance. This is used to prevent garbage
@@ -407,11 +404,11 @@ namespace QtCore {
 		// delete the child when it is deleted. This Dictionary will prevent the
 		// child from being GCd even if there are no references to it in the Qyoto
 		// application code.
-		static private Dictionary<IntPtr, object> globalReferenceMap = new Dictionary<IntPtr, object>();
+		static private readonly Dictionary<IntPtr, object> globalReferenceMap = new Dictionary<IntPtr, object>();
 
 		// The key is an IntPtr corresponding to the address of the C++ instance,
 		// and the value is a WeakReference to the C# instance.
-		static private Dictionary<IntPtr, WeakReference> pointerMap = new Dictionary<IntPtr, WeakReference>();
+		static private readonly Dictionary<IntPtr, WeakReference> pointerMap = new Dictionary<IntPtr, WeakReference>();
 
 		public static void AddGlobalRef(IntPtr instancePtr, IntPtr ptr) {
 			Object instance = ((GCHandle) instancePtr).Target;
@@ -650,7 +647,7 @@ namespace QtCore {
 			if (data == null) {
 				if (className.Contains(".")) {
 					StringBuilder sb = new StringBuilder(className);
-					sb[className.LastIndexOf(".")] = '+';
+					sb[className.LastIndexOf(".", StringComparison.Ordinal)] = '+';
 					return CreateInstance(sb.ToString(), smokeObjectPtr);
 				}
 				Console.Error.WriteLine("CreateInstance() ** Missing class ** {0}", className);
@@ -921,103 +918,182 @@ namespace QtCore {
 			return (IntPtr) GCHandle.Alloc(pair);
 		}
 
-		public static unsafe TypeId UnboxToStackItem(object o, StackItem *item) {
-			if (o == null) {
+		public static unsafe TypeId UnboxToStackItem(object o, StackItem* item)
+		{
+			if (o == null)
+			{
 				item->s_class = IntPtr.Zero;
 				return TypeId.t_class;
 			}
-			Type t = o.GetType();
-
-			if (t.IsEnum) {
-				if (SizeOfNativeLong <= sizeof(long)) {
-					int value = Enum.GetUnderlyingType(t) == typeof(long) ? (int) (long) o : (int) o;
+			if (o is Enum)
+			{
+				if (SizeOfNativeLong <= sizeof(long))
+				{
+					int value = Enum.GetUnderlyingType(o.GetType()) == typeof(long) ? (int) (long) o : (int) o;
 					item->s_int = value;
 					return TypeId.t_int;
-				} else {
-					long value = Enum.GetUnderlyingType(t) == typeof(long) ? (long) o : (int) o;
-					item->s_long = value;
-					return TypeId.t_long;
 				}
+				long val = Enum.GetUnderlyingType(o.GetType()) == typeof(long) ? (long) o : (int) o;
+				item->s_long = val;
+				return TypeId.t_long;
 			}
-		    if (t == typeof(int)) {
-		        item->s_int = (int) o;
-		        return TypeId.t_int;
-		    }
-		    if (t == typeof(bool)) {
-		        item->s_bool = (bool) o;
-		        return TypeId.t_bool;
-		    }
-		    if (t == typeof(short)) {
-		        item->s_short = (short) o;
-		        return TypeId.t_short;
-		    }
-		    if (t == typeof(float)) {
-		        item->s_float = (float) o;
-		        return TypeId.t_float;
-		    }
-		    if (t == typeof(double)) {
-		        item->s_double = (double) o;
-		        return TypeId.t_double;
-		    }
-		    if (t == typeof(NativeLong)) {
-		        if (SizeOfNativeLong <= sizeof(long)) {
-		            item->s_int = (int) (NativeLong) o;
-		            return TypeId.t_int;
-		        }
-		        item->s_long = (NativeLong) o;
-		        return TypeId.t_long;
-		    }
-		    if (t == typeof(ushort)) {
-		        item->s_ushort = (ushort) o;
-		        return TypeId.t_ushort;
-		    }
-		    if (t == typeof(uint)) {
-		        item->s_uint = (uint) o;
-		        return TypeId.t_uint;
-		    }
-		    if (t == typeof(NativeULong)) {
-		        if (SizeOfNativeLong <= sizeof(long)) {
-		            item->s_uint = (uint) (NativeULong) o;
-		            return TypeId.t_uint;
-		        }
-		        item->s_ulong = (NativeULong) o;
-		        return TypeId.t_ulong;
-		    }
-		    if (t == typeof(long)) {
-		        item->s_long = (long) o;
-		        return TypeId.t_long;
-		    }
-		    if (t == typeof(ulong)) {
-		        item->s_ulong = (ulong) o;
-		        return TypeId.t_ulong;
-		    }
-		    if (t == typeof(char)) {
-		        item->s_char = (char) o;
-		        return TypeId.t_uchar;
-		    }
-		    if (t == typeof(byte)) {
-		        item->s_uchar = (byte) o;
-		        return TypeId.t_uchar;
-		    }
-		    if (t == typeof(char)) {
-		        item->s_char = (char) (char) o;
-		        return TypeId.t_char;
-		    }
+			if (o is int)
+			{
+				item->s_int = (int) o;
+				return TypeId.t_int;
+			}
+			if (o is bool)
+			{
+				item->s_bool = (bool) o;
+				return TypeId.t_bool;
+			}
+			if (o is short)
+			{
+				item->s_short = (short) o;
+				return TypeId.t_short;
+			}
+			if (o is float)
+			{
+				item->s_float = (float) o;
+				return TypeId.t_float;
+			}
+			if (o is double)
+			{
+				item->s_double = (double) o;
+				return TypeId.t_double;
+			}
+			if (o is NativeLong)
+			{
+				if (SizeOfNativeLong <= sizeof (long))
+				{
+					item->s_int = (int) (NativeLong) o;
+					return TypeId.t_int;
+				}
+				item->s_long = (NativeLong) o;
+				return TypeId.t_long;
+			}
+			if (o is ushort)
+			{
+				item->s_ushort = (ushort) o;
+				return TypeId.t_ushort;
+			}
+			if (o is uint)
+			{
+				item->s_uint = (uint) o;
+				return TypeId.t_uint;
+			}
+			if (o is NativeULong)
+			{
+				if (SizeOfNativeLong <= sizeof (long))
+				{
+					item->s_uint = (uint) (NativeULong) o;
+					return TypeId.t_uint;
+				}
+				item->s_ulong = (NativeULong) o;
+				return TypeId.t_ulong;
+			}
+			if (o is long)
+			{
+				item->s_long = (long) o;
+				return TypeId.t_long;
+			}
+			if (o is ulong)
+			{
+				item->s_ulong = (ulong) o;
+				return TypeId.t_ulong;
+			}
+			if (o is char)
+			{
+				item->s_char = (char) o;
+				return TypeId.t_uchar;
+			}
+			if (o is byte)
+			{
+				item->s_uchar = (byte) o;
+				return TypeId.t_uchar;
+			}
 			string text = o as string;
-			if (text != null) {
+			if (text != null)
+			{
 				item->s_class = Marshal.StringToHGlobalUni(text);
 				return TypeId.t_string;
 			}
-			if (o is Delegate) {
-				item->s_class = Marshal.GetFunctionPointerForDelegate((Delegate) o);
-			} else {
-#if DEBUG
-				item->s_class = (IntPtr) DebugGCHandle.Alloc(o);
-#else
-				item->s_class = (IntPtr) GCHandle.Alloc(o);
-#endif
+			Delegate @delegate = o as Delegate;
+			if (@delegate != null)
+			{
+				item->s_class = Marshal.GetFunctionPointerForDelegate(@delegate);
+				return TypeId.t_class;
 			}
-		    return t == typeof(string) ? TypeId.t_string : TypeId.t_class;
+#if DEBUG
+			item->s_class = (IntPtr) DebugGCHandle.Alloc(o);
+#else
+			item->s_class = (IntPtr) GCHandle.Alloc(o);
+#endif
+			if (o is QBitArray)
+			{
+				return TypeId.t_bitArray;
+			}
+			if (o is QByteArray)
+			{
+				return TypeId.t_byteArray;
+			}
+			if (o is QDate)
+			{
+				return TypeId.t_date;
+			}
+			if (o is IList<QVariant>)
+			{
+				return TypeId.t_list;
+			}
+			if (o is QLocale)
+			{
+				return TypeId.t_locale;
+			}
+			if (o is IDictionary<string, QVariant>)
+			{
+				return TypeId.t_map;
+			}
+			if (o is QPoint)
+			{
+				return TypeId.t_point;
+			}
+			if (o is QPointF)
+			{
+				return TypeId.t_pointF;
+			}
+			if (o is QRect)
+			{
+				return TypeId.t_rect;
+			}
+			if (o is QRectF)
+			{
+				return TypeId.t_rectF;
+			}
+			if (o is QRegExp)
+			{
+				return TypeId.t_regExp;
+			}
+			if (o is QSize)
+			{
+				return TypeId.t_size;
+			}
+			if (o is QSizeF)
+			{
+				return TypeId.t_sizeF;
+			}
+			if (o is IList<string>)
+			{
+				return TypeId.t_stringList;
+			}
+			if (o is QTime)
+			{
+				return TypeId.t_time;
+			}
+			if (o is QUrl)
+			{
+				return TypeId.t_url;
+			}
+			return TypeId.t_class;
 		}
 
 		public static unsafe TypeId UnboxToStackItem(IntPtr obj, IntPtr st) {
@@ -1157,7 +1233,7 @@ namespace QtCore {
 				case TypeId.t_bool:
 					return item->s_bool;
 				case TypeId.t_char:
-					return (char) item->s_char;
+					return item->s_char;
 				case TypeId.t_uchar:
 					return item->s_uchar;
 				case TypeId.t_short:

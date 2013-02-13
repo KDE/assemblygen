@@ -242,7 +242,7 @@ SizeOfLong()
 */
 
 Q_DECL_EXPORT void
-CallSmokeMethod(Smoke * smoke, int methodId, void * obj, Smoke::StackItem * sp, int items, Smoke::TypeId * typeIDs);
+CallSmokeMethod(Smoke * smoke, int methodId, void * obj, Smoke::StackItem * sp, int items, int * typeIDs);
 
 typedef QHash<Smoke::ModuleIndex, Smoke::ModuleIndex> qHashCacheType;
 Q_GLOBAL_STATIC(qHashCacheType, qHashFunctionCache);
@@ -272,7 +272,7 @@ QyotoHash(void * obj)
 		Smoke::StackItem stack[2];
 		stack[1].s_class = obj;
 		Smoke::TypeId typeIDs[1] = { Smoke::t_class };
-		CallSmokeMethod(hashIndex.smoke, hashIndex.index, 0, stack, 2, typeIDs);
+		CallSmokeMethod(hashIndex.smoke, hashIndex.index, 0, stack, 2, (int*) typeIDs);
 		return (int) stack[0].s_uint;
 	}
 
@@ -287,7 +287,7 @@ QyotoHash(void * obj)
 }
 
 Q_DECL_EXPORT void
-CallSmokeMethod(Smoke * smoke, int methodId, void * obj, Smoke::StackItem * sp, int items, Smoke::TypeId * typeIDs)
+CallSmokeMethod(Smoke * smoke, int methodId, void * obj, Smoke::StackItem * sp, int items, int * typeIDs)
 {
 	Smoke::Method meth = smoke->methods[methodId];
 	const char *methname = smoke->methodNames[meth.name];
@@ -314,7 +314,7 @@ CallSmokeMethod(Smoke * smoke, int methodId, void * obj, Smoke::StackItem * sp, 
 		items = 0;
 	}
 
-	Qyoto::MethodCall c(smoke, methodId, obj, sp, items, typeIDs);
+	Qyoto::MethodCall c(smoke, methodId, obj, sp, items, (Smoke::TypeId*) typeIDs);
 	c.next();
 
 #ifdef DEBUG

@@ -436,6 +436,50 @@ StringArrayToQStringList(int length, char ** strArray)
 
 }
 
+void marshalObject(Marshall *m, const SmokeType& type)
+{
+	if(m->item().s_voidp == 0) {
+		m->var().s_voidp = 0;
+		return;
+	}
+
+	void *p = m->item().s_voidp;
+	void * obj = (*GetInstance)(p, true);
+	if(obj != 0) {
+		m->var().s_voidp = obj;
+		return;
+	}
+
+	smokeqyoto_object  * o = alloc_smokeqyoto_object(false, type.smoke(), type.classId(), p);
+	QByteArray className(qyoto_resolve_classname(o));
+	const char * classname = className.append(", qyoto-").append(o->smoke->moduleName()).data();
+
+	if((type.isConst() && type.isRef()) || (type.isStack() && m->cleanup())) {
+		p = construct_copy( o );
+		if (p != 0) {
+			o->ptr = p;
+			o->allocated = true;
+		}
+	}
+
+	obj = (*CreateInstance)(classname, o);
+	if (do_debug & qtdb_calls) {
+		printf("allocating %s %p -> %p\n", classname, o->ptr, (void*)obj);
+	}
+
+	if(type.isStack()) {
+		o->allocated = true;
+	}
+	// Keep a mapping of the pointer so that it is only wrapped once
+	if (m->shouldMapPointer()) {
+		if (o->smoke->isDerivedFrom(type.name(), "QObject")) {
+			QObject::connect((QObject*) p, SIGNAL(destroyed()), &objectUnmapper, SLOT(objectDestroyed()));
+		}
+		mapPointer(obj, o, o->classId, 0);
+	}
+	m->var().s_class = obj;
+}
+
 void
 marshall_basetype(Marshall *m)
 {
@@ -634,47 +678,8 @@ marshall_basetype(Marshall *m)
 	break;
 	case Marshall::ToObject:
 	{
-		if(m->item().s_voidp == 0) {
-			m->var().s_voidp = 0;
-		    break;
-		}
-
-		void *p = m->item().s_voidp;
-		void * obj = (*GetInstance)(p, true);
-		if(obj != 0) {
-			m->var().s_voidp = obj;
-		    break;
-		}
-
-		smokeqyoto_object  * o = alloc_smokeqyoto_object(false, m->smoke(), m->type().classId(), p);
-		QByteArray className(qyoto_resolve_classname(o));
-		const char * classname = className.append(", qyoto-").append(o->smoke->moduleName()).data();
-
-		if((m->type().isConst() && m->type().isRef()) || (m->type().isStack() && m->cleanup())) {
-			p = construct_copy( o );
-			if (p != 0) {
-				o->ptr = p;
-				o->allocated = true;
-		    }
-		}
-
-		obj = (*CreateInstance)(classname, o);
-		if (do_debug & qtdb_calls) {
-			printf("allocating %s %p -> %p\n", classname, o->ptr, (void*)obj);
-		}
-
-		if(m->type().isStack()) {
-		    o->allocated = true;
-		}
-		// Keep a mapping of the pointer so that it is only wrapped once
-        if (m->shouldMapPointer()) {
-            if (o->smoke->isDerivedFrom(o->smoke->className(o->classId), "QObject")) {
-                QObject::connect((QObject*) p, SIGNAL(destroyed()), &objectUnmapper, SLOT(objectDestroyed()));
-            }
-            mapPointer(obj, o, o->classId, 0);
-		}
-		
-		m->var().s_class = obj;
+		marshalObject(m, m->type());
+		break;
 	}
 	break;
 	default:
@@ -1079,11 +1084,18 @@ static void marshall_function_pointer(Marshall *m) {
     }
 }
 
+void marshalQVariantValue(Marshall *m, void* value, const char* type)
+{
+	m->item().s_voidp = value;
+	marshalObject(m, SmokeType(m->smoke(),m->smoke()->idType(type)));
+	m->setTypeID(Smoke::t_voidp);
+}
+
 static void marshall_QVariant(Marshall *m) {
 	QVariant* variant;
     switch (m->action()) {
         case Marshall::FromObject:
-			switch (m->typeID()) {
+			switch ((int) m->typeID()) {
 				case Smoke::t_bool:
                     variant = new QVariant(m->var().s_bool);
                     break;
@@ -1119,14 +1131,116 @@ static void marshall_QVariant(Marshall *m) {
                     break;
                 case Smoke::t_ushort:
                     variant = new QVariant(m->var().s_ushort);
-					break;
-				case 15: // string, added to TypeId in Qyoto only
-				{
-					QString* string = (QString*) StringToQString((ushort*) m->var().s_voidp);
-					variant = new QVariant(*string);
-					delete string;
-					break;
-				}
+                    break;
+                case 15:
+                {
+                    QBitArray* value = (QBitArray*) ((smokeqyoto_object*) (*GetSmokeObject)(m->var().s_voidp))->ptr;
+                    variant = new QVariant(*value);
+                    break;
+                }
+                case 16:
+                {
+                    QByteArray* value = (QByteArray*) ((smokeqyoto_object*) (*GetSmokeObject)(m->var().s_voidp))->ptr;
+                    variant = new QVariant(*value);
+                    break;
+                }
+                case 17:
+                {
+                    QDate* value = (QDate*) ((smokeqyoto_object*) (*GetSmokeObject)(m->var().s_voidp))->ptr;
+                    variant = new QVariant(*value);
+                    break;
+                }
+                case 18:
+                {
+                    QDateTime* value = (QDateTime*) ((smokeqyoto_object*) (*GetSmokeObject)(m->var().s_voidp))->ptr;
+                    variant = new QVariant(*value);
+                    break;
+                }
+                case 19:
+                {
+                    QVariantList* value = (QVariantList*) ((smokeqyoto_object*) (*GetSmokeObject)(m->var().s_voidp))->ptr;
+                    variant = new QVariant(*value);
+                    break;
+                }
+                case 20:
+                {
+                    QLocale* value = (QLocale*) ((smokeqyoto_object*) (*GetSmokeObject)(m->var().s_voidp))->ptr;
+                    variant = new QVariant(*value);
+                    break;
+                }
+                case 21:
+                {
+                    QVariantMap* value = (QVariantMap*) ((smokeqyoto_object*) (*GetSmokeObject)(m->var().s_voidp))->ptr;
+                    variant = new QVariant(*value);
+                    break;
+                }
+                case 22:
+                {
+                    QPoint* value = (QPoint*) ((smokeqyoto_object*) (*GetSmokeObject)(m->var().s_voidp))->ptr;
+                    variant = new QVariant(*value);
+                    break;
+                }
+                case 23:
+                {
+                    QPointF* value = (QPointF*) ((smokeqyoto_object*) (*GetSmokeObject)(m->var().s_voidp))->ptr;
+                    variant = new QVariant(*value);
+                    break;
+                }
+                case 24:
+                {
+                    QRect* value = (QRect*) ((smokeqyoto_object*) (*GetSmokeObject)(m->var().s_voidp))->ptr;
+                    variant = new QVariant(*value);
+                    break;
+                }
+                case 25:
+                {
+                    QRectF* value = (QRectF*) ((smokeqyoto_object*) (*GetSmokeObject)(m->var().s_voidp))->ptr;
+                    variant = new QVariant(*value);
+                    break;
+                }
+                case 26:
+                {
+                    QRegExp* value = (QRegExp*) ((smokeqyoto_object*) (*GetSmokeObject)(m->var().s_voidp))->ptr;
+                    variant = new QVariant(*value);
+                    break;
+                }
+                case 27:
+                {
+                    QSize* value = (QSize*) ((smokeqyoto_object*) (*GetSmokeObject)(m->var().s_voidp))->ptr;
+                    variant = new QVariant(*value);
+                    break;
+                }
+                case 28:
+                {
+                    QSizeF* value = (QSizeF*) ((smokeqyoto_object*) (*GetSmokeObject)(m->var().s_voidp))->ptr;
+                    variant = new QVariant(*value);
+                    break;
+                }
+                case 29:
+                {
+                    QString* string = (QString*) StringToQString((ushort*) m->var().s_voidp);
+                    variant = new QVariant(*string);
+                    delete string;
+                    break;
+                }
+                case 30:
+                {
+                    QStringList* value = (QStringList*) ((smokeqyoto_object*) (*GetSmokeObject)(m->var().s_voidp))->ptr;
+                    variant = new QVariant(*value);
+                    break;
+                }
+                case 31:
+                {
+                    QTime* value = (QTime*) ((smokeqyoto_object*) (*GetSmokeObject)(m->var().s_voidp))->ptr;
+                    variant = new QVariant(*value);
+                    break;
+                }
+                case 32:
+                {
+                    QUrl* value = (QUrl*) ((smokeqyoto_object*) (*GetSmokeObject)(m->var().s_voidp))->ptr;
+                    variant = new QVariant(*value);
+                    break;
+                }
 				default:
 					if (m->var().s_voidp == 0) {
 						variant = new QVariant();
@@ -1176,24 +1290,106 @@ static void marshall_QVariant(Marshall *m) {
 					m->var().s_float = variant->value<float>();
 					m->setTypeID(Smoke::t_float);
 					break;
-				case QVariant::String:
-				{
-					QString* s = new QString(variant->value<QString>());
-					m->var().s_voidp = (void*) StringFromQString((void*) s);
-					delete s;
-					m->setTypeID((Smoke::TypeId) 15);
-					break;
-				}
 				case QVariant::Invalid:
 					m->var().s_voidp = 0;
 					m->setTypeID(Smoke::t_voidp);
 					break;
+				case QVariant::BitArray:
+				{
+					marshalQVariantValue(m, new QBitArray(variant->value<QBitArray>()), "QBitArray");
+					break;
+				}
+				case QVariant::ByteArray:
+				{
+					marshalQVariantValue(m, new QByteArray(variant->value<QByteArray>()), "QByteArray");
+					break;
+				}
+				case QVariant::Date:
+				{
+					marshalQVariantValue(m, new QDate(variant->value<QDate>()), "QDate");
+					break;
+				}
+				case QVariant::DateTime:
+				{
+					marshalQVariantValue(m, new QDateTime(variant->value<QDateTime>()), "QDateTime");
+					break;
+				}
+				case QVariant::List:
+				{
+					marshalQVariantValue(m, new QVariantList(variant->value<QVariantList>()), "QVariantList");
+					break;
+				}
+				case QVariant::Locale:
+				{
+					marshalQVariantValue(m, new QLocale(variant->value<QLocale>()), "QLocale");
+					break;
+				}
+				case QVariant::Map:
+				{
+					marshalQVariantValue(m, new QVariantMap(variant->value<QVariantMap>()), "QVariantMap");
+					break;
+				}
+				case QVariant::Point:
+				{
+					marshalQVariantValue(m, new QPoint(variant->value<QPoint>()), "QPoint");
+					break;
+				}
+				case QVariant::PointF:
+				{
+					marshalQVariantValue(m, new QPointF(variant->value<QPointF>()), "QPointF");
+					break;
+				}
+				case QVariant::Rect:
+				{
+					marshalQVariantValue(m, new QRect(variant->value<QRect>()), "QRect");
+					break;
+				}
+				case QVariant::RectF:
+				{
+					marshalQVariantValue(m, new QRectF(variant->value<QRectF>()), "QRectF");
+					break;
+				}
+				case QVariant::RegExp:
+				{
+					marshalQVariantValue(m, new QRegExp(variant->value<QRegExp>()), "QRegExp");
+					break;
+				}
+				case QVariant::Size:
+				{
+					marshalQVariantValue(m, new QSize(variant->value<QSize>()), "QSize");
+					break;
+				}
+				case QVariant::SizeF:
+				{
+					marshalQVariantValue(m, new QSizeF(variant->value<QSizeF>()), "QSizeF");
+					break;
+				}
+				case QVariant::String:
+				{
+					QString* s = new QString(variant->value<QString>());
+					m->item().s_voidp = s;
+					marshall_QString(m);
+					m->setTypeID((Smoke::TypeId) 29);
+					delete s;
+					break;
+				}
+				case QVariant::StringList:
+				{
+					marshalQVariantValue(m, new QStringList(variant->value<QStringList>()), "QStringList");
+					break;
+				}
+				case QVariant::Time:
+				{
+					marshalQVariantValue(m, new QTime(variant->value<QTime>()), "QTime");
+					break;
+				}
+				case QVariant::Url:
+				{
+					marshalQVariantValue(m, new QUrl(variant->value<QUrl>()), "QUrl");
+					break;
+				}
 				default:
-					if (variant->data() == 0) {
-						m->var().s_voidp = 0;
-					} else {
-						m->var().s_voidp = variant->data();
-					}
+					m->var().s_voidp = variant->data();
 					m->setTypeID(Smoke::t_voidp);
 					break;
 			}

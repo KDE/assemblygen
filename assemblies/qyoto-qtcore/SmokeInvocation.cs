@@ -46,10 +46,27 @@ namespace QtCore {
         t_float,
         t_double,
         t_enum,
-        t_class,
-        t_last,      // number of pre-defined types
-        // adding specific types that must be differentiated from System.Object
-        t_string
+		t_class,
+		t_last,      // number of pre-defined types
+		// QVariant types
+		t_bitArray,
+		t_byteArray,
+		t_date,
+		t_dateTime,
+		t_list,
+		t_locale,
+		t_map,
+		t_point,
+		t_pointF,
+		t_rect,
+		t_rectF,
+		t_regExp,
+		t_size,
+		t_sizeF,
+		t_string,
+		t_stringList,
+		t_time,
+		t_url
     }
 
 	[StructLayout(LayoutKind.Explicit)]
@@ -333,20 +350,20 @@ namespace QtCore {
 			}
 
 			StackItem[] stack = new StackItem[(args.Length / 2) + 1];
-			TypeId[] typeIDs = new TypeId[(args.Length / 2) + 1];
+			int[] typeIDs = new int[(args.Length / 2) + 1];
 
 			unsafe {
-				fixed(StackItem * stackPtr = stack) {
-					fixed (TypeId * typeIDsPtr = typeIDs) {
+				fixed(StackItem* stackPtr = stack) {
+					fixed (int* typeIDsPtr = typeIDs)
+					{
 						typeIDs[0] = 0;
 						for (int i = 1, k = 1; i < args.Length; i += 2, k++) {
-							typeIDs[k] = SmokeMarshallers.UnboxToStackItem(args[i], stackPtr + k);
+							typeIDs[k] = (int) SmokeMarshallers.UnboxToStackItem(args[i], stackPtr + k);
 						}
 
 						object returnValue = null;
-
 						if (instance == null) {
-							CallSmokeMethod(methodId.smoke, (int) methodId.index, (IntPtr) 0, (IntPtr) stackPtr, args.Length / 2, (IntPtr) typeIDsPtr);
+							CallSmokeMethod(methodId.smoke, methodId.index, (IntPtr) 0, (IntPtr) stackPtr, args.Length / 2, (IntPtr) typeIDsPtr);
 						} else {
 #if DEBUG
 							GCHandle instanceHandle = DebugGCHandle.Alloc(instance);
@@ -360,16 +377,15 @@ namespace QtCore {
 							instanceHandle.Free();
 #endif
 						}
-					
 						if (returnType != typeof(void)) {
-							returnValue = SmokeMarshallers.BoxFromStackItem(returnType, (int) typeIDs[0], stackPtr);
+							returnValue = SmokeMarshallers.BoxFromStackItem(returnType, typeIDs[0], stackPtr);
 						}
 
 						if (refArgs) {
 							for (int i = 1, k = 1; i < args.Length; i += 2, k++) {
 								Type t = args[i].GetType();
 								if (t.IsPrimitive || t == typeof(NativeLong) || t == typeof(NativeULong)) {
-									args[i] = SmokeMarshallers.BoxFromStackItem(args[i].GetType(), (int) typeIDs[k], stackPtr + k);
+									args[i] = SmokeMarshallers.BoxFromStackItem(t, typeIDs[k], stackPtr + k);
 								}
 							}
 						}
