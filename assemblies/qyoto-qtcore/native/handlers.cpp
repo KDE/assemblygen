@@ -1367,10 +1367,9 @@ static void marshall_QVariant(Marshall *m) {
 				case QVariant::String:
 				{
 					QString* s = new QString(variant->value<QString>());
-					m->item().s_voidp = s;
-					marshall_QString(m);
-					m->setTypeID((Smoke::TypeId) 29);
+					m->var().s_voidp = (void*) StringFromQString((void*) s);
 					delete s;
+					m->setTypeID((Smoke::TypeId) 29);
 					break;
 				}
 				case QVariant::StringList:
