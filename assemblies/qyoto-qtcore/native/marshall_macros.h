@@ -104,6 +104,14 @@ void marshall_ItemList(Marshall *m) {
 #define DEF_LIST_MARSHALLER(ListIdent,ItemList,Item) namespace { char ListIdent##STR[] = #Item; }  \
         Marshall::HandlerFn marshall_##ListIdent = marshall_ItemList<Item,ItemList,ListIdent##STR>;
 
+
+
+// A ValueListItem means that the Item in ItemList uses implicit sharing, i.e. the class inherits
+// QSharedData. So, when marshalling ToObject, we will create a copy of each item in the list and pass
+// the copy back to C# rather than the object itself.
+//
+// See http://doc.qt.digia.com/stable/implicit-sharing.html for more info on implicit sharing.
+
 template <class Item, class ItemList, const char *ItemSTR >
 void marshall_ValueListItem(Marshall *m) {
 	switch(m->action()) {
@@ -119,21 +127,21 @@ void marshall_ValueListItem(Marshall *m) {
 			for (int i = 0; i < list->size(); ++i) {
 				void* obj = list->at(i);
 				smokeqyoto_object * o = (smokeqyoto_object*) (*GetSmokeObject)(obj);
-				
+
 				void* ptr = o->ptr;
 				ptr = o->smoke->cast(
 					ptr,                            // pointer
 					o->classId,                             // from
 					o->smoke->idClass(ItemSTR).index              // to
 				);
-				
+
 				cpplist->append(*(Item*) ptr);
 				(*FreeGCHandle)(obj);
 			}
-			
+
 			m->item().s_voidp = cpplist;
 			m->next();
-			
+
 			delete list;
 			(*FreeGCHandle)(m->var().s_voidp);
 
@@ -142,7 +150,7 @@ void marshall_ValueListItem(Marshall *m) {
 			}
 		}
 		break;
-      
+
 		case Marshall::ToObject:
 		{
 			ItemList *valuelist = (ItemList*)m->item().s_voidp;
@@ -153,7 +161,7 @@ void marshall_ValueListItem(Marshall *m) {
 
 			Smoke::ModuleIndex ix = m->smoke()->findClass(ItemSTR);
 			const char * className = qyoto_modules[ix.smoke].binding->className(ix.index);
-			
+
 			void * al = (*ConstructList)(className);
 
 			for (int i=0; i < valuelist->size() ; ++i) {
@@ -161,8 +169,9 @@ void marshall_ValueListItem(Marshall *m) {
 				void * obj = (*GetInstance)(p, true);
 
 				if (obj == 0) {
-					smokeqyoto_object * o = alloc_smokeqyoto_object(false, ix.smoke, ix.index, p);
-					obj = (*CreateInstance)(qyoto_resolve_classname(o), o);
+				    p = (void *) new Item(*(Item*) p);
+				    smokeqyoto_object * o = alloc_smokeqyoto_object(false, ix.smoke, ix.index, p);
+				    obj = (*CreateInstance)(qyoto_resolve_classname(o), o);
 				}
 
 				(*AddIntPtrToList)(al, obj);
@@ -175,11 +184,10 @@ void marshall_ValueListItem(Marshall *m) {
 			if (m->type().isStack()) {
 				delete valuelist;
 			}
-			
 
 		}
 		break;
-      
+
 		default:
 			m->unsupported();
 		break;
