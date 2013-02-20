@@ -1675,18 +1675,18 @@ void marshall_QListConstCharP(Marshall *m) {
 
 DEF_LIST_MARSHALLER( QObjectList, QList<QObject*>, QObject )
 
-DEF_LIST_MARSHALLER( QByteArrayList, QList<QByteArray*>, QByteArray )
-DEF_LIST_MARSHALLER( QFileInfoList, QList<QFileInfo*>, QFileInfo )
-DEF_LIST_MARSHALLER( QLineFVector, QVector<QLineF*>, QLineF )
-DEF_LIST_MARSHALLER( QLineVector, QVector<QLine*>, QLine )
-DEF_LIST_MARSHALLER( QPointFVector, QVector<QPointF*>, QPointF )
-DEF_LIST_MARSHALLER( QPointVector, QVector<QPoint*>, QPoint )
+DEF_VALUELIST_MARSHALLER( QByteArrayList, QList<QByteArray>, QByteArray )
+DEF_VALUELIST_MARSHALLER( QFileInfoList, QFileInfoList, QFileInfo )
+DEF_VALUELIST_MARSHALLER( QLineFVector, QVector<QLineF>, QLineF )
+DEF_VALUELIST_MARSHALLER( QLineVector, QVector<QLine>, QLine )
+DEF_VALUELIST_MARSHALLER( QPointFVector, QVector<QPointF>, QPointF )
+DEF_VALUELIST_MARSHALLER( QPointVector, QVector<QPoint>, QPoint )
 DEF_LIST_MARSHALLER( QRectFList, QList<QRectF*>, QRectF )
-DEF_LIST_MARSHALLER( QRectFVector, QVector<QRectF*>, QRectF )
-DEF_LIST_MARSHALLER( QRectVector, QVector<QRect*>, QRect )
-DEF_LIST_MARSHALLER( QUrlList, QList<QUrl*>, QUrl )
-DEF_LIST_MARSHALLER( QVariantList, QList<QVariant*>, QVariant )
-DEF_LIST_MARSHALLER( QVariantVector, QVector<QVariant*>, QVariant )
+DEF_VALUELIST_MARSHALLER( QRectFVector, QVector<QRectF>, QRectF )
+DEF_VALUELIST_MARSHALLER( QRectVector, QVector<QRect>, QRect )
+DEF_VALUELIST_MARSHALLER( QUrlList, QList<QUrl>, QUrl )
+DEF_VALUELIST_MARSHALLER( QVariantList, QList<QVariant>, QVariant )
+DEF_VALUELIST_MARSHALLER( QVariantVector, QVector<QVariant>, QVariant )
 
 Q_DECL_EXPORT TypeHandler Qyoto_handlers[] = {
     { "bool*", marshall_boolR },
