@@ -14,7 +14,8 @@ set (ASSEMBLYGEN_ARGS
 )
 if (MONO_EXECUTABLE)
     add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-phonon.dll
-        COMMAND ${MONO_EXECUTABLE} ${ASSEMBLYGEN_ARGS})
+        COMMAND ${MONO_EXECUTABLE} ${ASSEMBLYGEN_ARGS}
+        COMMAND ${SN_EXECUTABLE} -R ${LIBRARY_OUTPUT_PATH}/qyoto-phonon.dll ${KEYFILE})
 else (MONO_EXECUTABLE)
     add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-phonon.dll
         COMMAND ${ASSEMBLYGEN_ARGS})
