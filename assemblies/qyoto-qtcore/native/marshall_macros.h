@@ -170,8 +170,9 @@ void marshall_ValueListItem(Marshall *m) {
 
 				if (obj == 0) {
 				    p = (void *) new Item(*(Item*) p);
-				    smokeqyoto_object * o = alloc_smokeqyoto_object(false, ix.smoke, ix.index, p);
-				    obj = (*CreateInstance)(qyoto_resolve_classname(o), o);
+					smokeqyoto_object * o = alloc_smokeqyoto_object(false, ix.smoke, ix.index, p);
+					QByteArray className(qyoto_resolve_classname(o));
+					obj = (*CreateInstance)(className.append(", qyoto-").append(o->smoke->moduleName()).data(), o);
 				}
 
 				(*AddIntPtrToList)(al, obj);
