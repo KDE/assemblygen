@@ -110,6 +110,11 @@ namespace {
     template <class Value>
         void writeSetter(const QString &indent, const QString &varName,const QString &setter, Value v, QTextStream &str) {
             QString property(setter);
+			if (property == "setContentsMargins") {
+				property.replace("set", "Set");
+				str << indent << varName << "." << property << "(" << v << ", " << v << ", " << v << ", "<< v << ");\n";
+				return;
+			}
             property.replace("set", "");
             str << indent << varName << "." << property << " = " << v << ";\n";
         }
@@ -327,9 +332,12 @@ void WriteInitialization::LayoutDefaultHandler::writeProperties(const QString &i
     int defaultSpacing = marginType == WriteInitialization::Use43UiFile ? -1 : 6;
     writeProperty(Spacing, indent, varName, properties, QLatin1String("spacing"), QLatin1String("setSpacing"),
                   defaultSpacing, false, str);
+
+	str << indent;
+
     // We use 9 as TopLevelMargin, since Designer seem to always use 9.
     static const int layoutmargins[4] = {-1, 9, 9, 0};
-    writeProperty(Margin,  indent, varName, properties, QLatin1String("margin"),  QLatin1String("setMargin"),
+    writeProperty(Margin,  indent, varName, properties, QLatin1String("margin"),  QLatin1String("setContentsMargins"),
                   layoutmargins[marginType], suppressMarginDefault, str);
 }
 
@@ -1098,7 +1106,9 @@ void WriteInitialization::writeProperties(const QString &varName,
                     csname = "DayOfWeek";
                 } else if (csname == "VerticalScrollBarPolicy" || csname == "HorizontalScrollBarPolicy") {
                     csname = "ScrollBarPolicy";
-                }
+                } else if (csname == "DefaultDropAction") {
+					csname = "DropAction";
+				}
                 propertyValue = parts[0] + QLatin1String(".") + csname + QLatin1String(".") + parts[1];
             }
             if (!p->elementEnum().contains(QLatin1String("::")))
