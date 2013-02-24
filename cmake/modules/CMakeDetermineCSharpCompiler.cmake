@@ -82,5 +82,5 @@ endif (CMAKE_CSharp_COMPILER)
 
 # configure variables set in this file for fast reload later on
 configure_file(${CMAKE_SOURCE_DIR}/cmake/modules/CMakeCSharpCompiler.cmake.in 
-  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeCSharpCompiler.cmake IMMEDIATE @ONLY)
+  ${CMAKE_PLATFORM_INFO_DIR}/CMakeCSharpCompiler.cmake IMMEDIATE @ONLY)
 set(CMAKE_CSharp_COMPILER_ENV_VAR "CSC")
