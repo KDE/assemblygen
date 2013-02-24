@@ -1,4 +1,4 @@
-set(KEYFILE "${CMAKE_CURRENT_SOURCE_DIR}/key.snk")
+set(KEYFILE \\"${CMAKE_CURRENT_SOURCE_DIR}/key.snk\\")
 
 find_package(Qt4 COMPONENTS QtDBus)
 find_package(Smoke COMPONENTS Phonon)
