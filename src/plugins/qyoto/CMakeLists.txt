@@ -21,9 +21,11 @@ if (WIN32)
 endif (WIN32)
 
 csharp_add_library(QyotoGenerator ${QyotoGenerator_SRC} UNSAFE REFERENCES System.Data.dll assemblygen Mono.Data.Sqlite.dll zlib.net.dll)
-add_custom_command(TARGET QyotoGenerator PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/Mono.Data.Sqlite.dll ${LIBRARY_OUTPUT_PATH}/Mono.Data.Sqlite.dll)
-add_custom_command(TARGET QyotoGenerator PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/zlib.net.dll ${LIBRARY_OUTPUT_PATH}/zlib.net.dll)
-add_custom_command(TARGET QyotoGenerator PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/sqlite3.dll ${LIBRARY_OUTPUT_PATH}/sqlite3.dll)
+add_custom_command(TARGET QyotoGenerator PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/Mono.Data.Sqlite.dll ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/Mono.Data.Sqlite.dll)
+add_custom_command(TARGET QyotoGenerator PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/zlib.net.dll ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/zlib.net.dll)
+add_custom_command(TARGET QyotoGenerator PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/sqlite3.dll ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/sqlite3.dll)
+
+add_dependencies(QyotoGenerator qyotogenerator-native)
 
 install(TARGETS qyotogenerator-native DESTINATION lib${LIB_SUFFIX}/assemblygen/plugins)
 install_assembly(NO_GAC QyotoGenerator DESTINATION lib${LIB_SUFFIX}/assemblygen/plugins)

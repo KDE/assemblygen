@@ -17,32 +17,32 @@ set (qyoto_qtgui_SRC
 
 GET_LIBRARY_OUTPUT_DIR(library_target_dir)
 set (ASSEMBLYGEN_ARGS
-	${LIBRARY_OUTPUT_PATH}/assemblygen.exe
+	${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/assemblygen.exe
 	-unsafe -out:qyoto-qtgui.dll -r:qyoto-qtcore.dll -namespace:QtGui
 	-plugins:QyotoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
 	-code-file:qyoto-qtgui.cs -docs:"${DOCUMENTATION_PATH}" \"-keyfile:${KEYFILE}\"
 	${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtgui${CMAKE_SHARED_LIBRARY_SUFFIX}
 	${qyoto_qtgui_SRC}
-	WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
+	WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}
 	DEPENDS ${qyoto_qtgui_SRC}
 )
 if (MONO_EXECUTABLE)
-	add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtgui.dll
+	add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtgui.dll
 		COMMAND ${MONO_EXECUTABLE} ${ASSEMBLYGEN_ARGS}
-		COMMAND ${SN_EXECUTABLE} -R ${LIBRARY_OUTPUT_PATH}/qyoto-qtgui.dll ${KEYFILE})
+		COMMAND ${SN_EXECUTABLE} -R ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtgui.dll ${KEYFILE})
 else (MONO_EXECUTABLE)
-	add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/qyoto-qtgui.dll
+	add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtgui.dll
 		COMMAND ${ASSEMBLYGEN_ARGS})
 endif (MONO_EXECUTABLE)
 
-add_custom_target(qyoto-qtgui ALL DEPENDS ${LIBRARY_OUTPUT_PATH}/qyoto-qtgui.dll)
+add_custom_target(qyoto-qtgui ALL DEPENDS ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtgui.dll)
 add_dependencies(qyoto-qtgui assemblygen QyotoGenerator qyoto-qtcore)
-set_property(TARGET qyoto-qtgui PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/qyoto-qtgui.dll)
+set_property(TARGET qyoto-qtgui PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtgui.dll)
 set_property(TARGET qyoto-qtgui PROPERTY _assembly_type dll)
 
 
 
 install_assembly(qyoto-qtgui DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
-install(FILES ${LIBRARY_OUTPUT_PATH}/qyoto-qtgui.xml DESTINATION share/qyoto)
+install(FILES ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtgui.xml DESTINATION share/qyoto)
 
 add_subdirectory(native)

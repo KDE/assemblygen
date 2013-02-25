@@ -3,19 +3,19 @@ set(kimono_khtml_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/KHTMLWidget.cs
 )
 
-add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/kimono-khtml.dll
-                   COMMAND ${MONO_EXECUTABLE} --debug ${LIBRARY_OUTPUT_PATH}/assemblygen.exe
+add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/kimono-khtml.dll
+                   COMMAND ${MONO_EXECUTABLE} --debug ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/assemblygen.exe
                             -unsafe -out:kimono-khtml.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:kimono-kdecore.dll -r:kimono-kdeui.dll -r:kimono-kparts.dll -r:kimono-kio.dll
                             -namespace:Kimono -import:Qyoto -plugins:QyotoGenerator.dll,KimonoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
                             -code-file:kimono-khtml.cs \"-keyfile:${KEYFILE}\"
                             ${CMAKE_SHARED_LIBRARY_PREFIX}smokekhtml.so
                             ${kimono_khtml_SRC}
-                   WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}
+                   WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}
                    DEPENDS ${kimono_khtml_SRC})
 
-add_custom_target(kimono-khtml ALL DEPENDS ${LIBRARY_OUTPUT_PATH}/kimono-khtml.dll)
+add_custom_target(kimono-khtml ALL DEPENDS ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/kimono-khtml.dll)
 add_dependencies(kimono-khtml assemblygen QyotoGenerator KimonoGenerator qyoto-qtcore qyoto-qtgui kimono-kdecore kimono-kdeui kimono-kparts kimono-kio)
-set_property(TARGET kimono-khtml PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/kimono-khtml.dll)
+set_property(TARGET kimono-khtml PROPERTY _assembly ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/kimono-khtml.dll)
 set_property(TARGET kimono-khtml PROPERTY _assembly_type dll)
 
 GET_LIBRARY_OUTPUT_DIR(library_target_dir)
