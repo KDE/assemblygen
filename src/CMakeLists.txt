@@ -17,10 +17,10 @@ set(assemblygen_SRC
     CodeDomExtensions.cs
     EnumGenerator.cs
     GeneratorData.cs
-	HtmlEncoder.cs
+    HtmlEncoder.cs
     main.cs
     MethodsGenerator.cs
-	ParameterTypeComparer.cs
+    ParameterTypeComparer.cs
     PluginInterfaces.cs
     Smoke.cs
     SmokeMethodEqualityComparer.cs
