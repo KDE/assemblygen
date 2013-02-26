@@ -63,7 +63,7 @@ Possible options:
     -namespace:<name>        Name of the default namespace. Defaults to 'Qyoto'.
     -import:<name>[,n2,...]  Adds additional 'using <name>' statements to each namespace.
     -plugins:P1[,Pn]         Loads additional plugins. Absolute path or relative path to the 'plugins' directory.
-    -dest:d1                 The destination directory.
+    -smokePath:d1            The directory that contains the compiled smoke libraries.
     -verbose                 Be verbose (VERY verbose!).
     -help                    Shows this message.
 
@@ -99,7 +99,7 @@ Any options not listed here are directly passed to the compiler (leading dashes 
 		string smokeLib = null;
 		string defaultNamespace = "Qyoto";
 		string globalClass = "Global";
-		string destination = string.Empty;
+		string smokePath = string.Empty;
 		string docs = string.Empty;
 
 		List<Assembly> plugins = new List<Assembly>();
@@ -156,9 +156,9 @@ Any options not listed here are directly passed to the compiler (leading dashes 
 				defaultNamespace = arg.Substring(11);
 				continue;
 			}
-			if (arg.StartsWith("-dest:"))
+			if (arg.StartsWith("-smokePath:"))
 			{
-				destination = arg.Substring("-dest:".Length);
+				smokePath = arg.Substring("-smokePath:".Length);
 				continue;
 			}
 			if (arg.StartsWith("-import:"))
@@ -233,7 +233,7 @@ Any options not listed here are directly passed to the compiler (leading dashes 
 		                                             where iface == typeof(ICustomTranslator)
 		                                             select (ICustomTranslator) Activator.CreateInstance(type)).ToList();
 
-		GeneratorData data = new GeneratorData(smoke, defaultNamespace, imports, references, destination, docs);
+		GeneratorData data = new GeneratorData(smoke, defaultNamespace, imports, references, smokePath, docs);
 		data.GlobalSpaceClassName = globalClass;
 		Translator translator = new Translator(data, customTranslators);
 

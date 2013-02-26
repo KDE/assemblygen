@@ -6,7 +6,7 @@ GET_LIBRARY_OUTPUT_DIR(library_target_dir)
 set (ASSEMBLYGEN_ARGS
 	${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/assemblygen.exe
 	-unsafe -out:qyoto-qtsql.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -namespace:QtSql
-	-plugins:QyotoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
+	-plugins:QyotoGenerator.dll -smokePath:${SMOKE_INSTALL_PREFIX}
 	-code-file:qyoto-qtsql.cs -docs:"${DOCUMENTATION_PATH}" \"-keyfile:${KEYFILE}\"
 	${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtsql${CMAKE_SHARED_LIBRARY_SUFFIX}
 	${qyoto_qtsql_SRC}

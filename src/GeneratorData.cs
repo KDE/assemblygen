@@ -28,7 +28,7 @@ using System.Collections.Generic;
 
 public unsafe class GeneratorData
 {
-	public string Destination { get; set; }
+	public string SmokePath { get; set; }
 	public string Docs { get; set; }
 
 	public Smoke* Smoke = (Smoke*) IntPtr.Zero;
@@ -66,15 +66,15 @@ public unsafe class GeneratorData
 	public bool Debug;
 
 	public GeneratorData(Smoke* smoke, string defaultNamespace, List<string> imports, List<Assembly> references,
-	                     string destination, string docs)
-		: this(smoke, defaultNamespace, imports, references, new CodeCompileUnit(), destination, docs)
+	                     string smokePath, string docs)
+		: this(smoke, defaultNamespace, imports, references, new CodeCompileUnit(), smokePath, docs)
 	{
 	}
 
 	public GeneratorData(Smoke* smoke, string defaultNamespace, List<string> imports, List<Assembly> references,
-	                     CodeCompileUnit unit, string destination, string docs)
+	                     CodeCompileUnit unit, string smokePath, string docs)
 	{
-		Destination = destination;
+		SmokePath = smokePath;
 		Docs = docs;
 		Smoke = smoke;
 		this.GetArgNames();
@@ -143,6 +143,10 @@ public unsafe class GeneratorData
 				typedefs.Add(key);
 			}
 		}
+		else
+		{
+			Console.Error.WriteLine("Could not find typedefs file: '{0}'", typeDefsFile);
+		}
 	}
 
 	private void GetArgNames()
@@ -154,6 +158,10 @@ public unsafe class GeneratorData
 			{
 				this.ArgumentNames[strings[0]] = strings[1].Split(',');
 			}
+		}
+		else
+		{
+			Console.Error.WriteLine("Could not find args file: '{0}'", argNamesFile);
 		}
 	}
 
@@ -314,20 +322,19 @@ public unsafe class GeneratorData
 
 	public string GetFile(Smoke* smoke, string name)
 	{
-		string dest = this.Destination;
-		if (string.IsNullOrEmpty(dest))
+		string filePath = this.SmokePath;
+		if (string.IsNullOrEmpty(filePath))
 		{
 			if (Environment.OSVersion.Platform == PlatformID.Win32NT)
 			{
-				dest = Path.GetDirectoryName(Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.System)));
+				filePath = Path.GetDirectoryName(Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.System)));
 			}
 			else
 			{
-				dest = Path.DirectorySeparatorChar.ToString(CultureInfo.InvariantCulture);
+				filePath = Path.DirectorySeparatorChar.ToString(CultureInfo.InvariantCulture);
 			}
 		}
-		dest = Path.Combine(dest, "share");
-		dest = Path.Combine(dest, "smoke");
-		return Path.Combine(dest, string.Format("{0}.{1}.txt", ByteArrayManager.GetString(smoke->module_name), name));
+		filePath = Path.Combine(filePath, "share", "smoke");
+		return Path.Combine(filePath, string.Format("{0}.{1}.txt", ByteArrayManager.GetString(smoke->module_name), name));
 	}
 }

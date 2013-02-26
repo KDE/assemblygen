@@ -33,7 +33,7 @@ GET_LIBRARY_OUTPUT_DIR(library_target_dir)
 set (ASSEMBLYGEN_ARGS
 	${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/assemblygen.exe
 	-unsafe -out:qyoto-qtcore.dll -global-class:Qt -namespace:QtCore
-	-plugins:QyotoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
+	-plugins:QyotoGenerator.dll -smokePath:${SMOKE_INSTALL_PREFIX}
 	-code-file:qyoto-qtcore.cs -docs:"${DOCUMENTATION_PATH}" 
 	\"-keyfile:${KEYFILE}\"
 	${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtcore${CMAKE_SHARED_LIBRARY_SUFFIX}

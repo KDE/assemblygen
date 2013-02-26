@@ -7,7 +7,7 @@ set (ASSEMBLYGEN_ARGS
 	${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/assemblygen.exe
 	 -namespace:QtWebKit
 	-unsafe -out:qyoto-qtwebkit.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:qyoto-qtnetwork.dll -r:qyoto-qtscript.dll
-	-plugins:QyotoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
+	-plugins:QyotoGenerator.dll -smokePath:${SMOKE_INSTALL_PREFIX}
 	-code-file:qyoto-qtwebkit.cs -docs:"${DOCUMENTATION_PATH}" \"-keyfile:${KEYFILE}\"
 	${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtwebkit${CMAKE_SHARED_LIBRARY_SUFFIX}
 	${qyoto_qtwebkit_SRC}

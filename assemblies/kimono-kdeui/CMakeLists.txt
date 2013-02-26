@@ -7,7 +7,7 @@ set(kimono_kdeui_SRC
 add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/kimono-kdeui.dll
                    COMMAND ${MONO_EXECUTABLE} ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/assemblygen.exe
                             -unsafe -out:kimono-kdeui.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:qyoto-qtsvg.dll -r:qyoto-qtxml.dll -r:kimono-kdecore.dll
-                            -namespace:Kimono -import:Qyoto -plugins:QyotoGenerator.dll,KimonoGenerator.dll -dest:${CMAKE_INSTALL_PREFIX}
+                            -namespace:Kimono -import:Qyoto -plugins:QyotoGenerator.dll,KimonoGenerator.dll -smokePath:${SMOKE_INSTALL_PREFIX}
                             -code-file:kimono-kdeui.cs \"-keyfile:${KEYFILE}\"
                             ${CMAKE_SHARED_LIBRARY_PREFIX}smokekdeui.so
                             ${kimono_kdeui_SRC}
