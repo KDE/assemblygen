@@ -6,8 +6,6 @@ if (QT_QTDBUS_LIBRARY)
     add_definitions(-DUSING_QTDBUS)
 endif (QT_QTDBUS_LIBRARY)
 
-QT4_WRAP_CPP(qyoto_HEADERS_MOC "qyoto.h")
-
 # source files
 SET(SRC_QYOTO_QTCORE_NATIVE
     callbacks.cpp

@@ -60,19 +60,6 @@
 
 #include <qtcore_smoke.h>
 
-void ObjectUnmapper::objectDestroyed()
-{
-    void* qyotoObj = (*GetInstance)(sender(), true);
-    if (qyotoObj) {
-        smokeqyoto_object* o = (smokeqyoto_object*) (*GetSmokeObject)(qyotoObj);
-        if (o != 0 && o->ptr != 0) {
-            unmapPointer(o, o->classId, 0);
-            (*SetSmokeObject)(qyotoObj, 0);
-            free_smokeqyoto_object(o);
-        }
-    }
-}
-
 extern bool qRegisterResourceData(int, const unsigned char *, const unsigned char *, const unsigned char *);
 extern bool qUnregisterResourceData(int, const unsigned char *, const unsigned char *, const unsigned char *);
 
@@ -94,8 +81,8 @@ qyoto_event_notify(void **data)
 	// to the child also.
 	if (event->type() == QEvent::ChildAdded || event->type() == QEvent::ChildRemoved) {
 		QChildEvent *e = static_cast<QChildEvent *>(event);
-		void * childObj = (*GetInstance)(e->child(), true);
-		if (childObj != 0) {
+		if (pointerMap.contains(e->child())) {
+			void * childObj = pointerMap[e->child()];
 			smokeqyoto_object *o = (smokeqyoto_object*) (*GetSmokeObject)(childObj);
 			// Maybe add a check whether the childObj is still a QObject here
 			if (e->added()) {
@@ -105,24 +92,20 @@ qyoto_event_notify(void **data)
 				(*RemoveGlobalRef)(childObj, e->child());
 				o->allocated = true;  // now we need to care about deletion again
 			}
-
-			(*FreeGCHandle)(childObj);
 		}
 	} else if (event->type() == QEvent::Show || event->type() == QEvent::Hide) {
 		if (!receiver->isWidgetType() || receiver->parent() != 0)
 			return false;
 
-		void *obj = (*GetInstance)(receiver, true);
-		if (!obj)
+		if (!pointerMap.contains(receiver))
 			return false;
 
+		void *obj = pointerMap[receiver];
 		if (event->type() == QEvent::Show) {
 			(*AddGlobalRef)(obj, receiver);    // Keep top-level widgets alive as long as they're visible.
 		} else {
 			(*RemoveGlobalRef)(obj, receiver);    // Make them eligible for collection as soon as they're hidden (and if there are no more references to them, obviously).
 		}
-
-		(*FreeGCHandle)(obj);
 	}
 
 	return false;

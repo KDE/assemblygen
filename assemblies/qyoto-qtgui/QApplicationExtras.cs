@@ -34,7 +34,7 @@ namespace QtGui {
 			
 			string[] args = GenerateArgs(argv);
 
-			interceptor.Invoke(	"QApplication$?", "QApplication(int&, char**)", 
+			interceptor.Invoke(	"QApplication$?", "QApplication(int&, char**)", true,
 								typeof(void), false, typeof(int), args.Length, typeof(string[]), args );
 			SetupEventReceiver();
 		}
@@ -45,7 +45,7 @@ namespace QtGui {
 			
 			string[] args = GenerateArgs(argv);
 
-			interceptor.Invoke(	"QApplication$?$", "QApplication(int&, char**, bool)", 
+			interceptor.Invoke(	"QApplication$?$", "QApplication(int&, char**, bool)", true,
 								typeof(void), false, typeof(int), args.Length, typeof(string[]), args, typeof(bool), GUIenabled );
 			SetupEventReceiver();
 		}
@@ -56,7 +56,7 @@ namespace QtGui {
 			
 			string[] args = GenerateArgs(argv);
 
-			interceptor.Invoke(	"QApplication$?$", "QApplication(int&, char**, QApplication::Type)",
+			interceptor.Invoke(	"QApplication$?$", "QApplication(int&, char**, QApplication::Type)", true,
 								typeof(void), false, typeof(int), args.Length, typeof(string[]), args, typeof(QApplication.Type), arg3 );
 			SetupEventReceiver();
 		}

@@ -444,9 +444,8 @@ void marshalObject(Marshall *m, const SmokeType& type)
 	}
 
 	void *p = m->item().s_voidp;
-	void * obj = (*GetInstance)(p, true);
-	if(obj != 0) {
-		m->var().s_voidp = obj;
+	if(pointerMap.contains(p)) {
+		m->var().s_voidp = pointerMap[p];
 		return;
 	}
 
@@ -462,7 +461,7 @@ void marshalObject(Marshall *m, const SmokeType& type)
 		}
 	}
 
-	obj = (*CreateInstance)(classname, o);
+	void* obj = (*CreateInstance)(classname, o);
 	if (do_debug & qtdb_calls) {
 		printf("allocating %s %p -> %p\n", classname, o->ptr, (void*)obj);
 	}
@@ -472,9 +471,6 @@ void marshalObject(Marshall *m, const SmokeType& type)
 	}
 	// Keep a mapping of the pointer so that it is only wrapped once
 	if (m->shouldMapPointer()) {
-		if (o->smoke->isDerivedFrom(type.name(), "QObject")) {
-			QObject::connect((QObject*) p, SIGNAL(destroyed()), &objectUnmapper, SLOT(objectDestroyed()));
-		}
 		mapPointer(obj, o, o->classId, 0);
 	}
 	m->var().s_class = obj;

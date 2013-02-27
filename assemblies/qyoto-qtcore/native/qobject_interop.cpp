@@ -82,8 +82,8 @@ cs_qFindChildren_helper(const QObject *parent, const QString &name, const QRegEx
         obj = children.at(i);
         if (mo.cast(obj)) {
             if ((re && re->indexIn(obj->objectName()) != -1) || name.isNull() || obj->objectName() == name) {
-                void* instance = (*GetInstance)(obj, true);
-                if (!instance) {
+                void* instance = 0;
+                if (!pointerMap.contains(obj)) {
                     Smoke::ModuleIndex id = Smoke::findClass(obj->metaObject()->className());
                     if (!id.smoke) {
                         id = Smoke::findClass(mo.className());
@@ -92,6 +92,8 @@ cs_qFindChildren_helper(const QObject *parent, const QString &name, const QRegEx
                     QByteArray className(qyoto_resolve_classname(o));
                     const char * classname = className.append(", qyoto-").append(o->smoke->moduleName()).data();
                     instance = (*CreateInstance)(classname, o);
+                } else {
+                    instance = pointerMap[obj];
                 }
                 list->append(instance);
             }
@@ -148,8 +150,7 @@ cs_qFindChild_helper(QObject* parent, const QString &name, const QMetaObject &mo
     for (i = 0; i < children.size(); ++i) {
         obj = children.at(i);
         if (mo.cast(obj) && (name.isNull() || obj->objectName() == name)) {
-            monoObject = (*GetInstance)(obj, true);
-            return monoObject;
+            return pointerMap[obj];
         }
     }
     for (i = 0; i < children.size(); ++i) {
@@ -205,9 +206,6 @@ qyoto_qt_metacast(void* obj, char* target)
     smokeqyoto_object* to = alloc_smokeqyoto_object(false, mi.smoke, mi.index, ret);
 	QByteArray className(qyoto_resolve_classname(to));
 	void *instance = (*CreateInstance)(className.append(", qyoto-").append(to->smoke->moduleName()).data(), to);
-    if (to->smoke->isDerivedFrom(to->smoke->className(to->classId), "QObject")) {
-        QObject::connect((QObject*) ret, SIGNAL(destroyed()), &objectUnmapper, SLOT(objectDestroyed()));
-    }
     mapPointer(instance, to, to->classId, 0);
 #ifdef DEBUG
     printf("qyoto_qt_metacast: created new instance of type %s (%p)\n", target, to->ptr);

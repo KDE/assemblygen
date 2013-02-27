@@ -35,7 +35,28 @@ int do_debug = qtdb_none;
 // modules
 QHash<Smoke*, QyotoModule> qyoto_modules;
 bool application_terminated = false;
-ObjectUnmapper objectUnmapper;
+
+QHash<void*, void*> pointerMap;
+
+void operator delete(void* p)
+{
+    if (pointerMap.contains(p)) {
+        void * obj = pointerMap[p];
+        smokeqyoto_object *o = (smokeqyoto_object*) (*GetSmokeObject)(obj);
+
+        (*TryDispose)(obj);
+
+        if (o == 0 || o->ptr == 0) {
+            (*FreeGCHandle)(obj);
+            return;
+        }
+        unmapPointer(o, o->classId, 0);
+        (*SetSmokeObject)(obj, 0);
+        free_smokeqyoto_object(o);
+        (*FreeGCHandle)(obj);
+    }
+    free(p);
+}
 
 extern "C" {
 
@@ -116,7 +137,7 @@ void mapPointer(void * obj, smokeqyoto_object *o, Smoke::Index classId, void *la
                         IsContainedInstance(o) ? "true" : "false" );
             fflush(stdout);
         }
-        (*MapPointer)(ptr, obj, IsContainedInstance(o));
+        pointerMap.insert(ptr, obj);
     }
 
     for (Smoke::Index *i = o->smoke->inheritanceList + o->smoke->classes[classId].parents; *i; i++) {
@@ -131,7 +152,7 @@ void unmapPointer(smokeqyoto_object *o, Smoke::Index classId, void *lastptr) {
 
     if (ptr != lastptr) {
         lastptr = ptr;
-        (*UnmapPointer)(ptr);
+        pointerMap.remove(ptr);
     }
 
     for (Smoke::Index *i = o->smoke->inheritanceList + o->smoke->classes[classId].parents; *i; i++) {

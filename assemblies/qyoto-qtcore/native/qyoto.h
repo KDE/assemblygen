@@ -18,14 +18,6 @@ class SmokeBinding;
 
 struct MocArgument;
 
-class ObjectUnmapper : public QObject
-{
-    Q_OBJECT
-
-public slots:
-    void objectDestroyed();
-};
-
 struct smokeqyoto_object {
     void *ptr;
     bool allocated;
@@ -68,7 +60,7 @@ extern QYOTO_EXPORT int do_debug; // evil
 
 extern QYOTO_EXPORT bool application_terminated;
 
-extern QYOTO_EXPORT ObjectUnmapper objectUnmapper;
+extern QYOTO_EXPORT QHash<void*, void*> pointerMap;
 
 extern QYOTO_EXPORT Marshall::HandlerFn getMarshallFn(const SmokeType &type);
 

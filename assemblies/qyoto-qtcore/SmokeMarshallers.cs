@@ -15,6 +15,8 @@
  *                                                                         *
  ***************************************************************************/
 
+using System.IO;
+
 namespace QtCore {
 	using System;
 	using System.Collections;
@@ -334,7 +336,7 @@ namespace QtCore {
 				return;
 			}
 #if DEBUG
-			DebugGCHandle.Free((GCHandle) handle);
+			((GCHandle) handle).Free();
 #else
 			((GCHandle) handle).Free();
 #endif
@@ -404,165 +406,31 @@ namespace QtCore {
 		// delete the child when it is deleted. This Dictionary will prevent the
 		// child from being GCd even if there are no references to it in the Qyoto
 		// application code.
-		static private readonly Dictionary<IntPtr, object> globalReferenceMap = new Dictionary<IntPtr, object>();
 
 		// The key is an IntPtr corresponding to the address of the C++ instance,
 		// and the value is a WeakReference to the C# instance.
-		static private readonly Dictionary<IntPtr, WeakReference> pointerMap = new Dictionary<IntPtr, WeakReference>();
 
 		public static void AddGlobalRef(IntPtr instancePtr, IntPtr ptr) {
-			Object instance = ((GCHandle) instancePtr).Target;
-			lock (globalReferenceMap) {
-				globalReferenceMap[ptr] = instance;
-			}
-#if DEBUG
-			if ((QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0) {
-				Console.WriteLine("AddGlobalRef() Creating global reference 0x{0:x8} -> {1}", (int) ptr, instance);
-			}
-#endif
 		}
 
 		public static void RemoveGlobalRef(IntPtr instancePtr, IntPtr ptr) {
-		    lock (globalReferenceMap) {
-				if (globalReferenceMap.ContainsKey(ptr)) {
-#if DEBUG
-					if ((QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0) {
-						object reference;
-						if (globalReferenceMap.TryGetValue(ptr, out reference)) {
-							Console.WriteLine("RemoveGlobalRef() Removing global reference 0x{0:x8} -> {1}", (int) ptr, reference);
-						}
-					}
-#endif
-					globalReferenceMap.Remove(ptr);
-				}
-			}
 		}
 
 		public static void MapPointer(IntPtr ptr, IntPtr instancePtr, bool createGlobalReference) {
-			lock (pointerMap) {
-				Object instance = ((GCHandle) instancePtr).Target;
-				WeakReference weakRef = new WeakReference(instance);
-				pointerMap[ptr] = weakRef;
-#if DEBUG
-				if ((QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0) {
-					Console.WriteLine("MapPointer() Creating weak reference 0x{0:x8} -> {1}", (int) ptr, instance);
-				}
-#endif
-				if (createGlobalReference) {
-					lock (globalReferenceMap) {
-						globalReferenceMap[ptr] = instance;
-#if DEBUG
-						if ((QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0) {
-							Console.WriteLine("MapPointer() Creating global reference 0x{0:x8} -> {1}", (int) ptr, instance);
-						}
-#endif
-					}
-				}
-			}
 		}
 		
 		public static void UnmapPointer(IntPtr ptr) {
-			lock (pointerMap) {
-#if DEBUG
-				if ((QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0) {
-					Console.WriteLine("UnmapPointer() Removing weak reference 0x{0:x8}", (int) ptr);
-				}
-#endif
-				pointerMap.Remove(ptr);
-				lock (globalReferenceMap) {
-					if (globalReferenceMap.ContainsKey(ptr)) {
-#if DEBUG
-						if ((QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0) {
-							object reference;
-							if (globalReferenceMap.TryGetValue(ptr, out reference)) {
-								Console.WriteLine("UnmapPointer() Removing global reference 0x{0:x8} -> {1}", (int) ptr, reference);
-							}
-						}
-#endif
-						globalReferenceMap.Remove(ptr);
-					}
-				}
-			}
 		}
 		
 		// If 'allInstances' is false then only return a result if the instance a custom subclass
 		// of a Qyoto class and therefore could have custom slots or overriden methods
 		public static IntPtr GetInstance(IntPtr ptr, bool allInstances) {
-		    lock (pointerMap) {
-			    WeakReference weakRef;
-			    if (!pointerMap.TryGetValue(ptr, out weakRef)) {
-#if DEBUG
-					if ((QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0
-						&& QDebug.debugLevel >= DebugLevel.Extensive ) 
-					{
-						Console.WriteLine("GetInstance() pointerMap[0x{0:x8}] == null", (int) ptr);
-					}
-#endif
-					return IntPtr.Zero;
-				}
-
-				if (weakRef != null && weakRef.IsAlive) {
-#if DEBUG
-					if ((QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0
-						&& QDebug.debugLevel >= DebugLevel.Extensive ) 
-					{
-						Console.WriteLine("GetInstance() weakRef.IsAlive 0x{0:x8} -> {1}", (int) ptr, weakRef.Target is MethodInfo ? ((MethodInfo) weakRef.Target).Name : weakRef.Target.ToString());
-					}
-#endif
-					if (!allInstances && IsSmokeClass(weakRef.Target.GetType())) {
-						return IntPtr.Zero;
-					} 
-
-#if DEBUG
-					GCHandle instanceHandle = DebugGCHandle.Alloc(weakRef.Target);
-#else
-					GCHandle instanceHandle = GCHandle.Alloc(weakRef.Target);
-#endif
-					return (IntPtr) instanceHandle;
-				}
-			    object strongRef;
-			    if (Environment.HasShutdownStarted && globalReferenceMap.TryGetValue(ptr, out strongRef)) {
-#if DEBUG
-			        if (	(QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0
-			            	&& QDebug.debugLevel >= DebugLevel.Extensive ) 
-			        {
-			            Console.WriteLine("GetInstance() strongRef 0x{0:x8} -> {1}", (int) ptr, strongRef);
-			        }
-#endif
-			        if (!allInstances && IsSmokeClass(strongRef.GetType())) {
-			            return IntPtr.Zero;
-			        } 
-
-#if DEBUG
-			        GCHandle instanceHandle = DebugGCHandle.Alloc(strongRef);
-#else
-					GCHandle instanceHandle = GCHandle.Alloc(strongRef);
-#endif
-			        return (IntPtr) instanceHandle;
-			    }
-#if DEBUG
-			    if (	(QDebug.DebugChannel() & QtDebugChannel.QTDB_GC) != 0
-			        	&& QDebug.debugLevel >= DebugLevel.Extensive ) 
-			    {
-			        Console.WriteLine("GetInstance() weakRef dead ptr: 0x{0:x8}", (int) ptr);
-			    }
-#endif
-			    pointerMap.Remove(ptr);
-			    return IntPtr.Zero;
-			}
+				    return IntPtr.Zero;
 		}
 
 		// converts weak references to strong references so they are still available
 		// when the application is shutting down.
 		public static void ConvertRefs() {
-			lock (pointerMap) {
-				foreach (KeyValuePair<IntPtr, WeakReference> pair in pointerMap) {
-					if (!pair.Value.IsAlive)
-						continue;
-					lock (globalReferenceMap)
-						globalReferenceMap[pair.Key] = pair.Value.Target;
-				}
-			}
 		}
 
 		private class SmokeClassData {
@@ -737,18 +605,9 @@ namespace QtCore {
 				Console.WriteLine("The IntPtr is invalid!");
 				return IntPtr.Zero;
 			}
-			object l;
-			try {
-				l = ((GCHandle) ptr).Target;
-			} catch (Exception e) {
-				Console.WriteLine("An error occured when retrieving the target: {0}", e);
-				return ConstructPointerList();
-			}
-			// convert the list to an array via reflection. this is probably the easiest way
-			object[] oa = (object[]) l.GetType().GetMethod("ToArray").Invoke(l, null);
-			
 			IntPtr list = ConstructPointerList();
-			foreach (object o in oa) {
+			foreach (object o in (IEnumerable) ((GCHandle) ptr).Target)
+			{
 #if DEBUG
 				AddObjectToPointerList(list, (IntPtr) DebugGCHandle.Alloc(o));
 #else
@@ -1216,7 +1075,7 @@ namespace QtCore {
 			        GCHandle handle = (GCHandle) item->s_class;
 			        object ret = handle.Target;
 #if DEBUG
-			        DebugGCHandle.Free(handle);
+					//DebugGCHandle.Free(handle);
 #else
 					handle.Free();
 #endif

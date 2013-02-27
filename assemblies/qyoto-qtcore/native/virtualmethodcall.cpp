@@ -31,7 +31,6 @@ VirtualMethodCall::VirtualMethodCall(Smoke *smoke, Smoke::Index meth, Smoke::Sta
 
 VirtualMethodCall::~VirtualMethodCall() {
 	delete[] _sp;
-	(*FreeGCHandle)(_obj);
 	(*FreeGCHandle)(_overridenMethod);
 }
 

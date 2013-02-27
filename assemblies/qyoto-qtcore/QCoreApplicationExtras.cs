@@ -71,7 +71,7 @@ namespace QtCore {
 			string[] args = GenerateArgs(argv);
 			
 			interceptor.Invoke(	"QCoreApplication$?", 
-								"QCoreApplication(int&, char**)", 
+								"QCoreApplication(int&, char**)", true,
 								typeof(void), false, typeof(int), args.Length, typeof(string[]), args );
 			SetupEventReceiver();
 		}

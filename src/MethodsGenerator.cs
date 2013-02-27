@@ -788,6 +788,7 @@ public unsafe class MethodsGenerator
 		// first pass the munged name, then the C++ signature
 		invoke.Parameters.Add(new CodePrimitiveExpression(mungedName));
 		invoke.Parameters.Add(new CodePrimitiveExpression(cppSignature));
+		invoke.Parameters.Add(new CodePrimitiveExpression((method->flags & (uint) Smoke.MethodFlags.mf_ctor) > 0));
 
 		// retrieve the return type
 		CodeTypeReference returnType;

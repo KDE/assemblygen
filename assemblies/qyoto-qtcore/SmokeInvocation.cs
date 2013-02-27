@@ -323,7 +323,12 @@ namespace QtCore {
 			}
 		}
 
-		public object Invoke(string mungedName, string signature, Type returnType, bool refArgs, params object[] args) {
+		public object Invoke(string mungedName, string signature, Type returnType, bool refArgs, params object[] args)
+		{
+			return Invoke(mungedName, signature, false, returnType, refArgs, args);
+		}
+
+		public object Invoke(string mungedName, string signature, bool isConstructor, Type returnType, bool refArgs, params object[] args) {
 #if DEBUG
 			if ((QDebug.DebugChannel() & QtDebugChannel.QTDB_TRANSPARENT_PROXY) != 0) {
 				Console.WriteLine(	"ENTER SmokeInvocation.Invoke() MethodName: {0}.{1} Type: {2} ArgCount: {3}", 
@@ -371,11 +376,14 @@ namespace QtCore {
 							GCHandle instanceHandle = GCHandle.Alloc(instance);
 #endif
 							CallSmokeMethod(methodId.smoke, methodId.index, (IntPtr) instanceHandle, (IntPtr) stackPtr, args.Length / 2, (IntPtr) typeIDsPtr);
+							if (!isConstructor)
+							{
 #if DEBUG
-							DebugGCHandle.Free(instanceHandle);
+								DebugGCHandle.Free(instanceHandle);
 #else
-							instanceHandle.Free();
-#endif
+								instanceHandle.Free();
+#endif	
+							}
 						}
 						if (returnType != typeof(void)) {
 							returnValue = SmokeMarshallers.BoxFromStackItem(returnType, typeIDs[0], stackPtr);

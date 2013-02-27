@@ -629,7 +629,7 @@ namespace QtCore
       
 			QMetaObject res = (QMetaObject)((GCHandle) metaObject).Target;
 #if DEBUG
-			DebugGCHandle.Free((GCHandle) metaObject);
+			//DebugGCHandle.Free((GCHandle) metaObject);
 #else
 			((GCHandle) metaObject).Free();
 #endif

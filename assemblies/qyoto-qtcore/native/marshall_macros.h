@@ -74,14 +74,15 @@ void marshall_ItemList(Marshall *m) {
 			
 			for (int i=0; i < list->size() ; ++i) {
 				void *p = (void *) list->at(i);
-				void * obj = (*GetInstance)(p, true);
-				if (obj == 0) {
+				void * obj = 0;
+				if (!pointerMap.contains(p)) {
 					smokeqyoto_object * o = alloc_smokeqyoto_object(false, ix.smoke, ix.index, p);
 					QByteArray className(qyoto_resolve_classname(o));
 					obj = (*CreateInstance)(className.append(", qyoto-").append(o->smoke->moduleName()).data(), o);
+				} else {
+					obj = pointerMap[p];
 				}
 				(*AddIntPtrToList)(al, obj);
-				(*FreeGCHandle)(obj);
 			}
 
 			m->var().s_voidp = al;
@@ -166,17 +167,16 @@ void marshall_ValueListItem(Marshall *m) {
 
 			for (int i=0; i < valuelist->size() ; ++i) {
 				void *p = (void *) &(valuelist->at(i));
-				void * obj = (*GetInstance)(p, true);
-
-				if (obj == 0) {
-				    p = (void *) new Item(*(Item*) p);
+				void * obj = 0;
+				if (!pointerMap.contains(p)) {
+					p = (void *) new Item(*(Item*) p);
 					smokeqyoto_object * o = alloc_smokeqyoto_object(false, ix.smoke, ix.index, p);
 					QByteArray className(qyoto_resolve_classname(o));
 					obj = (*CreateInstance)(className.append(", qyoto-").append(o->smoke->moduleName()).data(), o);
+				} else {
+					obj = pointerMap[p];
 				}
-
 				(*AddIntPtrToList)(al, obj);
-				(*FreeGCHandle)(obj);
 			}
 
 			m->var().s_voidp = al;
@@ -277,8 +277,6 @@ void marshall_QPair(Marshall *m) {
 			}
 			
 			void *pair = (*CreateQPair)(first, second);
-			(*FreeGCHandle)(first);
-			(*FreeGCHandle)(second);
 			
 			m->var().s_voidp = pair;
 			m->next();

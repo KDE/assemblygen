@@ -30,28 +30,6 @@ Binding::Binding(Smoke *s, const QHash<int, QByteArray>& classname) : SmokeBindi
 void
 Binding::deleted(Smoke::Index classId, void *ptr)
 {
-	void * obj = (*GetInstance)(ptr, true);
-	if (obj == 0) {
-		return;
-	}
-
-	smokeqyoto_object *o = (smokeqyoto_object*) (*GetSmokeObject)(obj);
-
-	if (do_debug & qtdb_gc) {
-		printf("%p->~%s()\n", ptr, smoke->className(classId));
-		fflush(stdout);
-	}
-
-	(*TryDispose)(obj);
-
-	if (o == 0 || o->ptr == 0) {
-		(*FreeGCHandle)(obj);
-		return;
-	}
-	unmapPointer(o, o->classId, 0);
-	(*SetSmokeObject)(obj, 0);
-	free_smokeqyoto_object(o);
-	(*FreeGCHandle)(obj);
 }
 
 bool
@@ -59,12 +37,12 @@ Binding::callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool isAb
 {
 	// don't call anything if the application has already terminated
 	if (application_terminated) return false;
-	void * obj = (*GetInstance)(ptr, false);
-
-	if (obj == 0 && !isAbstract) {
+	// TODO: the only case to pass false to GetInstance
+	if (!pointerMap.contains(ptr) && !isAbstract) {
 		return false;
 	}
 
+	void * obj = pointerMap[ptr];
 	Smoke::Method & meth = smoke->methods[method];
 	QByteArray signature(smoke->methodNames[meth.name]);
 	signature += "(";
@@ -102,7 +80,6 @@ Binding::callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool isAb
 		
 		args[0].s_int = qyoto_qt_metacall(obj, _c, _id, _o);
 
-		(*FreeGCHandle)(obj);
 		return true;
 	}
 
@@ -113,7 +90,6 @@ Binding::callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool isAb
 	Smoke::TypeId typeIDs[meth.numArgs + 1 /* return value */];
 	void * overridenMethod = (*OverridenMethod)(obj, (const char *) signature);
 	if (overridenMethod == 0) {
-		(*FreeGCHandle)(obj);
 		return false;
 	}
 
