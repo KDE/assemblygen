@@ -18,7 +18,8 @@
 # install_assembly (<target name> [NO_GAC] DESTINATION <assembly destination directory>
 #                   [PACKAGE <package name>] [DOC <documentation destination directory>])
 # The assembly destination directory is only used if we compile with Visual C# and thus can't use gacutil.
-# If a package is specified and a file called <target>.pc.cmake exists in the current source directory,
+
+
 # this function will configure the template file. All occurences of @assembly@ will be replaced with
 # the path to the assembly. The resulting <target>.pc file will be installed to
 # <CMAKE_INSTALL_PREFIX>/lib/pkgconfig/ . If you want to have a different basename for the template file,
@@ -337,9 +338,9 @@ function(install_assembly)
     endif (NOT filename)
 
     # replace meta-variable CMAKE_CFG_INTDIR with something that install command understands
-    if (${CMAKE_CFG_INTDIR} MATCHES "\$\(.*\)")
+    if (${CMAKE_CFG_INTDIR} MATCHES "\\$\\(.*\\)")
         string(REPLACE "${CMAKE_CFG_INTDIR}" "\${CMAKE_INSTALL_CONFIG_NAME}" filename "${filename}")
-    endif (${CMAKE_CFG_INTDIR} MATCHES "\$\(.*\)")
+    endif (${CMAKE_CFG_INTDIR} MATCHES "\\$\\(.*\\)")
 
     if (package)
         set (package_option "-package ${package}")
