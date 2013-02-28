@@ -110,16 +110,17 @@ Binding::callMethod(Smoke::Index method, void *ptr, Smoke::Stack args, bool isAb
 		return true;
 	}
 
-	Smoke::TypeId *typeIDs;
-	typeIDs= new Smoke::TypeId[meth.numArgs + 1 /* return value */];
 	void * overridenMethod = (*OverridenMethod)(obj, (const char *) signature);
 	if (overridenMethod == 0) {
 		(*FreeGCHandle)(obj);
 		return false;
 	}
 
+	Smoke::TypeId *typeIDs;
+	typeIDs= new Smoke::TypeId[meth.numArgs + 1 /* return value */];
 	Qyoto::VirtualMethodCall c(smoke, method, args, obj, overridenMethod, typeIDs);
 	c.next();
+	delete typeIDs;
 	return true;
 }
 
