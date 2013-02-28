@@ -16,7 +16,7 @@
 #                     [COMPILE_DEFINITIONS <additional definitions>] )
 #
 # install_assembly (<target name> [NO_GAC] DESTINATION <assembly destination directory>
-#                   [PACKAGE <package name>] )
+#                   [PACKAGE <package name>] [DOC <documentation destination directory>])
 # The assembly destination directory is only used if we compile with Visual C# and thus can't use gacutil.
 # If a package is specified and a file called <target>.pc.cmake exists in the current source directory,
 # this function will configure the template file. All occurences of @assembly@ will be replaced with
@@ -291,6 +291,8 @@ function(install_assembly)
             set (current "d")
         elseif (arg STREQUAL "PACKAGE")
             set (current "p")
+        elseif (arg STREQUAL "DOC")
+            set (current "x")
         # value handling
         elseif (current STREQUAL "t")
             set (target ${arg})
@@ -302,6 +304,13 @@ function(install_assembly)
             endif (IS_ABSOLUTE "${arg}")
         elseif (current STREQUAL "p")
             set (package ${arg})
+        elseif (current STREQUAL "x")
+            if (IS_ABSOLUTE "${arg}")
+                set (doc_dir "${arg}")
+            else (IS_ABSOLUTE "${arg}")
+                set (doc_dir "${CMAKE_INSTALL_PREFIX}/${arg}")
+            endif (IS_ABSOLUTE "${arg}")
+            set (install_doc TRUE)
         endif (arg STREQUAL "NO_GAC")
     endforeach (arg)
 
@@ -327,6 +336,11 @@ function(install_assembly)
         message(FATAL_ERROR "Couldn't retrieve the assembly filename for target ${target}! Are you sure the target is a .NET library assembly?")
     endif (NOT filename)
 
+    # replace meta-variable CMAKE_CFG_INTDIR with something that install command understands
+    if (${CMAKE_CFG_INTDIR} MATCHES "\$\(.*\)")
+        string(REPLACE "${CMAKE_CFG_INTDIR}" "\${CMAKE_INSTALL_CONFIG_NAME}" filename "${filename}")
+    endif (${CMAKE_CFG_INTDIR} MATCHES "\$\(.*\)")
+
     if (package)
         set (package_option "-package ${package}")
     endif (package)
@@ -351,6 +365,11 @@ function(install_assembly)
         endif (NOT LIB_INSTALL_DIR)
         install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${pc_file}.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
     endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${pc_file}.pc.cmake)
+
+    if (install_doc)
+        string(REPLACE "${type}" "xml" docfile "${filename}")
+        install(FILES ${docfile} DESTINATION ${doc_dir} OPTIONAL)
+    endif (install_doc)
 
     if (no_gac)
         return()

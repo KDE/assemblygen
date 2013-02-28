@@ -30,7 +30,6 @@ set_property(TARGET qyoto-qtsql PROPERTY _assembly_type dll)
 
 
 
-install_assembly(qyoto-qtsql DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
-install(FILES ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtsql.xml DESTINATION share/qyoto)
+install_assembly(qyoto-qtsql DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto DOC share/qyoto)
 
 add_subdirectory(native)

@@ -43,7 +43,6 @@ set_property(TARGET qyoto-qtgui PROPERTY _assembly_type dll)
 
 
 
-install_assembly(qyoto-qtgui DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
-install(FILES ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtgui.xml DESTINATION share/qyoto)
+install_assembly(qyoto-qtgui DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto DOC share/qyoto)
 
 add_subdirectory(native)

@@ -58,7 +58,6 @@ set_property(TARGET qyoto-qtcore PROPERTY _assembly_type dll)
 
 
 
-install_assembly(qyoto-qtcore DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto)
-install(FILES ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtcore.xml DESTINATION share/qyoto)
+install_assembly(qyoto-qtcore DESTINATION lib${LIB_SUFFIX} PACKAGE qyoto DOC share/qyoto)
 
 add_subdirectory(native)
