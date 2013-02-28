@@ -35,7 +35,7 @@ set (ASSEMBLYGEN_ARGS
 	-unsafe -out:qyoto-qtcore.dll -global-class:Qt -namespace:QtCore
 	-plugins:QyotoGenerator.dll -smokePath:${SMOKE_INSTALL_PREFIX}
 	-code-file:qyoto-qtcore.cs -docs:"${DOCUMENTATION_PATH}" 
-	\"-keyfile:\\\"${KEYFILE}\\\"\"
+	\"-keyfile:${KEYFILE}\"
 	${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtcore${CMAKE_SHARED_LIBRARY_SUFFIX}
 	${qyoto_qtcore_SRC}
 	WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}
@@ -44,7 +44,7 @@ set (ASSEMBLYGEN_ARGS
 if (MONO_EXECUTABLE)
 	add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtcore.dll
 		COMMAND ${MONO_EXECUTABLE} ${ASSEMBLYGEN_ARGS}
-		COMMAND ${SN_EXECUTABLE} -R ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtcore.dll \\\"${KEYFILE}\\\")
+		COMMAND ${SN_EXECUTABLE} -R ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtcore.dll ${KEYFILE})
 else (MONO_EXECUTABLE)
 	add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtcore.dll
 		COMMAND ${ASSEMBLYGEN_ARGS})
