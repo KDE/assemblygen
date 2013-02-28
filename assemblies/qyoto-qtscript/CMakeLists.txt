@@ -7,7 +7,7 @@ set (ASSEMBLYGEN_ARGS
 	${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/assemblygen.exe
 	-unsafe -out:qyoto-qtscript.dll -r:qyoto-qtcore.dll -namespace:QtScript
 	-plugins:QyotoGenerator.dll -smokePath:${SMOKE_INSTALL_PREFIX}
-	-code-file:qyoto-qtscript.cs -docs:"${DOCUMENTATION_PATH}" \"-keyfile:${KEYFILE}\"
+	-code-file:qyoto-qtscript.cs -docs:"${DOCUMENTATION_PATH}" \"-keyfile:\\\"${KEYFILE}\\\"\"
 	${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtscript${CMAKE_SHARED_LIBRARY_SUFFIX}
 	${qyoto_qtscript_SRC}
 	WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}
@@ -16,7 +16,7 @@ set (ASSEMBLYGEN_ARGS
 if (MONO_EXECUTABLE)
 	add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtscript.dll
 		COMMAND ${MONO_EXECUTABLE} ${ASSEMBLYGEN_ARGS}
-		COMMAND ${SN_EXECUTABLE} -R ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtscript.dll ${KEYFILE})
+		COMMAND ${SN_EXECUTABLE} -R ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtscript.dll \\\"${KEYFILE}\\\")
 else (MONO_EXECUTABLE)
 	add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtscript.dll
 		COMMAND ${ASSEMBLYGEN_ARGS})

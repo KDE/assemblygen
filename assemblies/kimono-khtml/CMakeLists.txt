@@ -7,7 +7,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/kimono-khtm
                    COMMAND ${MONO_EXECUTABLE} --debug ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/assemblygen.exe
                             -unsafe -out:kimono-khtml.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:kimono-kdecore.dll -r:kimono-kdeui.dll -r:kimono-kparts.dll -r:kimono-kio.dll
                             -namespace:Kimono -import:Qyoto -plugins:QyotoGenerator.dll,KimonoGenerator.dll -smokePath:${SMOKE_INSTALL_PREFIX}
-                            -code-file:kimono-khtml.cs \"-keyfile:${KEYFILE}\"
+                            -code-file:kimono-khtml.cs \"-keyfile:\\\"${KEYFILE}\\\"\"
                             ${CMAKE_SHARED_LIBRARY_PREFIX}smokekhtml.so
                             ${kimono_khtml_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}
