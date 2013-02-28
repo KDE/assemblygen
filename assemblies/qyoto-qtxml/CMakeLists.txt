@@ -7,7 +7,7 @@ set (ASSEMBLYGEN_ARGS
 	${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/assemblygen.exe
 	-unsafe -out:qyoto-qtxml.dll -r:qyoto-qtcore.dll -namespace:QtXml
 	-plugins:QyotoGenerator.dll -smokePath:${SMOKE_INSTALL_PREFIX}
-	-code-file:qyoto-qtxml.cs -docs:"${DOCUMENTATION_PATH}" \"-keyfile:\\\"${KEYFILE}\\\"\"
+	-code-file:qyoto-qtxml.cs -docs:"${DOCUMENTATION_PATH}" -keyfile:"${KEYFILE}"
 	${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtxml${CMAKE_SHARED_LIBRARY_SUFFIX}
 	${qyoto_qtxml_SRC}
 	WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}
@@ -16,10 +16,11 @@ set (ASSEMBLYGEN_ARGS
 if (MONO_EXECUTABLE)
 	add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtxml.dll
 		COMMAND ${MONO_EXECUTABLE} ${ASSEMBLYGEN_ARGS}
-		COMMAND ${SN_EXECUTABLE} -R ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtxml.dll ${KEYFILE})
+		COMMAND ${SN_EXECUTABLE} -R ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtxml.dll ${KEYFILE}
+		VERBATIM)
 else (MONO_EXECUTABLE)
 	add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtxml.dll
-		COMMAND ${ASSEMBLYGEN_ARGS})
+		COMMAND ${ASSEMBLYGEN_ARGS} VERBATIM)
 endif (MONO_EXECUTABLE)
 
 add_custom_target(qyoto-qtxml ALL DEPENDS ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtxml.dll)

@@ -7,7 +7,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/kimono-ktex
                             -unsafe -out:kimono-ktexteditor.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:qyoto-qtxml.dll
                                 -r:kimono-kdecore.dll -r:kimono-kdeui.dll -r:kimono-kparts.dll
                             -namespace:Kimono -import:Qyoto -plugins:QyotoGenerator.dll,KimonoGenerator.dll -smokePath:${SMOKE_INSTALL_PREFIX}
-                            -code-file:kimono-ktexteditor.cs \"-keyfile:\\\"${KEYFILE}\\\"\"
+                            -code-file:kimono-ktexteditor.cs -keyfile:"${KEYFILE}"
                             ${CMAKE_SHARED_LIBRARY_PREFIX}smokektexteditor.so
                             ${kimono_ktexteditor_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}

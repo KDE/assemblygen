@@ -7,7 +7,7 @@ set (ASSEMBLYGEN_ARGS
 	${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/assemblygen.exe
 	-unsafe -out:qyoto-qtsvg.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -namespace:QtSvg
 	-plugins:QyotoGenerator.dll -smokePath:${SMOKE_INSTALL_PREFIX}
-	-code-file:qyoto-qtsvg.cs -docs:"${DOCUMENTATION_PATH}" \"-keyfile:\\\"${KEYFILE}\\\"\"
+	-code-file:qyoto-qtsvg.cs -docs:"${DOCUMENTATION_PATH}" -keyfile:"${KEYFILE}"
 	${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtsvg${CMAKE_SHARED_LIBRARY_SUFFIX}
 	${qyoto_qtsvg_SRC}
 	WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}
@@ -16,10 +16,11 @@ set (ASSEMBLYGEN_ARGS
 if (MONO_EXECUTABLE)
 	add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtsvg.dll
 		COMMAND ${MONO_EXECUTABLE} ${ASSEMBLYGEN_ARGS}
-		COMMAND ${SN_EXECUTABLE} -R ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtsvg.dll ${KEYFILE})
+		COMMAND ${SN_EXECUTABLE} -R ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtsvg.dll ${KEYFILE}
+		VERBATIM)
 else (MONO_EXECUTABLE)
 	add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtsvg.dll
-		COMMAND ${ASSEMBLYGEN_ARGS})
+		COMMAND ${ASSEMBLYGEN_ARGS} VERBATIM)
 endif (MONO_EXECUTABLE)
 
 add_custom_target(qyoto-qtsvg ALL DEPENDS ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/qyoto-qtsvg.dll)

@@ -80,6 +80,10 @@ if (CMAKE_CSharp_COMPILER)
     set (CMAKE_CSharp_COMPILER_LOADED 1)
 endif (CMAKE_CSharp_COMPILER)
 
+if(NOT CMAKE_PLATFORM_INFO_DIR) # pre-2.8.10
+    set(CMAKE_PLATFORM_INFO_DIR ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY})
+endif(NOT CMAKE_PLATFORM_INFO_DIR)
+
 # configure variables set in this file for fast reload later on
 configure_file(${CMAKE_SOURCE_DIR}/cmake/modules/CMakeCSharpCompiler.cmake.in 
   ${CMAKE_PLATFORM_INFO_DIR}/CMakeCSharpCompiler.cmake IMMEDIATE @ONLY)

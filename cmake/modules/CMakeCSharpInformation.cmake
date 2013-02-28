@@ -343,21 +343,21 @@ function(install_assembly)
         set(assembly "${destination_dir}/${target}.${type}")
     endif (NOT MONO_FOUND OR no_gac OR type STREQUAL "exe")
 
-    if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${pc_file}.pc.cmake")
-        configure_file ("${CMAKE_CURRENT_SOURCE_DIR}/${pc_file}.pc.cmake" "${CMAKE_CURRENT_BINARY_DIR}/${pc_file}.pc" @ONLY)
+    if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${pc_file}.pc.cmake)
+        configure_file (${CMAKE_CURRENT_SOURCE_DIR}/${pc_file}.pc.cmake ${CMAKE_CURRENT_BINARY_DIR}/${pc_file}.pc @ONLY)
 
         if (NOT LIB_INSTALL_DIR)
             set (LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib)
         endif (NOT LIB_INSTALL_DIR)
-        install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${pc_file}.pc" DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
-    endif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${pc_file}.pc.cmake")
+        install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${pc_file}.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
+    endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${pc_file}.pc.cmake)
 
     if (no_gac)
         return()
     endif (no_gac)
 
     # So we have the mono runtime and we can use gacutil (it has the -root option, which the MS version doesn't have).
-    install(CODE "execute_process(COMMAND ${GACUTIL_EXECUTABLE} -i ${filename} ${package_option} -root ${CMAKE_CURRENT_BINARY_DIR}/tmp_gac)")
+    install(CODE "execute_process(COMMAND ${GACUTIL_EXECUTABLE} -i \"${filename}\" ${package_option} -root \"${CMAKE_CURRENT_BINARY_DIR}/tmp_gac\")")
     file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/tmp_gac/mono)
     file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tmp_gac/mono)
     install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tmp_gac/mono/ DESTINATION ${GAC_DIR} )
