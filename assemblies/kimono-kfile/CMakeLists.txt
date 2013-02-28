@@ -7,7 +7,7 @@ add_custom_command(OUTPUT ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/kimono-kfil
                             -unsafe -out:kimono-kfile.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -r:qyoto-qtdbus.dll -r:qyoto-qtxml.dll
                                                           -r:kimono-kdecore.dll -r:kimono-kdeui.dll -r:kimono-kio.dll -r:kimono-solid.dll
                             -namespace:Kimono -import:Qyoto -plugins:QyotoGenerator.dll,KimonoGenerator.dll -smokePath:${SMOKE_INSTALL_PREFIX}
-                            -code-file:kimono-kfile.cs \"-keyfile:${KEYFILE}\"
+                            -code-file:kimono-kfile.cs \"-keyfile:\\\"${KEYFILE}\\\"\"
                             ${CMAKE_SHARED_LIBRARY_PREFIX}smokekfile.so
                             ${kimono_kfile_SRC}
                    WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}
