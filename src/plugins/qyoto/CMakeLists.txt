@@ -15,10 +15,10 @@ set(qyotogenerator_native_SRC
 add_library(qyotogenerator-native SHARED ${qyotogenerator_native_SRC})
 target_link_libraries(qyotogenerator-native ${QT_QTCORE_LIBRARY} ${SMOKE_BASE_LIBRARY})
 
-if (WIN32)
+if (WIN32 AND CMAKE_COMPILER_IS_GNUCC)
 	# Realign the stack, for compatibility with an older ABI.
 	set_target_properties (qyotogenerator-native PROPERTIES COMPILE_FLAGS -mstackrealign)
-endif (WIN32)
+endif (WIN32 AND CMAKE_COMPILER_IS_GNUCC)
 
 csharp_add_library(QyotoGenerator ${QyotoGenerator_SRC} UNSAFE REFERENCES System.Data.dll assemblygen Mono.Data.Sqlite.dll zlib.net.dll)
 add_custom_command(TARGET QyotoGenerator PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/Mono.Data.Sqlite.dll ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/Mono.Data.Sqlite.dll)

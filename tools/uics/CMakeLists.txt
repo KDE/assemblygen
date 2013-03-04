@@ -26,8 +26,10 @@ add_executable(uics_bin ${uics_bin_SRCS})
 set_target_properties(uics_bin PROPERTIES OUTPUT_NAME uics)
 set_target_properties(uics_bin PROPERTIES COMPILE_FLAGS -DQT_UIC_CS_GENERATOR)
 if (WIN32)
-	# Realign the stack, for compatibility with an older ABI.
-	set_target_properties (uics_bin PROPERTIES COMPILE_FLAGS -mstackrealign)
+    if (CMAKE_COMPILER_IS_GNUCC)
+        # Realign the stack, for compatibility with an older ABI.
+        set_target_properties (uics_bin PROPERTIES COMPILE_FLAGS -mstackrealign)
+    endif (CMAKE_COMPILER_IS_GNUCC)
 
     # So that ui4.h gets the right value of QDESIGNER_UILIB_EXPORT
     set_target_properties(uics_bin PROPERTIES COMPILE_FLAGS "-DQT_UIC_CS_GENERATOR -DQDESIGNER_UILIB_LIBRARY")

@@ -18,8 +18,10 @@ INSTALL(TARGETS qyoto-qtdbus-native LIBRARY DESTINATION ${LIB_INSTALL_DIR}
 						  		   ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
 						  		   RUNTIME DESTINATION bin)
 if (WIN32)
-	# Realign the stack, for compatibility with an older ABI.
-	set_target_properties (qyoto-qtdbus-native PROPERTIES COMPILE_FLAGS -mstackrealign)
+    if (CMAKE_COMPILER_IS_GNUCC)
+        # Realign the stack, for compatibility with an older ABI.
+        set_target_properties (qyoto-qtdbus-native PROPERTIES COMPILE_FLAGS -mstackrealign)
+    endif (CMAKE_COMPILER_IS_GNUCC)
 
     # Get rid of the "lib" prefix on archives/DLLs in Windows.
     set_target_properties(qyoto-qtdbus-native
