@@ -12,7 +12,7 @@ set (ASSEMBLYGEN_ARGS
 	${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/assemblygen.exe
 	-unsafe -out:qyoto-qtdbus.dll -r:qyoto-qtcore.dll -namespace:QtDBus
 	-plugins:QyotoGenerator.dll -smokePath:${SMOKE_INSTALL_PREFIX}
-	-code-file:qyoto-qtdbus.cs -docs:"${DOCUMENTATION_PATH}" -keyfile:"${KEYFILE}"
+	-code-file:qyoto-qtdbus.cs -docs:${DOCUMENTATION_PATH} -keyfile:"${KEYFILE}"
 	${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtdbus${CMAKE_SHARED_LIBRARY_SUFFIX}
 	${qyoto_qtdbus_SRC}
 	WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}

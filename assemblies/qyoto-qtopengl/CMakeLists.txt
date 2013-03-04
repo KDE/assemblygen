@@ -7,7 +7,7 @@ set (ASSEMBLYGEN_ARGS
 	${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}/assemblygen.exe -unsafe
 	-out:qyoto-qtopengl.dll -r:qyoto-qtcore.dll -r:qyoto-qtgui.dll -namespace:QtOpenGL
 	-plugins:QyotoGenerator.dll -smokePath:${SMOKE_INSTALL_PREFIX}
-	-code-file:qyoto-qtopengl.cs -docs:"${DOCUMENTATION_PATH}" -keyfile:"${KEYFILE}"
+	-code-file:qyoto-qtopengl.cs -docs:${DOCUMENTATION_PATH} -keyfile:"${KEYFILE}"
 	${CMAKE_SHARED_LIBRARY_PREFIX}smokeqtopengl${CMAKE_SHARED_LIBRARY_SUFFIX}
 	${qyoto_qtopengl_SRC}
 	WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR}
